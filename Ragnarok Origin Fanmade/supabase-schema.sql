@@ -50,6 +50,17 @@ select id from auth.users
 where lower(email) = 'bagonzaza1150@gmail.com'
 on conflict (user_id) do nothing;
 
+-- Optional one-time repair for old listings created before Discord login was required.
+-- Run this if an old listing appears in "ประกาศของฉัน" but cannot be deleted.
+-- update public.marketplace_listings
+-- set user_id = (
+--   select id from auth.users
+--   where lower(email) = 'bagonzaza1150@gmail.com'
+--   order by created_at desc
+--   limit 1
+-- )
+-- where user_id is null;
+
 alter table public.marketplace_listings
   add column if not exists user_id uuid references auth.users(id) on delete set null;
 

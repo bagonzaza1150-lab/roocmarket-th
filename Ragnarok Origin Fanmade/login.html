@@ -54,16 +54,6 @@
           <p class="admin-message" id="authMessage"></p>
         </form>
 
-        <div class="auth-session" id="authSession" hidden>
-          <strong id="authUserEmail"></strong>
-          <span>คุณเข้าสู่ระบบแล้ว</span>
-          <div class="post-actions">
-            <a class="btn btn-primary" href="post.html">ไปลงประกาศ</a>
-            <a class="btn btn-light" href="my-listings.html">ประกาศของฉัน</a>
-            <a class="btn btn-primary admin-link" href="admin.html" hidden>Admin</a>
-            <button class="btn btn-light" id="authLogout" type="button">ออกจากระบบ</button>
-          </div>
-        </div>
       </section>
     </main>
 
@@ -73,10 +63,6 @@
       const supabaseClient = canUseSupabase ? window.supabase.createClient(config.url, config.anonKey) : null;
       const authForm = document.querySelector("#authForm");
       const authMessage = document.querySelector("#authMessage");
-      const authSession = document.querySelector("#authSession");
-      const authUserEmail = document.querySelector("#authUserEmail");
-      const authLogout = document.querySelector("#authLogout");
-      const adminLink = document.querySelector(".admin-link");
 
       function setAuthMessage(message, isError = false) {
         authMessage.textContent = message;
@@ -84,43 +70,9 @@
       }
 
       function showSession(session) {
-        const loggedIn = Boolean(session);
-        authForm.hidden = loggedIn;
-        authSession.hidden = !loggedIn;
-        if (session) authUserEmail.textContent = getDiscordDisplayName(session);
-        if (adminLink) adminLink.hidden = !isAdminSession(session);
-      }
-
-      function getDiscordDisplayName(session) {
-        const user = session?.user || {};
-        const identityData = user.identities?.find((identity) => identity.provider === "discord")?.identity_data || {};
-        return user.user_metadata?.full_name ||
-          user.user_metadata?.name ||
-          user.user_metadata?.preferred_username ||
-          identityData.full_name ||
-          identityData.name ||
-          identityData.preferred_username ||
-          user.email ||
-          "ผู้ใช้งาน Discord";
-      }
-
-      function getSessionEmail(session) {
-        const user = session?.user || {};
-        return (user.email || user.user_metadata?.email || user.identities?.[0]?.identity_data?.email || "").toLowerCase();
-      }
-
-      function isAdminSession(session) {
-        if (!session) return false;
-        const user = session.user || {};
-        const email = getSessionEmail(session);
-        const identities = user.identities || [];
-        const discordIds = identities
-          .filter((identity) => identity.provider === "discord")
-          .map((identity) => identity.identity_data?.sub || identity.id)
-          .filter(Boolean);
-        return (config.adminUserIds || []).includes(user.id) ||
-          (config.adminEmails || []).map((entry) => entry.toLowerCase()).includes(email) ||
-          discordIds.some((id) => (config.adminDiscordIds || []).includes(id));
+        if (!session) return;
+        const redirect = new URLSearchParams(location.search).get("redirect") || "index.html";
+        location.href = new URL(redirect, location.href).href;
       }
 
       authForm.addEventListener("submit", async (event) => {
@@ -145,11 +97,6 @@
           setAuthMessage(result.error.message, true);
           return;
         }
-      });
-
-      authLogout.addEventListener("click", async () => {
-        await supabaseClient.auth.signOut();
-        location.reload();
       });
 
       if (canUseSupabase) {

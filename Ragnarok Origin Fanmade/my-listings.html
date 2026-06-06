@@ -137,7 +137,7 @@
         const { data, error } = await supabaseClient
           .from("marketplace_listings")
           .select("*")
-          .eq("user_id", currentSession.user.id)
+          .or(`user_id.eq.${currentSession.user.id},user_id.is.null`)
           .order("created_at", { ascending: false });
 
         if (error) {
@@ -153,14 +153,19 @@
         const card = grid.querySelector(`[data-id="${CSS.escape(id)}"]`);
         const isActive = card?.querySelector(".verified") !== null;
         setMessage("กำลังอัปเดตประกาศ...");
-        const { error } = await supabaseClient
+        const { data, error } = await supabaseClient
           .from("marketplace_listings")
           .update({ active: !isActive })
           .eq("id", id)
-          .eq("user_id", currentSession.user.id);
+          .select("id");
 
         if (error) {
           setMessage(error.message, true);
+          return;
+        }
+
+        if (!data || !data.length) {
+          setMessage("อัปเดตไม่ได้: ประกาศนี้อาจเป็นโพสต์เก่าที่ยังไม่ได้ผูกกับบัญชี Discord ของคุณ", true);
           return;
         }
 
@@ -170,14 +175,19 @@
       async function deleteListing(id) {
         if (!confirm("ลบประกาศนี้?")) return;
         setMessage("กำลังลบประกาศ...");
-        const { error } = await supabaseClient
+        const { data, error } = await supabaseClient
           .from("marketplace_listings")
           .delete()
           .eq("id", id)
-          .eq("user_id", currentSession.user.id);
+          .select("id");
 
         if (error) {
           setMessage(error.message, true);
+          return;
+        }
+
+        if (!data || !data.length) {
+          setMessage("ลบไม่ได้: ประกาศนี้เป็นโพสต์เก่าหรือไม่ได้ผูกกับบัญชี Discord นี้ ให้รัน SQL claim ด้านล่างก่อน", true);
           return;
         }
 
