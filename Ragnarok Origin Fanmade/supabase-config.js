@@ -283,7 +283,8 @@ window.ROOC_SUPABASE = {
     const controls = getFilterControls();
     if (controls.refresh) {
       controls.refresh.disabled = true;
-      controls.refresh.textContent = "กำลังรีเฟรช...";
+      controls.refresh.classList.add("is-loading");
+      controls.refresh.setAttribute("aria-label", "กำลังรีเฟรชสินค้า");
     }
 
     try {
@@ -302,7 +303,9 @@ window.ROOC_SUPABASE = {
     } finally {
       if (controls.refresh) {
         controls.refresh.disabled = false;
-        controls.refresh.textContent = "รีเฟรชสินค้า";
+        controls.refresh.classList.remove("is-loading");
+        controls.refresh.setAttribute("aria-label", "รีเฟรชสินค้า");
+        controls.refresh.title = "รีเฟรชสินค้า";
       }
     }
   }
