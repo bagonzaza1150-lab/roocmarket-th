@@ -156,10 +156,12 @@ to authenticated
 using (auth.uid() = user_id);
 
 drop policy if exists "Public can read active marketplace listings" on public.marketplace_listings;
-create policy "Public can read active marketplace listings"
+drop policy if exists "Public can read marketplace listings" on public.marketplace_listings;
+create policy "Public can read marketplace listings"
 on public.marketplace_listings
 for select
-using (active = true);
+to anon, authenticated
+using (true);
 
 drop policy if exists "Authenticated users can read own marketplace listings" on public.marketplace_listings;
 create policy "Authenticated users can read own marketplace listings"

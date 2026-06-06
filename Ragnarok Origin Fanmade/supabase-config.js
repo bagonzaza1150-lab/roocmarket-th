@@ -13,6 +13,7 @@ window.ROOC_SUPABASE = {
   const canUseSupabase = Boolean(config.url && config.anonKey && window.supabase);
   const supabaseClient = canUseSupabase ? window.supabase.createClient(config.url, config.anonKey) : null;
   let publicListings = [];
+  let soldListings = [];
 
   function escapeHtml(value) {
     return String(value || "")
@@ -25,6 +26,18 @@ window.ROOC_SUPABASE = {
 
   async function fetchPublicListings() {
     const response = await fetch(`${config.url}/rest/v1/marketplace_listings?select=*&active=eq.true&order=created_at.desc&limit=200`, {
+      headers: {
+        apikey: config.anonKey,
+        Authorization: `Bearer ${config.anonKey}`
+      }
+    });
+
+    if (!response.ok) throw new Error(await response.text());
+    return response.json();
+  }
+
+  async function fetchSoldListings() {
+    const response = await fetch(`${config.url}/rest/v1/marketplace_listings?select=*&active=eq.false&order=updated_at.desc&limit=12`, {
       headers: {
         apikey: config.anonKey,
         Authorization: `Bearer ${config.anonKey}`
@@ -201,6 +214,37 @@ window.ROOC_SUPABASE = {
     emptyState.hidden = true;
   }
 
+  function renderSoldListings(listings) {
+    const section = document.querySelector("#soldListings");
+    const scroller = document.querySelector("#soldListingScroller");
+    const count = document.querySelector("#soldListingCount");
+    if (!section || !scroller || !count) return;
+
+    if (!listings.length) {
+      section.hidden = true;
+      scroller.innerHTML = "";
+      count.textContent = "0 รายการ";
+      return;
+    }
+
+    count.textContent = `${listings.length.toLocaleString("th-TH")} รายการ`;
+    scroller.innerHTML = listings.map((listing) => {
+      const title = listing.title || listing.item_name || "ประกาศขาย";
+      const price = listing.price_text ? `฿ ${listing.price_text}` : "";
+      return `
+        <article class="sold-card">
+          <img src="${escapeHtml(listing.image_url || "assets/category-icons/mvp-c.png")}" alt="" />
+          <div>
+            <h3>${escapeHtml(title)}</h3>
+            <p>${escapeHtml(price)}</p>
+            <strong>ขายแล้ว</strong>
+          </div>
+        </article>
+      `;
+    }).join("");
+    section.hidden = false;
+  }
+
   function renderFilteredListings() {
     if (!document.querySelector("#latestListingGrid")) return;
     renderCounts(publicListings);
@@ -263,10 +307,17 @@ window.ROOC_SUPABASE = {
   async function hydratePublicListings() {
     if (!document.querySelector("#latestListingGrid")) return;
     try {
-      publicListings = await fetchPublicListings();
+      [publicListings, soldListings] = await Promise.all([
+        fetchPublicListings(),
+        fetchSoldListings().catch((error) => {
+          console.warn("ROOC sold listings failed:", error);
+          return [];
+        })
+      ]);
       bindFilters();
       renderFilteredListings();
-      console.info(`ROOC public listings loaded ${publicListings.length} rows`);
+      renderSoldListings(soldListings);
+      console.info(`ROOC public listings loaded ${publicListings.length} active rows, ${soldListings.length} sold rows`);
     } catch (error) {
       console.error("ROOC public listings failed:", error);
     }
