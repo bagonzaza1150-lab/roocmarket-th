@@ -475,8 +475,8 @@
       }
 
       const supabaseClient = getSupabaseClient();
-      loadListingCounts(supabaseClient);
-      loadLatestListings(supabaseClient);
+      loadListingCounts(null);
+      loadLatestListings(null);
 
       const sellerContactModal = document.querySelector("#sellerContactModal");
       const sellerContactItem = document.querySelector("#sellerContactItem");
