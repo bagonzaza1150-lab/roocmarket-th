@@ -357,9 +357,27 @@ window.ROOC_SUPABASE = {
       "";
   }
 
+  function getDiscordId(session) {
+    const identity = session?.user?.identities?.find((entry) => entry.provider === "discord");
+    return identity?.identity_data?.sub || identity?.id || "";
+  }
+
   function getSessionEmail(session) {
     const user = session?.user || {};
     return (user.email || user.user_metadata?.email || user.identities?.[0]?.identity_data?.email || "").toLowerCase();
+  }
+
+  async function upsertMarketplaceProfile(session) {
+    if (!session || !supabaseClient) return;
+    await supabaseClient
+      .from("marketplace_profiles")
+      .upsert({
+        user_id: session.user.id,
+        discord_id: getDiscordId(session),
+        display_name: getDiscordDisplayName(session),
+        avatar_url: getDiscordAvatarUrl(session),
+        email: getSessionEmail(session)
+      }, { onConflict: "user_id" });
   }
 
   async function getPremiumStatus(session) {
@@ -441,8 +459,10 @@ window.ROOC_SUPABASE = {
   async function hydrateAuthUi() {
     if (!supabaseClient) return;
     const { data } = await supabaseClient.auth.getSession();
+    await upsertMarketplaceProfile(data.session);
     await syncAuthUi(data.session);
     supabaseClient.auth.onAuthStateChange((_event, session) => {
+      upsertMarketplaceProfile(session);
       syncAuthUi(session);
     });
   }
