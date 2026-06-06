@@ -54,6 +54,22 @@ window.ROOC_SUPABASE = {
     return Number.isFinite(number) ? number : 0;
   }
 
+  function compareListingPrice(a, b, direction) {
+    const priceA = parsePrice(a.price_text);
+    const priceB = parsePrice(b.price_text);
+    const hasPriceA = priceA > 0;
+    const hasPriceB = priceB > 0;
+
+    if (hasPriceA !== hasPriceB) return hasPriceA ? -1 : 1;
+    if (!hasPriceA && !hasPriceB) {
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    }
+
+    const priceDiff = direction === "asc" ? priceA - priceB : priceB - priceA;
+    if (priceDiff !== 0) return priceDiff;
+    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+  }
+
   function getContactProfileUrl(contact) {
     const value = String(contact || "").trim();
     if (!value) return "";
@@ -72,6 +88,7 @@ window.ROOC_SUPABASE = {
       category: document.querySelector("#categoryFilter"),
       price: document.querySelector("#priceFilter"),
       sort: document.querySelector("#sortFilter"),
+      refresh: document.querySelector("#refreshListingsButton"),
       middleman: document.querySelector("#middlemanFilter"),
       ready: document.querySelector("#readyFilter"),
       reset: document.querySelector("#resetFilters"),
@@ -126,8 +143,8 @@ window.ROOC_SUPABASE = {
     });
 
     return filtered.sort((a, b) => {
-      if (filters.sort === "price-low") return parsePrice(a.price_text) - parsePrice(b.price_text);
-      if (filters.sort === "price-high") return parsePrice(b.price_text) - parsePrice(a.price_text);
+      if (filters.sort === "price-low") return compareListingPrice(a, b, "asc");
+      if (filters.sort === "price-high") return compareListingPrice(a, b, "desc");
       if (Boolean(b.seller_is_premium) !== Boolean(a.seller_is_premium)) {
         return Number(Boolean(b.seller_is_premium)) - Number(Boolean(a.seller_is_premium));
       }
@@ -262,12 +279,43 @@ window.ROOC_SUPABASE = {
     renderListingCards(getFilteredListings(), true);
   }
 
+  async function refreshListings() {
+    const controls = getFilterControls();
+    if (controls.refresh) {
+      controls.refresh.disabled = true;
+      controls.refresh.textContent = "กำลังรีเฟรช...";
+    }
+
+    try {
+      [publicListings, soldListings] = await Promise.all([
+        fetchPublicListings(),
+        fetchSoldListings().catch((error) => {
+          console.warn("ROOC sold listings failed:", error);
+          return [];
+        })
+      ]);
+      renderFilteredListings();
+      renderSoldListings(soldListings);
+      console.info(`ROOC listings refreshed ${publicListings.length} active rows, ${soldListings.length} sold rows`);
+    } catch (error) {
+      console.error("ROOC listings refresh failed:", error);
+    } finally {
+      if (controls.refresh) {
+        controls.refresh.disabled = false;
+        controls.refresh.textContent = "รีเฟรชสินค้า";
+      }
+    }
+  }
+
   function bindFilters() {
+    if (document.body.dataset.filtersBound === "true") return;
+    document.body.dataset.filtersBound = "true";
     const controls = getFilterControls();
     const rerender = () => renderFilteredListings();
 
     controls.search?.addEventListener("input", rerender);
     controls.sort?.addEventListener("change", rerender);
+    controls.refresh?.addEventListener("click", refreshListings);
     controls.price?.addEventListener("change", rerender);
     controls.middleman?.addEventListener("change", rerender);
     controls.ready?.addEventListener("change", rerender);
@@ -316,16 +364,8 @@ window.ROOC_SUPABASE = {
   async function hydratePublicListings() {
     if (!document.querySelector("#latestListingGrid")) return;
     try {
-      [publicListings, soldListings] = await Promise.all([
-        fetchPublicListings(),
-        fetchSoldListings().catch((error) => {
-          console.warn("ROOC sold listings failed:", error);
-          return [];
-        })
-      ]);
       bindFilters();
-      renderFilteredListings();
-      renderSoldListings(soldListings);
+      await refreshListings();
       console.info(`ROOC public listings loaded ${publicListings.length} active rows, ${soldListings.length} sold rows`);
     } catch (error) {
       console.error("ROOC public listings failed:", error);

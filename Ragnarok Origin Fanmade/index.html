@@ -230,11 +230,14 @@
               <p class="eyebrow">Latest Listings</p>
               <h2>ประกาศล่าสุด</h2>
             </div>
-            <select id="sortFilter" aria-label="เรียงลำดับ">
-              <option value="newest">ใหม่ล่าสุด</option>
-              <option value="price-low">ราคาต่ำสุด</option>
-              <option value="price-high">ราคาสูงสุด</option>
-            </select>
+            <div class="listing-tools">
+              <select id="sortFilter" aria-label="เรียงลำดับ">
+                <option value="newest">ใหม่ล่าสุด</option>
+                <option value="price-low">ราคาน้อยไปมาก</option>
+                <option value="price-high">ราคามากไปน้อย</option>
+              </select>
+              <button class="btn btn-small refresh-listings-button" id="refreshListingsButton" type="button">รีเฟรชสินค้า</button>
+            </div>
           </div>
 
           <div class="market-tabs" aria-label="เลือกหมวดประกาศ">
