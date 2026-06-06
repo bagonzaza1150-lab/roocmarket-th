@@ -128,6 +128,7 @@
                   <span class="${status.className}">${status.label}</span>
                 </div>
                 <h3>${escapeHtml(listing.title || listing.item_name || "ประกาศขาย")}</h3>
+                <p>${listing.character_name ? `ตัวละคร: ${escapeHtml(listing.character_name)}` : "ยังไม่ได้ระบุชื่อตัวละคร"}</p>
                 <p>${escapeHtml(listing.description || "")}</p>
                 <strong>฿ ${escapeHtml(listing.price_text || "0")}</strong>
               </div>

@@ -138,8 +138,12 @@
                   <input id="listingTitle" type="text" placeholder="เช่น Maya Card หรือ Rare Adornment" />
                 </label>
                 <label class="post-field">
+                  <span>ชื่อตัวละคร</span>
+                  <input id="characterName" type="text" placeholder="ชื่อตัวละครในเกม" required />
+                </label>
+                <label class="post-field">
                   <span>ราคา</span>
-                  <input id="listingPrice" type="text" inputmode="numeric" placeholder="3,800" />
+                  <input id="listingPrice" type="text" inputmode="numeric" placeholder="3,800" required />
                 </label>
                 <label class="post-field">
                   <span>Server</span>
@@ -356,6 +360,7 @@
       const accountImageInput = document.querySelector("#accountImageInput");
       const postMessage = document.querySelector("#postMessage");
       const listingTitle = document.querySelector("#listingTitle");
+      const characterName = document.querySelector("#characterName");
       const listingPrice = document.querySelector("#listingPrice");
       const listingServer = document.querySelector("#listingServer");
       const listingContact = document.querySelector("#listingContact");
@@ -453,7 +458,7 @@
         selectedItemImage.src = group.items[0].image;
         selectedItemImage.nextElementSibling.textContent = group.helper;
         listingTitle.value = group.items[0].name;
-        listingPrice.value = group.items[0].price;
+        listingPrice.value = "";
         listingDescription.value = group.items[0].description;
         syncPreview();
       }
@@ -529,10 +534,23 @@
 
         const item = getActiveItem();
         const title = listingTitle.value.trim() || item.name;
-        const priceText = plainPrice(listingPrice.value || item.price);
+        const characterText = characterName.value.trim();
+        const priceText = plainPrice(listingPrice.value);
         const description = listingDescription.value.trim() || item.description;
         let imageUrl = item.image;
         let imagePath = null;
+
+        if (!characterText) {
+          setPostMessage("กรุณาใส่ชื่อตัวละครก่อนเผยแพร่ประกาศ", true);
+          characterName.focus();
+          return;
+        }
+
+        if (!priceText) {
+          setPostMessage("กรุณาใส่ราคาก่อนเผยแพร่ประกาศ", true);
+          listingPrice.focus();
+          return;
+        }
 
         setPostMessage("กำลังเผยแพร่ประกาศ...");
 
@@ -550,6 +568,7 @@
             title,
             image_url: imageUrl,
             image_path: imagePath,
+            character_name: characterText,
             price_text: priceText,
             server_name: listingServer.value,
             contact: listingContact.value.trim() || getDiscordProfileUrl(currentSession),
@@ -582,7 +601,7 @@
         const item = getActiveItem();
         selectedItemImage.src = item.image;
         listingTitle.value = item.name;
-        listingPrice.value = item.price;
+        listingPrice.value = "";
         listingDescription.value = item.description;
         syncPreview();
       });
@@ -594,7 +613,7 @@
         syncPreview();
       });
 
-      [listingTitle, listingPrice, listingServer, listingDescription, middlemanCheck, verifiedCheck, readyCheck].forEach((field) => {
+      [listingTitle, characterName, listingPrice, listingServer, listingDescription, middlemanCheck, verifiedCheck, readyCheck].forEach((field) => {
         field.addEventListener("input", syncPreview);
         field.addEventListener("change", syncPreview);
       });

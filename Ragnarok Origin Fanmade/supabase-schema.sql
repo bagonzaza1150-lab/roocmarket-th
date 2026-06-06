@@ -23,6 +23,7 @@ create table if not exists public.marketplace_listings (
   category text not null check (category in ('mvp', 'accessories', 'fashion', 'account')),
   item_name text not null,
   title text not null,
+  character_name text not null default '',
   image_url text not null,
   image_path text,
   price_text text not null default '',
@@ -64,6 +65,9 @@ on conflict (user_id) do nothing;
 
 alter table public.marketplace_listings
 add column if not exists user_id uuid references auth.users(id) on delete set null;
+
+alter table public.marketplace_listings
+add column if not exists character_name text not null default '';
 
 alter table public.marketplace_listings
 add column if not exists sale_status text not null default 'active';

@@ -98,6 +98,7 @@ window.ROOC_SUPABASE = {
     return [
       listing.title,
       listing.item_name,
+      listing.character_name,
       listing.description,
       listing.server_name,
       listing.contact
@@ -192,8 +193,8 @@ window.ROOC_SUPABASE = {
         listing.category === "mvp" ? '<span class="mvp">MVP</span>' : ""
       ].filter(Boolean).join("");
       const description = listing.middleman
-        ? `${listing.description || ""} · รองรับ Middleman`
-        : listing.description || "";
+        ? `${listing.character_name ? `ตัวละคร: ${listing.character_name} · ` : ""}${listing.description || ""} · รองรับ Middleman`
+        : `${listing.character_name ? `ตัวละคร: ${listing.character_name} · ` : ""}${listing.description || ""}`;
 
       return `
         <article class="listing-card">
@@ -338,6 +339,16 @@ window.ROOC_SUPABASE = {
       "Discord";
   }
 
+  function getDiscordAvatarUrl(session) {
+    const user = session?.user || {};
+    const identityData = user.identities?.find((identity) => identity.provider === "discord")?.identity_data || {};
+    return user.user_metadata?.avatar_url ||
+      user.user_metadata?.picture ||
+      identityData.avatar_url ||
+      identityData.picture ||
+      "";
+  }
+
   function getSessionEmail(session) {
     const user = session?.user || {};
     return (user.email || user.user_metadata?.email || user.identities?.[0]?.identity_data?.email || "").toLowerCase();
@@ -373,11 +384,26 @@ window.ROOC_SUPABASE = {
     const authLinks = document.querySelectorAll(".auth-link");
     const myListingsLink = document.querySelector(".my-listings-link") || ensureAccountLink();
     const adminLinks = document.querySelectorAll(".admin-link");
+    const displayName = session ? getDiscordDisplayName(session) : "";
+    const avatarUrl = session ? getDiscordAvatarUrl(session) : "";
 
     authLinks.forEach((link) => {
       if (session) {
-        link.textContent = getDiscordDisplayName(session);
-        link.href = "login.html";
+        const menu = document.createElement("div");
+        menu.className = "user-menu";
+        menu.innerHTML = `
+          <button class="user-menu-trigger" type="button" aria-expanded="false">
+            <img src="${escapeHtml(avatarUrl || "assets/category-icons/account-b.png")}" alt="" />
+            <span>${escapeHtml(displayName)}</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+          </button>
+          <div class="user-menu-panel" hidden>
+            <a class="premium-link" href="premium.html">Premium</a>
+            <a href="my-listings.html">ประกาศของฉัน</a>
+            <button type="button" data-user-logout>ออกจากระบบ</button>
+          </div>
+        `;
+        link.replaceWith(menu);
       } else {
         link.textContent = "เข้าสู่ระบบ";
         link.href = "login.html";
@@ -396,6 +422,27 @@ window.ROOC_SUPABASE = {
     syncAuthUi(data.session);
     supabaseClient.auth.onAuthStateChange((_event, session) => syncAuthUi(session));
   }
+
+  document.addEventListener("click", async (event) => {
+    const trigger = event.target.closest(".user-menu-trigger");
+    const logout = event.target.closest("[data-user-logout]");
+    document.querySelectorAll(".user-menu-panel").forEach((panel) => {
+      if (!trigger || !panel.closest(".user-menu")?.contains(trigger)) panel.hidden = true;
+    });
+
+    if (trigger) {
+      const panel = trigger.closest(".user-menu")?.querySelector(".user-menu-panel");
+      if (panel) {
+        panel.hidden = !panel.hidden;
+        trigger.setAttribute("aria-expanded", String(!panel.hidden));
+      }
+    }
+
+    if (logout && supabaseClient) {
+      await supabaseClient.auth.signOut();
+      window.location.href = "index.html";
+    }
+  });
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
