@@ -803,7 +803,50 @@ h1 {
 }
 
 .refresh-listings-button {
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper-soft);
+  color: var(--blue);
+  cursor: pointer;
+}
+
+.refresh-listings-button svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+}
+
+.refresh-listings-button span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+.refresh-listings-button:hover {
+  border-color: color-mix(in srgb, var(--blue) 42%, var(--line));
+  background: color-mix(in srgb, var(--blue) 12%, var(--paper));
+}
+
+.refresh-listings-button.is-loading svg {
+  animation: refreshSpin 700ms linear infinite;
+}
+
+@keyframes refreshSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .market-tabs {
@@ -2476,8 +2519,7 @@ h1 {
 
   .listing-tools {
     width: 100%;
-    flex-direction: column;
-    align-items: stretch;
+    align-items: center;
   }
 
   .premium-plans {
