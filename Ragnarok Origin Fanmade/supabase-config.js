@@ -40,6 +40,16 @@ window.ROOC_SUPABASE = {
     return Number.isFinite(number) ? number : 0;
   }
 
+  function getContactProfileUrl(contact) {
+    const value = String(contact || "").trim();
+    if (!value) return "";
+    if (/^https?:\/\//i.test(value)) return value;
+    if (/^\d{16,22}$/.test(value)) return `https://discord.com/users/${value}`;
+    const discordUserMatch = value.match(/(?:discord(?:app)?\.com\/users\/)(\d{16,22})/i);
+    if (discordUserMatch) return `https://discord.com/users/${discordUserMatch[1]}`;
+    return "";
+  }
+
   function getFilterControls() {
     return {
       search: document.querySelector("#marketSearch"),
@@ -160,6 +170,8 @@ window.ROOC_SUPABASE = {
     grid.innerHTML = listings.map((listing) => {
       const title = listing.title || listing.item_name || "ประกาศขาย";
       const mediaClass = listing.category === "mvp" ? "item-media card-media" : "item-media";
+      const contact = listing.contact || "";
+      const profileUrl = getContactProfileUrl(contact);
       const badges = [
         `<span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
         listing.verified_seller ? '<span class="verified">Verified</span>' : "",
@@ -180,7 +192,7 @@ window.ROOC_SUPABASE = {
           <p>${escapeHtml(description)}</p>
           <div class="price-row">
             <strong>฿ ${escapeHtml(listing.price_text || "0")}</strong>
-            <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(listing.contact || "")}">ติดต่อผู้ขาย</button>
+            <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}">ติดต่อผู้ขาย</button>
           </div>
         </article>
       `;

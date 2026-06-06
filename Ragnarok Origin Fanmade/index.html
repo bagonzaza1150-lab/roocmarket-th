@@ -259,6 +259,7 @@
         </div>
         <div class="contact-modal-item">
           <span>Discord / ช่องทางติดต่อ</span>
+          <a class="seller-profile-button" id="sellerContactLink" href="#" target="_blank" rel="noopener">เปิดโปรไฟล์ผู้ขาย</a>
           <strong id="sellerContactValue">-</strong>
         </div>
         <p id="sellerContactNote">ติดต่อผู้ขายโดยตรง และใช้ Middleman สำหรับดีลราคาสูง</p>
@@ -470,11 +471,27 @@
       const sellerContactModal = document.querySelector("#sellerContactModal");
       const sellerContactItem = document.querySelector("#sellerContactItem");
       const sellerContactValue = document.querySelector("#sellerContactValue");
+      const sellerContactLink = document.querySelector("#sellerContactLink");
 
-      function openSellerContact(title, contact) {
-        if (!sellerContactModal || !sellerContactItem || !sellerContactValue) return;
+      function getContactProfileUrl(contact) {
+        const value = String(contact || "").trim();
+        if (!value) return "";
+        if (/^https?:\/\//i.test(value)) return value;
+        if (/^\d{16,22}$/.test(value)) return `https://discord.com/users/${value}`;
+        const discordUserMatch = value.match(/(?:discord(?:app)?\.com\/users\/)(\d{16,22})/i);
+        if (discordUserMatch) return `https://discord.com/users/${discordUserMatch[1]}`;
+        return "";
+      }
+
+      function openSellerContact(title, contact, profileUrlOverride = "") {
+        if (!sellerContactModal || !sellerContactItem || !sellerContactValue || !sellerContactLink) return;
+        const profileUrl = profileUrlOverride || getContactProfileUrl(contact);
         sellerContactItem.textContent = title || "ประกาศขาย";
-        sellerContactValue.textContent = contact || "ผู้ขายยังไม่ได้ระบุช่องทางติดต่อ";
+        sellerContactValue.textContent = profileUrl
+          ? "กดปุ่มด้านบนเพื่อไปหน้าโปรไฟล์ผู้ขาย"
+          : (contact || "ผู้ขายยังไม่ได้ระบุช่องทางติดต่อ");
+        sellerContactLink.hidden = !profileUrl;
+        sellerContactLink.href = profileUrl || "#";
         sellerContactModal.hidden = false;
         document.body.classList.add("modal-open");
       }
@@ -488,7 +505,7 @@
       document.addEventListener("click", (event) => {
         const contactButton = event.target.closest(".contact-seller-button");
         if (contactButton) {
-          openSellerContact(contactButton.dataset.title, contactButton.dataset.contact);
+          openSellerContact(contactButton.dataset.title, contactButton.dataset.contact, contactButton.dataset.profileUrl);
           return;
         }
 

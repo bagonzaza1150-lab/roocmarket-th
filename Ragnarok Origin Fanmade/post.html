@@ -169,7 +169,7 @@
                 </label>
                 <label class="post-field">
                   <span>ช่องทางติดต่อ</span>
-                  <input id="listingContact" type="text" placeholder="Discord, Facebook หรือ Line" />
+              <input id="listingContact" type="text" placeholder="ว่างไว้ได้ ระบบจะใช้โปรไฟล์ Discord ของคุณ" />
                 </label>
               </div>
 
@@ -552,7 +552,7 @@
             image_path: imagePath,
             price_text: priceText,
             server_name: listingServer.value,
-            contact: listingContact.value.trim(),
+            contact: listingContact.value.trim() || getDiscordProfileUrl(currentSession),
             description,
             middleman: middlemanCheck.checked,
             verified_seller: verifiedCheck.checked,
@@ -637,6 +637,12 @@
           identityData.preferred_username ||
           user.email ||
           "Discord";
+      }
+
+      function getDiscordProfileUrl(session) {
+        const identity = session?.user?.identities?.find((entry) => entry.provider === "discord");
+        const discordId = identity?.identity_data?.sub || identity?.id;
+        return discordId ? `https://discord.com/users/${discordId}` : "";
       }
 
       function isAdminSession(session) {
