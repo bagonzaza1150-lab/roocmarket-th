@@ -167,6 +167,15 @@
 
           <form class="premium-admin-form" id="premiumForm">
             <input id="premiumUserId" type="hidden" />
+            <div class="premium-search-box">
+              <label class="post-field">
+                <span>ค้นหาผู้ใช้จากชื่อ Discord</span>
+                <input id="premiumSearchInput" type="search" placeholder="พิมพ์ชื่อ Discord เช่น squidward1975" />
+              </label>
+              <button class="btn btn-light" id="premiumSearchButton" type="button">ค้นหา</button>
+            </div>
+            <div class="premium-search-results" id="premiumSearchResults"></div>
+
             <div class="post-grid">
               <label class="post-field">
                 <span>Supabase User ID</span>
@@ -231,6 +240,9 @@
       const premiumUsers = document.querySelector("#premiumUsers");
       const premiumResetButton = document.querySelector("#premiumResetButton");
       const premiumMessage = document.querySelector("#premiumMessage");
+      const premiumSearchInput = document.querySelector("#premiumSearchInput");
+      const premiumSearchButton = document.querySelector("#premiumSearchButton");
+      const premiumSearchResults = document.querySelector("#premiumSearchResults");
 
       const fields = {
         id: document.querySelector("#itemId"),
@@ -246,6 +258,7 @@
 
       let itemCache = [];
       let premiumCache = [];
+      let premiumProfileResults = [];
       let currentSession = null;
 
       const premiumFields = {
@@ -261,6 +274,15 @@
       function setMessage(target, message, isError = false) {
         target.textContent = message;
         target.classList.toggle("is-error", isError);
+      }
+
+      function escapeHtml(value) {
+        return String(value || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
       }
 
       function categoryLabel(category) {
@@ -393,18 +415,17 @@
         premiumForm.scrollIntoView({ behavior: "smooth", block: "center" });
       }
 
-      async function savePremiumUser(event) {
-        event.preventDefault();
-        setMessage(premiumMessage, "กำลังบันทึก Premium...");
-        const payload = {
-          user_id: premiumFields.userId.value.trim(),
-          discord_id: premiumFields.discordId.value.trim(),
-          display_name: premiumFields.displayName.value.trim(),
-          avatar_url: premiumFields.avatarUrl.value.trim(),
-          note: premiumFields.note.value.trim(),
-          active: premiumFields.active.checked
-        };
+      function fillPremiumForm(profile) {
+        premiumFields.id.value = profile.user_id;
+        premiumFields.userId.value = profile.user_id;
+        premiumFields.discordId.value = profile.discord_id || "";
+        premiumFields.displayName.value = profile.display_name || "";
+        premiumFields.avatarUrl.value = profile.avatar_url || "";
+        premiumFields.active.checked = true;
+        if (!premiumFields.note.value) premiumFields.note.value = "เปิดจากการค้นหา Discord";
+      }
 
+      async function savePremiumPayload(payload) {
         const { error } = await supabaseClient
           .from("marketplace_premium_users")
           .upsert(payload, { onConflict: "user_id" });
@@ -426,6 +447,74 @@
         setMessage(premiumMessage, "บันทึก Premium เรียบร้อย");
         resetPremiumForm();
         await loadPremiumUsers();
+      }
+
+      async function savePremiumUser(event) {
+        event.preventDefault();
+        setMessage(premiumMessage, "กำลังบันทึก Premium...");
+        await savePremiumPayload({
+          user_id: premiumFields.userId.value.trim(),
+          discord_id: premiumFields.discordId.value.trim(),
+          display_name: premiumFields.displayName.value.trim(),
+          avatar_url: premiumFields.avatarUrl.value.trim(),
+          note: premiumFields.note.value.trim(),
+          active: premiumFields.active.checked
+        });
+      }
+
+      async function grantPremiumFromProfile(profile) {
+        setMessage(premiumMessage, `กำลังเปิด Premium ให้ ${profile.display_name || profile.user_id}...`);
+        await savePremiumPayload({
+          user_id: profile.user_id,
+          discord_id: profile.discord_id || "",
+          display_name: profile.display_name || "",
+          avatar_url: profile.avatar_url || "",
+          note: "เปิดจากการค้นหา Discord",
+          active: true
+        });
+      }
+
+      function renderProfileResults(profiles) {
+        premiumProfileResults = profiles;
+        if (!profiles.length) {
+          premiumSearchResults.innerHTML = '<p class="admin-empty">ไม่พบผู้ใช้ชื่อนี้ ผู้ใช้ต้องเคย Login Discord ก่อนอย่างน้อย 1 ครั้ง</p>';
+          return;
+        }
+
+        premiumSearchResults.innerHTML = profiles.map((profile) => `
+          <article class="premium-search-result">
+            <img src="${escapeHtml(profile.avatar_url || "assets/category-icons/account-b.png")}" alt="" />
+            <div>
+              <strong>${escapeHtml(profile.display_name || "Discord user")}</strong>
+              <span>${escapeHtml(profile.discord_id || "ยังไม่มี Discord ID")}</span>
+              <small>${escapeHtml(profile.user_id)}</small>
+            </div>
+            <button class="btn btn-small btn-premium" type="button" data-grant-premium="${escapeHtml(profile.user_id)}">ให้สิทธิ์</button>
+          </article>
+        `).join("");
+      }
+
+      async function searchPremiumProfiles() {
+        const query = premiumSearchInput.value.trim();
+        if (!query) {
+          premiumSearchResults.innerHTML = '<p class="admin-empty">พิมพ์ชื่อ Discord ก่อนค้นหา</p>';
+          return;
+        }
+
+        premiumSearchResults.innerHTML = '<p class="admin-empty">กำลังค้นหา...</p>';
+        const { data, error } = await supabaseClient
+          .from("marketplace_profiles")
+          .select("*")
+          .ilike("display_name", `%${query}%`)
+          .order("display_name", { ascending: true })
+          .limit(8);
+
+        if (error) {
+          premiumSearchResults.innerHTML = `<p class="admin-empty">${escapeHtml(error.message)}</p>`;
+          return;
+        }
+
+        renderProfileResults(data || []);
       }
 
       async function deletePremiumUser(userId) {
@@ -615,6 +704,13 @@
       itemForm.addEventListener("submit", saveItem);
       premiumForm.addEventListener("submit", savePremiumUser);
       premiumResetButton.addEventListener("click", resetPremiumForm);
+      premiumSearchButton.addEventListener("click", searchPremiumProfiles);
+      premiumSearchInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          searchPremiumProfiles();
+        }
+      });
       resetFormButton.addEventListener("click", resetEditor);
       adminCategoryFilter.addEventListener("change", renderItems);
       itemImage.addEventListener("change", () => {
@@ -632,6 +728,12 @@
         const deleteId = event.target.dataset.premiumDelete;
         if (editId) editPremiumUser(editId);
         if (deleteId) deletePremiumUser(deleteId);
+      });
+      premiumSearchResults.addEventListener("click", (event) => {
+        const grantId = event.target.dataset.grantPremium;
+        if (!grantId) return;
+        const profile = premiumProfileResults.find((entry) => entry.user_id === grantId);
+        if (profile) grantPremiumFromProfile(profile);
       });
 
       const themeToggle = document.querySelector("#themeToggle");

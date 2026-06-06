@@ -50,6 +50,19 @@ create table if not exists public.marketplace_admins (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.marketplace_profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  discord_id text not null default '',
+  display_name text not null default '',
+  avatar_url text not null default '',
+  email text not null default '',
+  updated_at timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists marketplace_profiles_search_idx
+  on public.marketplace_profiles (display_name, discord_id);
+
 create table if not exists public.marketplace_premium_users (
   user_id uuid primary key references auth.users(id) on delete cascade,
   discord_id text not null default '',
@@ -138,6 +151,11 @@ create trigger marketplace_listings_set_updated_at
 before update on public.marketplace_listings
 for each row execute function public.set_updated_at();
 
+drop trigger if exists marketplace_profiles_set_updated_at on public.marketplace_profiles;
+create trigger marketplace_profiles_set_updated_at
+before update on public.marketplace_profiles
+for each row execute function public.set_updated_at();
+
 drop trigger if exists marketplace_premium_users_set_updated_at on public.marketplace_premium_users;
 create trigger marketplace_premium_users_set_updated_at
 before update on public.marketplace_premium_users
@@ -146,6 +164,7 @@ for each row execute function public.set_updated_at();
 alter table public.marketplace_items enable row level security;
 alter table public.marketplace_listings enable row level security;
 alter table public.marketplace_admins enable row level security;
+alter table public.marketplace_profiles enable row level security;
 alter table public.marketplace_premium_users enable row level security;
 
 create or replace function public.is_market_admin()
@@ -181,6 +200,7 @@ grant all privileges on table public.marketplace_items to authenticated;
 grant select on table public.marketplace_listings to anon;
 grant all privileges on table public.marketplace_listings to authenticated;
 grant select on table public.marketplace_admins to authenticated;
+grant all privileges on table public.marketplace_profiles to authenticated;
 grant all privileges on table public.marketplace_premium_users to authenticated;
 grant execute on function public.is_market_admin() to anon, authenticated;
 grant execute on function public.is_market_premium(uuid) to anon, authenticated;
@@ -230,6 +250,28 @@ on public.marketplace_admins
 for select
 to authenticated
 using (auth.uid() = user_id);
+
+drop policy if exists "Authenticated users can read own profile" on public.marketplace_profiles;
+create policy "Authenticated users can read own profile"
+on public.marketplace_profiles
+for select
+to authenticated
+using (auth.uid() = user_id or public.is_market_admin());
+
+drop policy if exists "Authenticated users can insert own profile" on public.marketplace_profiles;
+create policy "Authenticated users can insert own profile"
+on public.marketplace_profiles
+for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+drop policy if exists "Authenticated users can update own profile" on public.marketplace_profiles;
+create policy "Authenticated users can update own profile"
+on public.marketplace_profiles
+for update
+to authenticated
+using (auth.uid() = user_id or public.is_market_admin())
+with check (auth.uid() = user_id or public.is_market_admin());
 
 drop policy if exists "Authenticated users can read own premium status" on public.marketplace_premium_users;
 create policy "Authenticated users can read own premium status"
