@@ -775,6 +775,7 @@ h1 {
   inset: 0;
   background: rgba(2, 9, 18, 0.72);
   backdrop-filter: blur(10px);
+  animation: modalBackdropIn 180ms ease-out both;
 }
 
 .contact-modal-card {
@@ -786,6 +787,31 @@ h1 {
   background: color-mix(in srgb, var(--paper) 94%, transparent);
   box-shadow: 0 26px 80px rgba(0, 0, 0, 0.36);
   padding: 24px;
+  transform-origin: 50% 58%;
+  animation: modalCardIn 260ms cubic-bezier(.18, .9, .28, 1.12) both;
+}
+
+.contact-modal-card .eyebrow,
+.contact-modal-card h2,
+.contact-modal-item,
+#sellerContactNote {
+  animation: modalContentIn 260ms ease-out both;
+}
+
+.contact-modal-card h2 {
+  animation-delay: 35ms;
+}
+
+.contact-modal-item:nth-of-type(1) {
+  animation-delay: 70ms;
+}
+
+.contact-modal-item:nth-of-type(2) {
+  animation-delay: 105ms;
+}
+
+#sellerContactNote {
+  animation-delay: 140ms;
 }
 
 .contact-modal-close {
@@ -838,6 +864,58 @@ h1 {
   color: var(--muted);
   font-size: 13px;
   line-height: 1.5;
+}
+
+@keyframes modalBackdropIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+
+  to {
+    opacity: 1;
+    backdrop-filter: blur(10px);
+  }
+}
+
+@keyframes modalCardIn {
+  0% {
+    opacity: 0;
+    transform: translateY(26px) scale(.94);
+  }
+
+  68% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.01);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes modalContentIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-modal-backdrop,
+  .contact-modal-card,
+  .contact-modal-card .eyebrow,
+  .contact-modal-card h2,
+  .contact-modal-item,
+  #sellerContactNote {
+    animation: none;
+  }
 }
 
 .category-icon img {
