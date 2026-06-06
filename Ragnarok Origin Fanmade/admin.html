@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Admin panel สำหรับจัดการฐานข้อมูลไอเท็ม ROOC Market TH"
+    />
+    <title>Admin | ROOC Market TH</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="shell nav">
+        <a class="brand" href="index.html" aria-label="ROOC Market TH">
+          <span class="brand-mark">RO</span>
+          <span>
+            <strong>ROOC Market</strong>
+            <small>Admin Panel</small>
+          </span>
+        </a>
+
+        <div class="nav-links" aria-label="เมนูหลัก">
+          <a href="index.html#market">ตลาด</a>
+          <a href="post.html">ลงประกาศ</a>
+          <a href="admin.html">Admin</a>
+        </div>
+
+        <div class="nav-actions">
+          <label class="theme-switch" aria-label="สลับโหมดสว่างและมืด">
+            <input id="themeToggle" type="checkbox" />
+            <span class="switch-track">
+              <span class="switch-ball"></span>
+            </span>
+          </label>
+          <button class="btn btn-light" id="logoutButton" type="button" hidden>ออกจากระบบ</button>
+        </div>
+      </nav>
+    </header>
+
+    <main class="shell admin-page">
+      <section class="admin-head">
+        <div>
+          <p class="eyebrow">Admin</p>
+          <h1>จัดการฐานข้อมูลไอเท็ม</h1>
+          <p>
+            เพิ่ม แก้ไข ลบ MVP Cards, Accessories และ Fashion พร้อมอัปโหลดรูปเข้า Storage
+            เพื่อให้หน้าโพสต์ประกาศดึงรูปขึ้นอัตโนมัติ
+          </p>
+        </div>
+        <div class="admin-status" id="connectionStatus">
+          <span>Supabase</span>
+          <strong id="connectionStatusText">รอตั้งค่า</strong>
+          <small id="sessionStatusText">ยังไม่ได้ตรวจ session</small>
+        </div>
+      </section>
+
+      <section class="admin-setup" id="setupPanel" hidden>
+        <h2>ยังไม่ได้ตั้งค่า Supabase</h2>
+        <p>
+          ใส่ค่า `url` และ `anonKey` ในไฟล์ `supabase-config.js` จากนั้นรัน SQL ใน `supabase-schema.sql`
+          ที่ Supabase SQL Editor แล้วกลับมาเปิดหน้านี้ใหม่
+        </p>
+      </section>
+
+      <section class="admin-login" id="loginPanel">
+        <form class="admin-card" id="loginForm">
+          <p class="eyebrow">Login</p>
+          <h2>เข้าสู่ระบบผู้ดูแล</h2>
+          <p>เข้าสู่ระบบด้วย Discord บัญชีที่ได้รับสิทธิ์ Admin เท่านั้น</p>
+          <button class="btn btn-primary discord-login" type="submit">เข้าสู่ระบบด้วย Discord</button>
+          <p class="admin-message" id="loginMessage"></p>
+        </form>
+      </section>
+
+      <section class="admin-workspace" id="adminWorkspace" hidden>
+        <form class="admin-editor" id="itemForm">
+          <div class="form-block-head">
+            <span id="editorMode">+</span>
+            <div>
+              <h2 id="editorTitle">เพิ่มไอเท็มใหม่</h2>
+              <p>รูปที่อัปโหลดจะถูกใช้เป็นรูปอัตโนมัติในหน้า `ลงประกาศ`</p>
+            </div>
+          </div>
+
+          <input id="itemId" type="hidden" />
+          <input id="existingImageUrl" type="hidden" />
+          <input id="existingImagePath" type="hidden" />
+
+          <div class="post-grid">
+            <label class="post-field">
+              <span>หมวดหมู่</span>
+              <select id="itemCategory" required>
+                <option value="mvp">MVP Cards</option>
+                <option value="accessories">Accessories</option>
+                <option value="fashion">Fashion</option>
+              </select>
+            </label>
+            <label class="post-field">
+              <span>ชื่อไอเท็ม</span>
+              <input id="itemName" type="text" placeholder="เช่น Maya Card" required />
+            </label>
+            <label class="post-field">
+              <span>ราคาแนะนำ</span>
+              <input id="itemPrice" type="text" placeholder="3,800" />
+            </label>
+            <label class="post-field">
+              <span>ลำดับแสดงผล</span>
+              <input id="itemSortOrder" type="number" value="0" />
+            </label>
+          </div>
+
+          <label class="post-field">
+            <span>รายละเอียดเริ่มต้น</span>
+            <textarea id="itemDescription" rows="4" placeholder="ข้อความเริ่มต้นที่จะเติมในหน้าโพสต์ประกาศ"></textarea>
+          </label>
+
+          <div class="admin-upload-row">
+            <label class="upload-drop" for="itemImage">
+              <input id="itemImage" type="file" accept="image/*" />
+              <span>อัปโหลดรูปไอเท็ม</span>
+              <small>PNG, JPG หรือ WebP</small>
+            </label>
+            <div class="auto-image-box admin-image-preview">
+              <img id="itemImagePreview" src="assets/category-icons/mvp-c.png" alt="" />
+              <small>ตัวอย่างรูป</small>
+            </div>
+          </div>
+
+          <div class="post-checks">
+            <label><input id="itemActive" type="checkbox" checked /> เปิดใช้งาน</label>
+          </div>
+
+          <div class="post-actions">
+            <button class="btn btn-light" id="resetFormButton" type="button">ล้างฟอร์ม</button>
+            <button class="btn btn-primary" type="submit">บันทึกไอเท็ม</button>
+          </div>
+          <p class="admin-message" id="editorMessage"></p>
+        </form>
+
+        <section class="admin-list-panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Items</p>
+              <h2>รายการไอเท็ม</h2>
+            </div>
+            <select id="adminCategoryFilter" aria-label="กรองหมวด">
+              <option value="all">ทั้งหมด</option>
+              <option value="mvp">MVP Cards</option>
+              <option value="accessories">Accessories</option>
+              <option value="fashion">Fashion</option>
+            </select>
+          </div>
+          <div class="admin-items" id="adminItems"></div>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      const config = window.ROOC_SUPABASE || {};
+      const hasConfig = Boolean(config.url && config.anonKey && window.supabase);
+      const supabaseClient = hasConfig ? window.supabase.createClient(config.url, config.anonKey) : null;
+      const bucketName = config.itemBucket || "item-images";
+
+      const setupPanel = document.querySelector("#setupPanel");
+      const loginPanel = document.querySelector("#loginPanel");
+      const adminWorkspace = document.querySelector("#adminWorkspace");
+      const connectionStatus = document.querySelector("#connectionStatusText");
+      const sessionStatusText = document.querySelector("#sessionStatusText");
+      const loginForm = document.querySelector("#loginForm");
+      const loginMessage = document.querySelector("#loginMessage");
+      const logoutButton = document.querySelector("#logoutButton");
+      const itemForm = document.querySelector("#itemForm");
+      const editorMode = document.querySelector("#editorMode");
+      const editorTitle = document.querySelector("#editorTitle");
+      const editorMessage = document.querySelector("#editorMessage");
+      const adminItems = document.querySelector("#adminItems");
+      const adminCategoryFilter = document.querySelector("#adminCategoryFilter");
+      const resetFormButton = document.querySelector("#resetFormButton");
+      const itemImage = document.querySelector("#itemImage");
+      const itemImagePreview = document.querySelector("#itemImagePreview");
+
+      const fields = {
+        id: document.querySelector("#itemId"),
+        category: document.querySelector("#itemCategory"),
+        name: document.querySelector("#itemName"),
+        price: document.querySelector("#itemPrice"),
+        sortOrder: document.querySelector("#itemSortOrder"),
+        description: document.querySelector("#itemDescription"),
+        imageUrl: document.querySelector("#existingImageUrl"),
+        imagePath: document.querySelector("#existingImagePath"),
+        active: document.querySelector("#itemActive")
+      };
+
+      let itemCache = [];
+      let currentSession = null;
+
+      function setMessage(target, message, isError = false) {
+        target.textContent = message;
+        target.classList.toggle("is-error", isError);
+      }
+
+      function categoryLabel(category) {
+        return {
+          mvp: "MVP Cards",
+          accessories: "Accessories",
+          fashion: "Fashion"
+        }[category] || category;
+      }
+
+      function resetEditor() {
+        itemForm.reset();
+        fields.id.value = "";
+        fields.imageUrl.value = "";
+        fields.imagePath.value = "";
+        fields.sortOrder.value = "0";
+        fields.active.checked = true;
+        itemImagePreview.src = "assets/category-icons/mvp-c.png";
+        editorMode.textContent = "+";
+        editorTitle.textContent = "เพิ่มไอเท็มใหม่";
+        setMessage(editorMessage, "");
+      }
+
+      function renderItems() {
+        const filter = adminCategoryFilter.value;
+        const visible = itemCache.filter((item) => filter === "all" || item.category === filter);
+        adminItems.innerHTML = "";
+
+        if (!visible.length) {
+          adminItems.innerHTML = '<p class="admin-empty">ยังไม่มีไอเท็มในหมวดนี้</p>';
+          return;
+        }
+
+        visible.forEach((item) => {
+          const card = document.createElement("article");
+          card.className = "admin-item-card";
+          card.innerHTML = `
+            <img src="${item.image_url}" alt="" />
+            <div>
+              <strong>${item.name}</strong>
+              <span>${categoryLabel(item.category)} · ${item.active ? "เปิดใช้งาน" : "ปิดใช้งาน"}</span>
+              <small>${item.price_hint || "ยังไม่ใส่ราคา"}</small>
+            </div>
+            <div class="admin-item-actions">
+              <button class="btn btn-small" type="button" data-edit="${item.id}">แก้ไข</button>
+              <button class="btn btn-small admin-delete" type="button" data-delete="${item.id}">ลบ</button>
+            </div>
+          `;
+          adminItems.append(card);
+        });
+      }
+
+      async function loadItems() {
+        const { data, error } = await supabaseClient
+          .from("marketplace_items")
+          .select("*")
+          .order("category", { ascending: true })
+          .order("sort_order", { ascending: true })
+          .order("name", { ascending: true });
+
+        if (error) {
+          setMessage(editorMessage, error.message, true);
+          return;
+        }
+
+        itemCache = data || [];
+        renderItems();
+      }
+
+      function editItem(id) {
+        const item = itemCache.find((entry) => entry.id === id);
+        if (!item) return;
+
+        fields.id.value = item.id;
+        fields.category.value = item.category;
+        fields.name.value = item.name;
+        fields.price.value = item.price_hint || "";
+        fields.sortOrder.value = item.sort_order || 0;
+        fields.description.value = item.description || "";
+        fields.imageUrl.value = item.image_url || "";
+        fields.imagePath.value = item.image_path || "";
+        fields.active.checked = item.active;
+        itemImagePreview.src = item.image_url;
+        editorMode.textContent = "แก้";
+        editorTitle.textContent = "แก้ไขไอเท็ม";
+        setMessage(editorMessage, "");
+        itemForm.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      async function uploadImage(file, category) {
+        const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
+        const path = `${category}/${Date.now()}-${safeName}`;
+        const { error } = await supabaseClient.storage.from(bucketName).upload(path, file, {
+          cacheControl: "3600",
+          upsert: false
+        });
+
+        if (error) throw error;
+
+        const { data } = supabaseClient.storage.from(bucketName).getPublicUrl(path);
+        return { imageUrl: data.publicUrl, imagePath: path };
+      }
+
+      async function saveItem(event) {
+        event.preventDefault();
+        setMessage(editorMessage, "กำลังบันทึก...");
+
+        try {
+          const { data: userData, error: userError } = await supabaseClient.auth.getUser();
+          if (userError || !userData.user) {
+            setMessage(editorMessage, "Session ไม่ใช่ authenticated กรุณาออกจากระบบแล้ว Login ใหม่", true);
+            return;
+          }
+
+          const file = itemImage.files && itemImage.files[0];
+          let imageUrl = fields.imageUrl.value;
+          let imagePath = fields.imagePath.value;
+
+          if (file) {
+            const uploaded = await uploadImage(file, fields.category.value);
+            imageUrl = uploaded.imageUrl;
+            imagePath = uploaded.imagePath;
+          }
+
+          if (!imageUrl) {
+            setMessage(editorMessage, "กรุณาอัปโหลดรูปไอเท็ม", true);
+            return;
+          }
+
+          const payload = {
+            category: fields.category.value,
+            name: fields.name.value.trim(),
+            image_url: imageUrl,
+            image_path: imagePath || null,
+            price_hint: fields.price.value.trim(),
+            description: fields.description.value.trim(),
+            sort_order: Number(fields.sortOrder.value || 0),
+            active: fields.active.checked
+          };
+
+          const query = fields.id.value
+            ? supabaseClient.from("marketplace_items").update(payload).eq("id", fields.id.value)
+            : supabaseClient.from("marketplace_items").insert(payload);
+
+          const { error } = await query;
+          if (error) throw error;
+
+          setMessage(editorMessage, "บันทึกเรียบร้อย");
+          resetEditor();
+          await loadItems();
+        } catch (error) {
+          setMessage(editorMessage, error.message || "บันทึกไม่สำเร็จ", true);
+        }
+      }
+
+      async function deleteItem(id) {
+        const item = itemCache.find((entry) => entry.id === id);
+        if (!item || !confirm(`ลบ ${item.name}?`)) return;
+
+        const { error } = await supabaseClient.from("marketplace_items").delete().eq("id", id);
+        if (error) {
+          setMessage(editorMessage, error.message, true);
+          return;
+        }
+
+        if (item.image_path) {
+          await supabaseClient.storage.from(bucketName).remove([item.image_path]);
+        }
+
+        await loadItems();
+      }
+
+      function getDiscordIds(session) {
+        const identities = session?.user?.identities || [];
+        return identities
+          .filter((identity) => identity.provider === "discord")
+          .map((identity) => identity.identity_data?.sub || identity.id)
+          .filter(Boolean);
+      }
+
+      function isAdminSession(session) {
+        if (!session) return false;
+        const user = session.user || {};
+        const email = (user.email || user.user_metadata?.email || user.identities?.[0]?.identity_data?.email || "").toLowerCase();
+        return (config.adminUserIds || []).includes(user.id) ||
+          (config.adminEmails || []).map((entry) => entry.toLowerCase()).includes(email) ||
+          getDiscordIds(session).some((id) => (config.adminDiscordIds || []).includes(id));
+      }
+
+      function showApp(session) {
+        currentSession = session;
+        const isAdmin = isAdminSession(session);
+        loginPanel.hidden = isAdmin;
+        adminWorkspace.hidden = !isAdmin;
+        logoutButton.hidden = !session;
+        connectionStatus.textContent = isAdmin ? "เชื่อมต่อแล้ว" : session ? "ไม่มีสิทธิ์ Admin" : "พร้อมล็อกอิน";
+        sessionStatusText.textContent = session
+          ? `${session.user.email || session.user.user_metadata?.full_name || "Discord user"} · role: ${isAdmin ? "admin" : "member"}`
+          : "ยังไม่ได้ login";
+        if (session && !isAdmin) {
+          const discordIds = getDiscordIds(session);
+          setMessage(loginMessage, `บัญชีนี้ยังไม่มีสิทธิ์ Admin · Supabase User ID: ${session.user.id}${discordIds.length ? ` · Discord ID: ${discordIds[0]}` : ""}`, true);
+        } else {
+          setMessage(loginMessage, "");
+        }
+        if (isAdmin) loadItems();
+      }
+
+      if (!hasConfig) {
+        setupPanel.hidden = false;
+        loginPanel.hidden = true;
+        connectionStatus.textContent = "ยังไม่ได้ตั้งค่า";
+      } else {
+        supabaseClient.auth.getSession().then(({ data }) => showApp(data.session));
+        supabaseClient.auth.onAuthStateChange((_event, session) => showApp(session));
+      }
+
+      loginForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        setMessage(loginMessage, "กำลังพาไป Discord...");
+        const { error } = await supabaseClient.auth.signInWithOAuth({
+          provider: "discord",
+          options: {
+            redirectTo: new URL("admin.html", location.href).href
+          }
+        });
+        setMessage(loginMessage, error ? error.message : "", Boolean(error));
+      });
+
+      logoutButton.addEventListener("click", () => supabaseClient.auth.signOut());
+      itemForm.addEventListener("submit", saveItem);
+      resetFormButton.addEventListener("click", resetEditor);
+      adminCategoryFilter.addEventListener("change", renderItems);
+      itemImage.addEventListener("change", () => {
+        const file = itemImage.files && itemImage.files[0];
+        if (file) itemImagePreview.src = URL.createObjectURL(file);
+      });
+      adminItems.addEventListener("click", (event) => {
+        const editId = event.target.dataset.edit;
+        const deleteId = event.target.dataset.delete;
+        if (editId) editItem(editId);
+        if (deleteId) deleteItem(deleteId);
+      });
+
+      const themeToggle = document.querySelector("#themeToggle");
+      const savedTheme = localStorage.getItem("theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const activeTheme = savedTheme || (prefersDark ? "dark" : "light");
+
+      document.documentElement.dataset.theme = activeTheme;
+      themeToggle.checked = activeTheme === "dark";
+
+      themeToggle.addEventListener("change", () => {
+        const nextTheme = themeToggle.checked ? "dark" : "light";
+        document.documentElement.dataset.theme = nextTheme;
+        localStorage.setItem("theme", nextTheme);
+      });
+    </script>
+  </body>
+</html>
