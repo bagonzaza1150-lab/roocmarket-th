@@ -150,6 +150,13 @@ on public.marketplace_listings
 for select
 using (active = true);
 
+drop policy if exists "Authenticated users can read own marketplace listings" on public.marketplace_listings;
+create policy "Authenticated users can read own marketplace listings"
+on public.marketplace_listings
+for select
+to authenticated
+using (auth.uid() = user_id);
+
 drop policy if exists "Public can insert marketplace listings" on public.marketplace_listings;
 drop policy if exists "Authenticated users can insert marketplace listings" on public.marketplace_listings;
 create policy "Authenticated users can insert marketplace listings"
@@ -163,15 +170,15 @@ create policy "Authenticated admins can update marketplace listings"
 on public.marketplace_listings
 for update
 to authenticated
-using (true)
-with check (true);
+using (public.is_market_admin() or auth.uid() = user_id)
+with check (public.is_market_admin() or auth.uid() = user_id);
 
 drop policy if exists "Authenticated admins can delete marketplace listings" on public.marketplace_listings;
 create policy "Authenticated admins can delete marketplace listings"
 on public.marketplace_listings
 for delete
 to authenticated
-using (true);
+using (public.is_market_admin() or auth.uid() = user_id);
 
 insert into storage.buckets (id, name, public)
 values ('item-images', 'item-images', true)

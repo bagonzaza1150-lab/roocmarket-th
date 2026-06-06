@@ -28,8 +28,7 @@
           <a href="index.html#categories">หมวดหมู่</a>
           <a href="post.html">ลงประกาศ</a>
           <a href="post.html#safe">ความปลอดภัย</a>
-        </div>
-
+          <a class="my-listings-link" href="my-listings.html" hidden>ประกาศของฉัน</a>
           <a class="admin-link" href="admin.html" hidden>Admin</a>
         </div>
 
@@ -659,9 +658,9 @@
           .filter((identity) => identity.provider === "discord")
           .map((identity) => identity.identity_data?.sub || identity.id)
           .filter(Boolean);
-        return (config.adminUserIds || []).includes(user.id) ||
-          (config.adminEmails || []).map((entry) => entry.toLowerCase()).includes(email) ||
-          discordIds.some((id) => (config.adminDiscordIds || []).includes(id));
+        return (supabaseConfig.adminUserIds || []).includes(user.id) ||
+          (supabaseConfig.adminEmails || []).map((entry) => entry.toLowerCase()).includes(email) ||
+          discordIds.some((id) => (supabaseConfig.adminDiscordIds || []).includes(id));
       }
 
       if (canUseSupabase) {

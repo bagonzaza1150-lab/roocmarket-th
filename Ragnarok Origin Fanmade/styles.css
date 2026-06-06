@@ -1476,6 +1476,69 @@ h1 {
   font-weight: 800;
 }
 
+.my-listings-page {
+  margin: 28px auto 56px;
+}
+
+.my-listings-panel {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  box-shadow: 0 16px 40px rgba(26, 83, 124, 0.08);
+  padding: 18px;
+}
+
+.my-listing-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.my-listing-card {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--paper);
+  padding: 12px;
+}
+
+.my-listing-card > img {
+  width: 96px;
+  height: 96px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper-soft);
+  object-fit: contain;
+}
+
+.my-listing-card h3 {
+  margin: 8px 0 4px;
+  overflow-wrap: anywhere;
+  font-size: 18px;
+}
+
+.my-listing-card p {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.my-listing-card strong {
+  color: #d89000;
+}
+
+.my-listing-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.my-delete {
+  color: #d24646;
+}
+
 .action-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
@@ -1753,6 +1816,23 @@ h1 {
 
   .admin-item-card {
     grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .my-listing-card {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .my-listing-card > img {
+    width: 72px;
+    height: 72px;
+  }
+
+  .my-listing-actions {
+    grid-column: 1 / -1;
+  }
+
+  .my-listing-actions .btn {
+    width: 100%;
   }
 
   .admin-item-card img {

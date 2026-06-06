@@ -10,6 +10,8 @@ window.ROOC_SUPABASE = {
 
 (() => {
   const config = window.ROOC_SUPABASE;
+  const canUseSupabase = Boolean(config.url && config.anonKey && window.supabase);
+  const supabaseClient = canUseSupabase ? window.supabase.createClient(config.url, config.anonKey) : null;
 
   function escapeHtml(value) {
     return String(value || "")
@@ -107,9 +109,85 @@ window.ROOC_SUPABASE = {
     }
   }
 
+  function getDiscordDisplayName(session) {
+    const user = session?.user || {};
+    const identityData = user.identities?.find((identity) => identity.provider === "discord")?.identity_data || {};
+    return user.user_metadata?.full_name ||
+      user.user_metadata?.name ||
+      user.user_metadata?.preferred_username ||
+      identityData.full_name ||
+      identityData.name ||
+      identityData.preferred_username ||
+      user.email ||
+      "Discord";
+  }
+
+  function getSessionEmail(session) {
+    const user = session?.user || {};
+    return (user.email || user.user_metadata?.email || user.identities?.[0]?.identity_data?.email || "").toLowerCase();
+  }
+
+  function isAdminSession(session) {
+    if (!session) return false;
+    const user = session.user || {};
+    const email = getSessionEmail(session);
+    const identities = user.identities || [];
+    const discordIds = identities
+      .filter((identity) => identity.provider === "discord")
+      .map((identity) => identity.identity_data?.sub || identity.id)
+      .filter(Boolean);
+    return (config.adminUserIds || []).includes(user.id) ||
+      (config.adminEmails || []).map((entry) => entry.toLowerCase()).includes(email) ||
+      discordIds.some((id) => (config.adminDiscordIds || []).includes(id));
+  }
+
+  function ensureAccountLink() {
+    const navLinks = document.querySelector(".nav-links");
+    if (!navLinks || navLinks.querySelector(".my-listings-link")) return null;
+    const link = document.createElement("a");
+    link.className = "my-listings-link";
+    link.href = "my-listings.html";
+    link.textContent = "ประกาศของฉัน";
+    link.hidden = true;
+    navLinks.append(link);
+    return link;
+  }
+
+  function syncAuthUi(session) {
+    const authLinks = document.querySelectorAll(".auth-link");
+    const myListingsLink = document.querySelector(".my-listings-link") || ensureAccountLink();
+    const adminLinks = document.querySelectorAll(".admin-link");
+
+    authLinks.forEach((link) => {
+      if (session) {
+        link.textContent = getDiscordDisplayName(session);
+        link.href = "login.html";
+      } else {
+        link.textContent = "เข้าสู่ระบบ";
+        link.href = "login.html";
+      }
+    });
+
+    if (myListingsLink) myListingsLink.hidden = !session;
+    adminLinks.forEach((link) => {
+      link.hidden = !isAdminSession(session);
+    });
+  }
+
+  async function hydrateAuthUi() {
+    if (!supabaseClient) return;
+    const { data } = await supabaseClient.auth.getSession();
+    syncAuthUi(data.session);
+    supabaseClient.auth.onAuthStateChange((_event, session) => syncAuthUi(session));
+  }
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", hydratePublicListings);
+    document.addEventListener("DOMContentLoaded", () => {
+      hydratePublicListings();
+      hydrateAuthUi();
+    });
   } else {
     hydratePublicListings();
+    hydrateAuthUi();
   }
 })();
