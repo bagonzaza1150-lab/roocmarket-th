@@ -86,6 +86,15 @@
         </ol>
       </section>
 
+      <section class="premium-status-card" id="premiumStatusCard">
+        <h2>สถานะบัญชีของฉัน</h2>
+        <p id="premiumStatusText">เข้าสู่ระบบด้วย Discord เพื่อตรวจสอบสถานะ Premium</p>
+        <div class="premium-id-box" id="premiumUserBox" hidden>
+          <span>Supabase User ID</span>
+          <strong id="premiumUserId">-</strong>
+        </div>
+      </section>
+
       <div class="premium-cta">
         <a class="btn btn-premium" href="#">ไปอัปเกรด Premium ฿89</a>
       </div>
@@ -103,6 +112,36 @@
         document.documentElement.dataset.theme = nextTheme;
         localStorage.setItem("theme", nextTheme);
       });
+
+      const config = window.ROOC_SUPABASE || {};
+      const canUseSupabase = Boolean(config.url && config.anonKey && window.supabase);
+      const supabaseClient = canUseSupabase ? window.supabase.createClient(config.url, config.anonKey) : null;
+      const premiumStatusText = document.querySelector("#premiumStatusText");
+      const premiumUserBox = document.querySelector("#premiumUserBox");
+      const premiumUserId = document.querySelector("#premiumUserId");
+
+      async function syncPremiumStatus() {
+        if (!supabaseClient) return;
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+        const session = sessionData.session;
+        if (!session) {
+          premiumStatusText.textContent = "ยังไม่ได้เข้าสู่ระบบ";
+          premiumUserBox.hidden = true;
+          return;
+        }
+
+        premiumUserBox.hidden = false;
+        premiumUserId.textContent = session.user.id;
+        const { data } = await supabaseClient
+          .from("marketplace_premium_users")
+          .select("active")
+          .eq("user_id", session.user.id)
+          .eq("active", true)
+          .maybeSingle();
+        premiumStatusText.textContent = data?.active ? "บัญชีนี้เป็น Premium แล้ว" : "บัญชีนี้ยังไม่ได้เปิด Premium";
+      }
+
+      syncPremiumStatus();
     </script>
   </body>
 </html>

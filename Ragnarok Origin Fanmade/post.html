@@ -555,6 +555,8 @@
         setPostMessage("กำลังเผยแพร่ประกาศ...");
 
         try {
+          const isPremiumSeller = await getPremiumStatus(currentSession);
+
           if (activeCategory === "account") {
             const uploaded = await uploadAccountListingImage(accountImageInput.files && accountImageInput.files[0]);
             imageUrl = uploaded.imageUrl;
@@ -569,6 +571,9 @@
             image_url: imageUrl,
             image_path: imagePath,
             character_name: characterText,
+            seller_name: getDiscordDisplayName(currentSession),
+            seller_avatar_url: getDiscordAvatarUrl(currentSession),
+            seller_is_premium: isPremiumSeller,
             price_text: priceText,
             server_name: listingServer.value,
             contact: listingContact.value.trim() || getDiscordProfileUrl(currentSession),
@@ -659,10 +664,32 @@
           "Discord";
       }
 
+      function getDiscordAvatarUrl(session) {
+        const user = session?.user || {};
+        const identityData = user.identities?.find((identity) => identity.provider === "discord")?.identity_data || {};
+        return user.user_metadata?.avatar_url ||
+          user.user_metadata?.picture ||
+          identityData.avatar_url ||
+          identityData.picture ||
+          "";
+      }
+
       function getDiscordProfileUrl(session) {
         const identity = session?.user?.identities?.find((entry) => entry.provider === "discord");
         const discordId = identity?.identity_data?.sub || identity?.id;
         return discordId ? `https://discord.com/users/${discordId}` : "";
+      }
+
+      async function getPremiumStatus(session) {
+        if (!session) return false;
+        const { data, error } = await supabaseClient
+          .from("marketplace_premium_users")
+          .select("active")
+          .eq("user_id", session.user.id)
+          .eq("active", true)
+          .maybeSingle();
+        if (error) return false;
+        return Boolean(data?.active);
       }
 
       function isAdminSession(session) {

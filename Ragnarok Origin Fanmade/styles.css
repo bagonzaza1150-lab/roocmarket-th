@@ -192,6 +192,26 @@ a:focus-visible {
   object-fit: cover;
 }
 
+.user-menu-trigger span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-menu-trigger strong {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border-radius: 999px;
+  background: rgba(247, 181, 0, 0.18);
+  color: #f7b500;
+  font-size: 14px;
+  line-height: 1;
+}
+
 .user-menu-trigger svg {
   width: 16px;
   height: 16px;
@@ -841,6 +861,47 @@ h1 {
   padding: 12px;
 }
 
+.listing-seller {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-top: 10px;
+}
+
+.listing-seller img {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper-soft);
+  object-fit: cover;
+}
+
+.listing-seller span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.listing-seller strong {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border-radius: 999px;
+  background: rgba(247, 181, 0, 0.16);
+  color: #f7b500;
+  font-size: 14px;
+  line-height: 1;
+}
+
 .item-media {
   display: grid;
   min-height: 156px;
@@ -1289,6 +1350,49 @@ h1 {
   background: #f7b500;
   color: #1a1300;
   box-shadow: 0 16px 36px rgba(247, 181, 0, 0.24);
+}
+
+.premium-status-card {
+  max-width: 900px;
+  margin: 18px auto 0;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+  padding: 22px;
+}
+
+.premium-status-card h2 {
+  margin: 0 0 8px;
+  font-size: 22px;
+}
+
+.premium-status-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.premium-id-box {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper-soft);
+  padding: 12px;
+}
+
+.premium-id-box span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.premium-id-box strong {
+  overflow-wrap: anywhere;
+}
+
+.premium-user-card img {
+  border-radius: 999px;
 }
 
 #sellerContactNote {

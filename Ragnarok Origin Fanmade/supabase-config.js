@@ -186,6 +186,8 @@ window.ROOC_SUPABASE = {
       const mediaClass = listing.category === "mvp" ? "item-media card-media" : "item-media";
       const contact = listing.contact || "";
       const profileUrl = getContactProfileUrl(contact);
+      const sellerName = listing.seller_name || "ผู้ขาย ROOC";
+      const sellerAvatar = listing.seller_avatar_url || "assets/category-icons/account-b.png";
       const badges = [
         `<span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
         listing.verified_seller ? '<span class="verified">Verified</span>' : "",
@@ -200,6 +202,11 @@ window.ROOC_SUPABASE = {
         <article class="listing-card">
           <div class="${mediaClass}">
             <img src="${escapeHtml(listing.image_url || "assets/category-icons/mvp-c.png")}" alt="" />
+          </div>
+          <div class="listing-seller">
+            <img src="${escapeHtml(sellerAvatar)}" alt="" />
+            <span>${escapeHtml(sellerName)}</span>
+            ${listing.seller_is_premium ? '<strong title="Premium">♛</strong>' : ""}
           </div>
           <div class="listing-meta">${badges}</div>
           <h3>${escapeHtml(title)}</h3>
@@ -231,12 +238,13 @@ window.ROOC_SUPABASE = {
     const cards = listings.map((listing) => {
       const title = listing.title || listing.item_name || "ประกาศขาย";
       const price = listing.price_text ? `฿ ${listing.price_text}` : "";
+      const sellerName = listing.seller_name || "ผู้ขาย ROOC";
       return `
         <article class="sold-card">
           <img src="${escapeHtml(listing.image_url || "assets/category-icons/mvp-c.png")}" alt="" />
           <div>
             <h3>${escapeHtml(title)}</h3>
-            <p>${escapeHtml(price)}</p>
+            <p>${escapeHtml(price)} · ${escapeHtml(sellerName)}</p>
             <strong>ขายแล้ว</strong>
           </div>
         </article>
@@ -354,6 +362,18 @@ window.ROOC_SUPABASE = {
     return (user.email || user.user_metadata?.email || user.identities?.[0]?.identity_data?.email || "").toLowerCase();
   }
 
+  async function getPremiumStatus(session) {
+    if (!session || !supabaseClient) return false;
+    const { data, error } = await supabaseClient
+      .from("marketplace_premium_users")
+      .select("active")
+      .eq("user_id", session.user.id)
+      .eq("active", true)
+      .maybeSingle();
+    if (error) return false;
+    return Boolean(data?.active);
+  }
+
   function isAdminSession(session) {
     if (!session) return false;
     const user = session.user || {};
@@ -380,12 +400,13 @@ window.ROOC_SUPABASE = {
     return link;
   }
 
-  function syncAuthUi(session) {
+  async function syncAuthUi(session) {
     const authLinks = document.querySelectorAll(".auth-link");
     const myListingsLink = document.querySelector(".my-listings-link") || ensureAccountLink();
     const adminLinks = document.querySelectorAll(".admin-link");
     const displayName = session ? getDiscordDisplayName(session) : "";
     const avatarUrl = session ? getDiscordAvatarUrl(session) : "";
+    const isPremium = await getPremiumStatus(session);
 
     authLinks.forEach((link) => {
       if (session) {
@@ -395,6 +416,7 @@ window.ROOC_SUPABASE = {
           <button class="user-menu-trigger" type="button" aria-expanded="false">
             <img src="${escapeHtml(avatarUrl || "assets/category-icons/account-b.png")}" alt="" />
             <span>${escapeHtml(displayName)}</span>
+            ${isPremium ? '<strong title="Premium">♛</strong>' : ""}
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
           </button>
           <div class="user-menu-panel" hidden>
@@ -419,8 +441,10 @@ window.ROOC_SUPABASE = {
   async function hydrateAuthUi() {
     if (!supabaseClient) return;
     const { data } = await supabaseClient.auth.getSession();
-    syncAuthUi(data.session);
-    supabaseClient.auth.onAuthStateChange((_event, session) => syncAuthUi(session));
+    await syncAuthUi(data.session);
+    supabaseClient.auth.onAuthStateChange((_event, session) => {
+      syncAuthUi(session);
+    });
   }
 
   document.addEventListener("click", async (event) => {

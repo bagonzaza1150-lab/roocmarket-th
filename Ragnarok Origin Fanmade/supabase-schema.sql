@@ -24,6 +24,9 @@ create table if not exists public.marketplace_listings (
   item_name text not null,
   title text not null,
   character_name text not null default '',
+  seller_name text not null default '',
+  seller_avatar_url text not null default '',
+  seller_is_premium boolean not null default false,
   image_url text not null,
   image_path text,
   price_text text not null default '',
@@ -47,6 +50,20 @@ create table if not exists public.marketplace_admins (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.marketplace_premium_users (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  discord_id text not null default '',
+  display_name text not null default '',
+  avatar_url text not null default '',
+  active boolean not null default true,
+  note text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists marketplace_premium_users_active_idx
+  on public.marketplace_premium_users (active, display_name);
+
 insert into public.marketplace_admins (user_id)
 select id from auth.users
 where lower(email) = 'bagonzaza1150@gmail.com'
@@ -68,6 +85,15 @@ add column if not exists user_id uuid references auth.users(id) on delete set nu
 
 alter table public.marketplace_listings
 add column if not exists character_name text not null default '';
+
+alter table public.marketplace_listings
+add column if not exists seller_name text not null default '';
+
+alter table public.marketplace_listings
+add column if not exists seller_avatar_url text not null default '';
+
+alter table public.marketplace_listings
+add column if not exists seller_is_premium boolean not null default false;
 
 alter table public.marketplace_listings
 add column if not exists sale_status text not null default 'active';
@@ -112,9 +138,15 @@ create trigger marketplace_listings_set_updated_at
 before update on public.marketplace_listings
 for each row execute function public.set_updated_at();
 
+drop trigger if exists marketplace_premium_users_set_updated_at on public.marketplace_premium_users;
+create trigger marketplace_premium_users_set_updated_at
+before update on public.marketplace_premium_users
+for each row execute function public.set_updated_at();
+
 alter table public.marketplace_items enable row level security;
 alter table public.marketplace_listings enable row level security;
 alter table public.marketplace_admins enable row level security;
+alter table public.marketplace_premium_users enable row level security;
 
 create or replace function public.is_market_admin()
 returns boolean
@@ -129,13 +161,29 @@ as $$
   );
 $$;
 
+create or replace function public.is_market_premium(target_user_id uuid default auth.uid())
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.marketplace_premium_users
+    where user_id = target_user_id
+      and active = true
+  );
+$$;
+
 grant usage on schema public to anon, authenticated;
 grant select on table public.marketplace_items to anon;
 grant all privileges on table public.marketplace_items to authenticated;
 grant select on table public.marketplace_listings to anon;
 grant all privileges on table public.marketplace_listings to authenticated;
 grant select on table public.marketplace_admins to authenticated;
+grant all privileges on table public.marketplace_premium_users to authenticated;
 grant execute on function public.is_market_admin() to anon, authenticated;
+grant execute on function public.is_market_premium(uuid) to anon, authenticated;
 
 grant usage on schema storage to anon, authenticated;
 grant select on table storage.objects to anon;
@@ -182,6 +230,35 @@ on public.marketplace_admins
 for select
 to authenticated
 using (auth.uid() = user_id);
+
+drop policy if exists "Authenticated users can read own premium status" on public.marketplace_premium_users;
+create policy "Authenticated users can read own premium status"
+on public.marketplace_premium_users
+for select
+to authenticated
+using (auth.uid() = user_id or public.is_market_admin());
+
+drop policy if exists "Authenticated admins can insert premium users" on public.marketplace_premium_users;
+create policy "Authenticated admins can insert premium users"
+on public.marketplace_premium_users
+for insert
+to authenticated
+with check (public.is_market_admin());
+
+drop policy if exists "Authenticated admins can update premium users" on public.marketplace_premium_users;
+create policy "Authenticated admins can update premium users"
+on public.marketplace_premium_users
+for update
+to authenticated
+using (public.is_market_admin())
+with check (public.is_market_admin());
+
+drop policy if exists "Authenticated admins can delete premium users" on public.marketplace_premium_users;
+create policy "Authenticated admins can delete premium users"
+on public.marketplace_premium_users
+for delete
+to authenticated
+using (public.is_market_admin());
 
 drop policy if exists "Public can read active marketplace listings" on public.marketplace_listings;
 drop policy if exists "Public can read marketplace listings" on public.marketplace_listings;

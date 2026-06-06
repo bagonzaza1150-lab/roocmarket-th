@@ -156,6 +156,51 @@
           </div>
           <div class="admin-items" id="adminItems"></div>
         </section>
+
+        <section class="admin-list-panel premium-admin-panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Premium</p>
+              <h2>จัดการสมาชิก Premium</h2>
+            </div>
+          </div>
+
+          <form class="premium-admin-form" id="premiumForm">
+            <input id="premiumUserId" type="hidden" />
+            <div class="post-grid">
+              <label class="post-field">
+                <span>Supabase User ID</span>
+                <input id="premiumUserIdInput" type="text" placeholder="UUID ของผู้ใช้" required />
+              </label>
+              <label class="post-field">
+                <span>Discord ID</span>
+                <input id="premiumDiscordId" type="text" placeholder="ตัวเลข Discord ID" />
+              </label>
+              <label class="post-field">
+                <span>ชื่อแสดงผล</span>
+                <input id="premiumDisplayName" type="text" placeholder="ชื่อ Discord" />
+              </label>
+              <label class="post-field">
+                <span>รูปโปรไฟล์</span>
+                <input id="premiumAvatarUrl" type="url" placeholder="Avatar URL" />
+              </label>
+            </div>
+            <label class="post-field">
+              <span>หมายเหตุ</span>
+              <input id="premiumNote" type="text" placeholder="เช่น จ่ายแล้ว / Ticket #123" />
+            </label>
+            <div class="post-checks">
+              <label><input id="premiumActive" type="checkbox" checked /> เปิดสิทธิ์ Premium</label>
+            </div>
+            <div class="post-actions">
+              <button class="btn btn-light" id="premiumResetButton" type="button">ล้างฟอร์ม</button>
+              <button class="btn btn-premium" type="submit">บันทึก Premium</button>
+            </div>
+            <p class="admin-message" id="premiumMessage"></p>
+          </form>
+
+          <div class="admin-items premium-user-list" id="premiumUsers"></div>
+        </section>
       </section>
     </main>
 
@@ -182,6 +227,10 @@
       const resetFormButton = document.querySelector("#resetFormButton");
       const itemImage = document.querySelector("#itemImage");
       const itemImagePreview = document.querySelector("#itemImagePreview");
+      const premiumForm = document.querySelector("#premiumForm");
+      const premiumUsers = document.querySelector("#premiumUsers");
+      const premiumResetButton = document.querySelector("#premiumResetButton");
+      const premiumMessage = document.querySelector("#premiumMessage");
 
       const fields = {
         id: document.querySelector("#itemId"),
@@ -196,7 +245,18 @@
       };
 
       let itemCache = [];
+      let premiumCache = [];
       let currentSession = null;
+
+      const premiumFields = {
+        id: document.querySelector("#premiumUserId"),
+        userId: document.querySelector("#premiumUserIdInput"),
+        discordId: document.querySelector("#premiumDiscordId"),
+        displayName: document.querySelector("#premiumDisplayName"),
+        avatarUrl: document.querySelector("#premiumAvatarUrl"),
+        note: document.querySelector("#premiumNote"),
+        active: document.querySelector("#premiumActive")
+      };
 
       function setMessage(target, message, isError = false) {
         target.textContent = message;
@@ -268,6 +328,124 @@
 
         itemCache = data || [];
         renderItems();
+      }
+
+      function resetPremiumForm() {
+        premiumForm.reset();
+        premiumFields.id.value = "";
+        premiumFields.active.checked = true;
+        setMessage(premiumMessage, "");
+      }
+
+      function renderPremiumUsers() {
+        premiumUsers.innerHTML = "";
+        if (!premiumCache.length) {
+          premiumUsers.innerHTML = '<p class="admin-empty">ยังไม่มีสมาชิก Premium</p>';
+          return;
+        }
+
+        premiumCache.forEach((user) => {
+          const card = document.createElement("article");
+          card.className = "admin-item-card premium-user-card";
+          card.innerHTML = `
+            <img src="${user.avatar_url || "assets/category-icons/account-b.png"}" alt="" />
+            <div>
+              <strong>${user.display_name || "Premium user"}</strong>
+              <span>${user.active ? "Premium เปิดใช้งาน" : "ปิดสิทธิ์"} · ${user.discord_id || "ยังไม่มี Discord ID"}</span>
+              <small>${user.user_id}${user.note ? ` · ${user.note}` : ""}</small>
+            </div>
+            <div class="admin-item-actions">
+              <button class="btn btn-small" type="button" data-premium-edit="${user.user_id}">แก้ไข</button>
+              <button class="btn btn-small admin-delete" type="button" data-premium-delete="${user.user_id}">ลบ</button>
+            </div>
+          `;
+          premiumUsers.append(card);
+        });
+      }
+
+      async function loadPremiumUsers() {
+        const { data, error } = await supabaseClient
+          .from("marketplace_premium_users")
+          .select("*")
+          .order("active", { ascending: false })
+          .order("display_name", { ascending: true });
+
+        if (error) {
+          setMessage(premiumMessage, error.message, true);
+          return;
+        }
+
+        premiumCache = data || [];
+        renderPremiumUsers();
+      }
+
+      function editPremiumUser(userId) {
+        const user = premiumCache.find((entry) => entry.user_id === userId);
+        if (!user) return;
+        premiumFields.id.value = user.user_id;
+        premiumFields.userId.value = user.user_id;
+        premiumFields.discordId.value = user.discord_id || "";
+        premiumFields.displayName.value = user.display_name || "";
+        premiumFields.avatarUrl.value = user.avatar_url || "";
+        premiumFields.note.value = user.note || "";
+        premiumFields.active.checked = user.active;
+        setMessage(premiumMessage, "");
+        premiumForm.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+
+      async function savePremiumUser(event) {
+        event.preventDefault();
+        setMessage(premiumMessage, "กำลังบันทึก Premium...");
+        const payload = {
+          user_id: premiumFields.userId.value.trim(),
+          discord_id: premiumFields.discordId.value.trim(),
+          display_name: premiumFields.displayName.value.trim(),
+          avatar_url: premiumFields.avatarUrl.value.trim(),
+          note: premiumFields.note.value.trim(),
+          active: premiumFields.active.checked
+        };
+
+        const { error } = await supabaseClient
+          .from("marketplace_premium_users")
+          .upsert(payload, { onConflict: "user_id" });
+
+        if (error) {
+          setMessage(premiumMessage, error.message, true);
+          return;
+        }
+
+        await supabaseClient
+          .from("marketplace_listings")
+          .update({
+            seller_is_premium: payload.active,
+            seller_name: payload.display_name,
+            seller_avatar_url: payload.avatar_url
+          })
+          .eq("user_id", payload.user_id);
+
+        setMessage(premiumMessage, "บันทึก Premium เรียบร้อย");
+        resetPremiumForm();
+        await loadPremiumUsers();
+      }
+
+      async function deletePremiumUser(userId) {
+        if (!confirm("ลบสิทธิ์ Premium ของผู้ใช้นี้?")) return;
+        const { error } = await supabaseClient
+          .from("marketplace_premium_users")
+          .delete()
+          .eq("user_id", userId);
+
+        if (error) {
+          setMessage(premiumMessage, error.message, true);
+          return;
+        }
+
+        await supabaseClient
+          .from("marketplace_listings")
+          .update({ seller_is_premium: false })
+          .eq("user_id", userId);
+
+        await loadPremiumUsers();
       }
 
       function editItem(id) {
@@ -406,7 +584,10 @@
         } else {
           setMessage(loginMessage, "");
         }
-        if (isAdmin) loadItems();
+        if (isAdmin) {
+          loadItems();
+          loadPremiumUsers();
+        }
       }
 
       if (!hasConfig) {
@@ -432,6 +613,8 @@
 
       logoutButton.addEventListener("click", () => supabaseClient.auth.signOut());
       itemForm.addEventListener("submit", saveItem);
+      premiumForm.addEventListener("submit", savePremiumUser);
+      premiumResetButton.addEventListener("click", resetPremiumForm);
       resetFormButton.addEventListener("click", resetEditor);
       adminCategoryFilter.addEventListener("change", renderItems);
       itemImage.addEventListener("change", () => {
@@ -443,6 +626,12 @@
         const deleteId = event.target.dataset.delete;
         if (editId) editItem(editId);
         if (deleteId) deleteItem(deleteId);
+      });
+      premiumUsers.addEventListener("click", (event) => {
+        const editId = event.target.dataset.premiumEdit;
+        const deleteId = event.target.dataset.premiumDelete;
+        if (editId) editPremiumUser(editId);
+        if (deleteId) deletePremiumUser(deleteId);
       });
 
       const themeToggle = document.querySelector("#themeToggle");
