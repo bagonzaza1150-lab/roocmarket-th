@@ -27,7 +27,6 @@
           <a href="#market">ตลาด</a>
           <a href="#categories">หมวดหมู่</a>
           <a href="post.html">ลงประกาศ</a>
-          <a href="post.html#safe">ความปลอดภัย</a>
           <a class="my-listings-link" href="my-listings.html" hidden>ประกาศของฉัน</a>
           <a class="admin-link" href="admin.html" hidden>Admin</a>
         </div>
@@ -53,7 +52,7 @@
             <h1>ตลาดซื้อขาย ROOC</h1>
             <p class="lead">
               รวมประกาศ MVP Cards, Accessories, Fashion และ Account พร้อมฟิลเตอร์ชัดเจน
-              ข้อมูลผู้ขาย และตัวช่วยซื้อขายปลอดภัย
+              และข้อมูลผู้ขายสำหรับติดต่อโดยตรง
             </p>
 
             <form class="search-card" action="#" aria-label="ค้นหาประกาศ">
@@ -61,12 +60,12 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="m21 21-4.4-4.4M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4Z" />
                 </svg>
-                <input type="search" placeholder="ค้นหา Ghostring, Baphomet, Angel Wing..." />
+                <input id="marketSearch" type="search" placeholder="ค้นหา Ghostring, Baphomet, Angel Wing..." />
               </div>
 
               <label>
                 Server
-                <select>
+                <select id="heroServerFilter">
                   <option>ทั้งหมด</option>
                   <option>Prontera 1</option>
                   <option>Prontera 2</option>
@@ -157,12 +156,12 @@
         <aside class="filters">
           <div class="panel-head">
             <h2>ตัวกรอง</h2>
-            <button type="button">ล้าง</button>
+            <button id="resetFilters" type="button">ล้าง</button>
           </div>
 
           <label>
             Server
-            <select>
+            <select id="sidebarServerFilter">
               <option>ทั้งหมด</option>
               <option>Prontera 1</option>
               <option>Prontera 2</option>
@@ -189,35 +188,29 @@
 
           <label>
             หมวดหมู่
-            <select>
-              <option>ทุกหมวดหมู่</option>
-              <option>MVP Cards</option>
-              <option>Accessories</option>
-              <option>Fashion</option>
-              <option>Account</option>
+            <select id="categoryFilter">
+              <option value="all">ทุกหมวดหมู่</option>
+              <option value="mvp">MVP Cards</option>
+              <option value="accessories">Accessories</option>
+              <option value="fashion">Fashion</option>
+              <option value="account">Account</option>
             </select>
           </label>
 
           <label>
             ช่วงราคา
-            <select>
-              <option>ทั้งหมด</option>
-              <option>ต่ำกว่า ฿1,000</option>
-              <option>฿1,000 - ฿3,000</option>
-              <option>มากกว่า ฿3,000</option>
+            <select id="priceFilter">
+              <option value="all">ทั้งหมด</option>
+              <option value="under-1000">ต่ำกว่า ฿1,000</option>
+              <option value="1000-3000">฿1,000 - ฿3,000</option>
+              <option value="over-3000">มากกว่า ฿3,000</option>
             </select>
           </label>
 
           <div class="check-list">
-            <label><input type="checkbox" checked /> ผู้ขายยืนยันแล้ว</label>
-            <label><input type="checkbox" /> รองรับ Middleman</label>
-            <label><input type="checkbox" /> พร้อมเทรดวันนี้</label>
-          </div>
-
-          <div class="safe-card">
-            <h2>ซื้อขายปลอดภัย</h2>
-            <p>ใช้ Middleman สำหรับดีลราคาสูง ลดความเสี่ยงก่อนโอนและส่งของ</p>
-            <button class="btn btn-secondary" type="button">ติดต่อทีมงาน</button>
+            <label><input id="verifiedFilter" type="checkbox" /> ผู้ขายยืนยันแล้ว</label>
+            <label><input id="middlemanFilter" type="checkbox" /> รองรับ Middleman</label>
+            <label><input id="readyFilter" type="checkbox" /> พร้อมเทรดวันนี้</label>
           </div>
         </aside>
 
@@ -227,19 +220,19 @@
               <p class="eyebrow">Latest Listings</p>
               <h2>ประกาศล่าสุด</h2>
             </div>
-            <select aria-label="เรียงลำดับ">
-              <option>ใหม่ล่าสุด</option>
-              <option>ราคาต่ำสุด</option>
-              <option>ราคาสูงสุด</option>
+            <select id="sortFilter" aria-label="เรียงลำดับ">
+              <option value="newest">ใหม่ล่าสุด</option>
+              <option value="price-low">ราคาต่ำสุด</option>
+              <option value="price-high">ราคาสูงสุด</option>
             </select>
           </div>
 
           <div class="market-tabs" aria-label="เลือกหมวดประกาศ">
-            <button class="is-active" type="button">ทั้งหมด</button>
-            <button type="button">MVP Cards</button>
-            <button type="button">Accessories</button>
-            <button type="button">Fashion</button>
-            <button type="button">Account</button>
+            <button class="is-active" type="button" data-category="all">ทั้งหมด</button>
+            <button type="button" data-category="mvp">MVP Cards</button>
+            <button type="button" data-category="accessories">Accessories</button>
+            <button type="button" data-category="fashion">Fashion</button>
+            <button type="button" data-category="account">Account</button>
           </div>
 
           <div class="listing-grid" id="latestListingGrid"></div>
@@ -268,7 +261,7 @@
           <span>Discord / ช่องทางติดต่อ</span>
           <strong id="sellerContactValue">-</strong>
         </div>
-        <p id="sellerContactNote">ติดต่อผู้ขายโดยตรง และใช้ Middleman สำหรับดีลราคาสูงเพื่อความปลอดภัย</p>
+        <p id="sellerContactNote">ติดต่อผู้ขายโดยตรง และใช้ Middleman สำหรับดีลราคาสูง</p>
       </section>
     </div>
 
@@ -288,7 +281,6 @@
           <h2>Marketplace</h2>
           <a href="#market">ประกาศล่าสุด</a>
           <a href="#categories">หมวดหมู่</a>
-          <a href="post.html#safe">ซื้อขายปลอดภัย</a>
         </div>
         <div>
           <h2>Community</h2>
@@ -474,8 +466,6 @@
       }
 
       const supabaseClient = getSupabaseClient();
-      loadListingCounts(null);
-      loadLatestListings(null);
 
       const sellerContactModal = document.querySelector("#sellerContactModal");
       const sellerContactItem = document.querySelector("#sellerContactItem");
