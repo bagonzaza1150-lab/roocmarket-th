@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="ROOC Market TH ตลาดกลางซื้อขายไอเทม Ragnarok Origin Classic สำหรับผู้เล่นไทย"
+    />
+    <title>ROOC Market TH</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="shell nav">
+        <a class="brand" href="#" aria-label="ROOC Market TH">
+          <span class="brand-mark">RO</span>
+          <span>
+            <strong>ROOC Market</strong>
+            <small>Thailand Marketplace</small>
+          </span>
+        </a>
+
+        <div class="nav-links" aria-label="เมนูหลัก">
+          <a href="#market">ตลาด</a>
+          <a href="#categories">หมวดหมู่</a>
+          <a href="post.html">ลงประกาศ</a>
+          <a class="my-listings-link" href="my-listings.html" hidden>ประกาศของฉัน</a>
+          <a class="admin-link" href="admin.html" hidden>Admin</a>
+        </div>
+
+        <div class="nav-actions">
+          <label class="theme-switch" aria-label="สลับโหมดสว่างและมืด">
+            <input id="themeToggle" type="checkbox" />
+            <span class="switch-track">
+              <span class="switch-ball"></span>
+            </span>
+          </label>
+          <a class="btn btn-light auth-link" href="login.html">เข้าสู่ระบบ</a>
+          <a class="btn btn-primary" href="post.html">ลงประกาศ</a>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="shell hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow">ROOC Market TH</p>
+            <h1>ตลาดซื้อขาย ROOC</h1>
+            <p class="lead">
+              รวมประกาศ MVP Cards, Accessories, Fashion และ Account พร้อมฟิลเตอร์ชัดเจน
+              และข้อมูลผู้ขายสำหรับติดต่อโดยตรง
+            </p>
+
+            <form class="search-card" action="#" aria-label="ค้นหาประกาศ">
+              <div class="search-input">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m21 21-4.4-4.4M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4Z" />
+                </svg>
+                <input id="marketSearch" type="search" placeholder="ค้นหา Ghostring, Baphomet, Angel Wing..." />
+              </div>
+
+              <label>
+                Server
+                <select id="heroServerFilter">
+                  <option>ทั้งหมด</option>
+                  <option>Prontera 1</option>
+                  <option>Prontera 2</option>
+                  <option>Prontera 3</option>
+                  <option>Prontera 4</option>
+                  <option>Prontera 5</option>
+                  <option>Prontera 6</option>
+                  <option>Prontera 7</option>
+                  <option>Prontera 8</option>
+                  <option>Prontera 9</option>
+                  <option>Prontera 10</option>
+                  <option>Geffen 1</option>
+                  <option>Geffen 2</option>
+                  <option>Geffen 3</option>
+                  <option>Geffen 4</option>
+                  <option>Geffen 5</option>
+                  <option>Geffen 6</option>
+                  <option>Geffen 7</option>
+                  <option>Geffen 8</option>
+                  <option>Geffen 9</option>
+                  <option>Geffen 10</option>
+                </select>
+              </label>
+
+              <button class="btn btn-primary" type="submit">ค้นหา</button>
+            </form>
+
+            <div class="trust-row" aria-label="สถิติตลาด">
+              <div>
+                <strong id="totalListingCount">0</strong>
+                <span>ประกาศ</span>
+              </div>
+              <div>
+                <strong>86</strong>
+                <span>ผู้ขายออนไลน์</span>
+              </div>
+              <div>
+                <strong>10</strong>
+                <span>ช่องทาง Server</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero-art" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <section class="shell sold-strip" id="soldListings" aria-label="รายการที่ขายออกแล้ว" hidden>
+        <div class="sold-strip-head">
+          <div>
+            <p class="eyebrow">Sold Listings</p>
+            <h2>ขายออกแล้ว</h2>
+          </div>
+          <span id="soldListingCount">0 รายการ</span>
+        </div>
+        <div class="sold-scroller" id="soldListingScroller"></div>
+      </section>
+
+      <section class="shell category-row" id="categories" aria-label="หมวดหมู่สินค้า">
+        <article>
+          <span class="category-icon">
+            <img src="assets/category-icons/mvp-c.png" alt="" />
+          </span>
+          <div>
+            <h2>MVP Cards</h2>
+            <p><span id="mvpListingCount">0</span> รายการ</p>
+          </div>
+        </article>
+        <article>
+          <span class="category-icon">
+            <img src="assets/category-icons/accessories-a.png" alt="" />
+          </span>
+          <div>
+            <h2>Accessories</h2>
+            <p><span id="accessoriesListingCount">0</span> รายการ</p>
+          </div>
+        </article>
+        <article>
+          <span class="category-icon">
+            <img src="assets/category-icons/fashion-c.png" alt="" />
+          </span>
+          <div>
+            <h2>Fashion</h2>
+            <p><span id="fashionListingCount">0</span> รายการ</p>
+          </div>
+        </article>
+        <article>
+          <span class="category-icon">
+            <img src="assets/category-icons/account-b.png" alt="" />
+          </span>
+          <div>
+            <h2>Account</h2>
+            <p><span id="accountListingCount">0</span> รายการ</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="shell market-layout" id="market">
+        <aside class="filters">
+          <div class="panel-head">
+            <h2>ตัวกรอง</h2>
+            <button id="resetFilters" type="button">ล้าง</button>
+          </div>
+
+          <label>
+            Server
+            <select id="sidebarServerFilter">
+              <option>ทั้งหมด</option>
+              <option>Prontera 1</option>
+              <option>Prontera 2</option>
+              <option>Prontera 3</option>
+              <option>Prontera 4</option>
+              <option>Prontera 5</option>
+              <option>Prontera 6</option>
+              <option>Prontera 7</option>
+              <option>Prontera 8</option>
+              <option>Prontera 9</option>
+              <option>Prontera 10</option>
+              <option>Geffen 1</option>
+              <option>Geffen 2</option>
+              <option>Geffen 3</option>
+              <option>Geffen 4</option>
+              <option>Geffen 5</option>
+              <option>Geffen 6</option>
+              <option>Geffen 7</option>
+              <option>Geffen 8</option>
+              <option>Geffen 9</option>
+              <option>Geffen 10</option>
+            </select>
+          </label>
+
+          <label>
+            หมวดหมู่
+            <select id="categoryFilter">
+              <option value="all">ทุกหมวดหมู่</option>
+              <option value="mvp">MVP Cards</option>
+              <option value="accessories">Accessories</option>
+              <option value="fashion">Fashion</option>
+              <option value="account">Account</option>
+            </select>
+          </label>
+
+          <label>
+            ช่วงราคา
+            <select id="priceFilter">
+              <option value="all">ทั้งหมด</option>
+              <option value="under-1000">ต่ำกว่า ฿1,000</option>
+              <option value="1000-3000">฿1,000 - ฿3,000</option>
+              <option value="over-3000">มากกว่า ฿3,000</option>
+            </select>
+          </label>
+
+          <div class="check-list">
+            <label><input id="verifiedFilter" type="checkbox" /> ผู้ขายยืนยันแล้ว</label>
+            <label><input id="middlemanFilter" type="checkbox" /> รองรับ Middleman</label>
+            <label><input id="readyFilter" type="checkbox" /> พร้อมเทรดวันนี้</label>
+          </div>
+        </aside>
+
+        <section class="listings">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Latest Listings</p>
+              <h2>ประกาศล่าสุด</h2>
+            </div>
+            <select id="sortFilter" aria-label="เรียงลำดับ">
+              <option value="newest">ใหม่ล่าสุด</option>
+              <option value="price-low">ราคาต่ำสุด</option>
+              <option value="price-high">ราคาสูงสุด</option>
+            </select>
+          </div>
+
+          <div class="market-tabs" aria-label="เลือกหมวดประกาศ">
+            <button class="is-active" type="button" data-category="all">ทั้งหมด</button>
+            <button type="button" data-category="mvp">MVP Cards</button>
+            <button type="button" data-category="accessories">Accessories</button>
+            <button type="button" data-category="fashion">Fashion</button>
+            <button type="button" data-category="account">Account</button>
+          </div>
+
+          <div class="listing-grid" id="latestListingGrid"></div>
+
+          <div class="empty-state" id="latestEmptyState">
+            <h3>ยังไม่มีประกาศขาย</h3>
+            <p>เมื่อมีผู้ขายลงประกาศ รายการล่าสุดจะแสดงในส่วนนี้</p>
+            <a class="btn btn-primary" href="post.html">ลงประกาศแรก</a>
+          </div>
+        </section>
+      </section>
+
+          </main>
+
+    <div class="contact-modal" id="sellerContactModal" hidden>
+      <div class="contact-modal-backdrop" data-close-contact></div>
+      <section class="contact-modal-card" role="dialog" aria-modal="true" aria-labelledby="sellerContactTitle">
+        <button class="contact-modal-close" type="button" data-close-contact aria-label="ปิด">×</button>
+        <p class="eyebrow">Seller Contact</p>
+        <h2 id="sellerContactTitle">ติดต่อผู้ขาย</h2>
+        <div class="contact-modal-item">
+          <span>รายการ</span>
+          <strong id="sellerContactItem">-</strong>
+        </div>
+        <div class="contact-modal-item">
+          <span>Discord / ช่องทางติดต่อ</span>
+          <a class="seller-profile-button" id="sellerContactLink" href="#" target="_blank" rel="noopener">เปิดโปรไฟล์ผู้ขาย</a>
+          <strong id="sellerContactValue">-</strong>
+        </div>
+        <p id="sellerContactNote">ติดต่อผู้ขายโดยตรง และใช้ Middleman สำหรับดีลราคาสูง</p>
+      </section>
+    </div>
+
+    <footer class="footer">
+      <div class="shell footer-grid">
+        <div>
+          <a class="brand" href="#" aria-label="ROOC Market TH">
+            <span class="brand-mark">RO</span>
+            <span>
+              <strong>ROOC Market</strong>
+              <small>Thailand Marketplace</small>
+            </span>
+          </a>
+          <p>เว็บไซต์ fan-made สำหรับซื้อขายไอเทม ROOC ไม่เกี่ยวข้องกับผู้ถือสิทธิ์อย่างเป็นทางการ</p>
+        </div>
+        <div>
+          <h2>Marketplace</h2>
+          <a href="#market">ประกาศล่าสุด</a>
+          <a href="#categories">หมวดหมู่</a>
+        </div>
+        <div>
+          <h2>Community</h2>
+          <a href="#">Discord</a>
+          <a href="#">กติกาซื้อขาย</a>
+          <a href="#">รายงานปัญหา</a>
+        </div>
+      </div>
+    </footer>
+    <script>
+      const categoryLabels = {
+        mvp: "MVP Cards",
+        accessories: "Accessories",
+        fashion: "Fashion",
+        account: "Account"
+      };
+      const appConfig = window.ROOC_SUPABASE || {};
+
+      function getSupabaseClient() {
+        const canUseSupabase = Boolean(appConfig.url && appConfig.anonKey && window.supabase);
+        return canUseSupabase ? window.supabase.createClient(appConfig.url, appConfig.anonKey) : null;
+      }
+
+      async function fetchListingsFromRest(params = "select=*&active=eq.true&order=created_at.desc") {
+        if (!appConfig.url || !appConfig.anonKey) {
+          throw new Error("Supabase config is missing");
+        }
+
+        const response = await fetch(`${appConfig.url}/rest/v1/marketplace_listings?${params}`, {
+          headers: {
+            apikey: appConfig.anonKey,
+            Authorization: `Bearer ${appConfig.anonKey}`
+          }
+        });
+
+        if (!response.ok) {
+          const detail = await response.text();
+          throw new Error(detail || `Supabase REST error ${response.status}`);
+        }
+
+        return response.json();
+      }
+
+      function escapeHtml(value) {
+        return String(value || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      async function loadListingCounts(client) {
+        const targets = {
+          mvp: document.querySelector("#mvpListingCount"),
+          accessories: document.querySelector("#accessoriesListingCount"),
+          fashion: document.querySelector("#fashionListingCount"),
+          account: document.querySelector("#accountListingCount")
+        };
+        const totalTarget = document.querySelector("#totalListingCount");
+
+        try {
+          let data = [];
+          let error = null;
+          if (client) {
+            const result = await client
+              .from("marketplace_listings")
+              .select("category")
+              .eq("active", true);
+            data = result.data;
+            error = result.error;
+          } else {
+            data = await fetchListingsFromRest("select=category&active=eq.true");
+          }
+
+          if (error) {
+            console.warn("ROOC count load through supabase-js failed, trying REST:", error);
+            data = await fetchListingsFromRest("select=category&active=eq.true");
+          }
+
+          if (client && (!data || !data.length)) {
+            data = await fetchListingsFromRest("select=category&active=eq.true");
+          }
+
+          if (!data) return;
+
+          const counts = { mvp: 0, accessories: 0, fashion: 0, account: 0 };
+          data.forEach((listing) => {
+            if (counts[listing.category] !== undefined) counts[listing.category] += 1;
+          });
+
+          Object.entries(targets).forEach(([category, target]) => {
+            if (target) target.textContent = counts[category].toLocaleString("th-TH");
+          });
+
+          if (totalTarget) {
+            totalTarget.textContent = data.length.toLocaleString("th-TH");
+          }
+        } catch (_error) {
+          // Keep zero counts when Supabase is not reachable.
+        }
+      }
+
+      async function loadLatestListings(client) {
+        const grid = document.querySelector("#latestListingGrid");
+        const emptyState = document.querySelector("#latestEmptyState");
+        if (!grid || !emptyState) return;
+
+        try {
+          let data = [];
+          let error = null;
+          if (client) {
+            const result = await client
+              .from("marketplace_listings")
+              .select("*")
+              .eq("active", true)
+              .order("created_at", { ascending: false })
+              .limit(12);
+            data = result.data;
+            error = result.error;
+          } else {
+            data = await fetchListingsFromRest("select=*&active=eq.true&order=created_at.desc&limit=12");
+          }
+
+          if (error) {
+            console.warn("ROOC listing load through supabase-js failed, trying REST:", error);
+            data = await fetchListingsFromRest("select=*&active=eq.true&order=created_at.desc&limit=12");
+          }
+
+          if (client && (!data || !data.length)) {
+            data = await fetchListingsFromRest("select=*&active=eq.true&order=created_at.desc&limit=12");
+          }
+
+          if (!data || !data.length) {
+            grid.innerHTML = "";
+            emptyState.hidden = false;
+            emptyState.querySelector("h3").textContent = "ยังไม่มีประกาศขาย";
+            emptyState.querySelector("p").textContent = "ไม่พบรายการที่ active = true ใน Supabase";
+            console.info("ROOC listings loaded 0 rows");
+            return;
+          }
+
+          console.info(`ROOC listings loaded ${data.length} rows`);
+
+          grid.innerHTML = data.map((listing) => {
+            const mediaClass = listing.category === "mvp" ? "item-media card-media" : "item-media";
+            const title = listing.title || listing.item_name || "ประกาศขาย";
+            const contact = listing.contact || "";
+            const badges = [
+              `<span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
+              listing.verified_seller ? '<span class="verified">Verified</span>' : "",
+              listing.ready_today ? '<span class="fast">Fast Deal</span>' : "",
+              listing.category === "mvp" ? '<span class="mvp">MVP</span>' : ""
+            ].filter(Boolean).join("");
+            const description = listing.middleman
+              ? `${listing.description || ""} · รองรับ Middleman`
+              : listing.description || "";
+
+            return `
+              <article class="listing-card">
+                <div class="${mediaClass}">
+                  <img src="${escapeHtml(listing.image_url || "assets/category-icons/mvp-c.png")}" alt="" />
+                </div>
+                <div class="listing-meta">${badges}</div>
+                <h3>${escapeHtml(title)}</h3>
+                <p>${escapeHtml(description)}</p>
+                <div class="price-row">
+                  <strong>฿ ${escapeHtml(listing.price_text || "0")}</strong>
+                  <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}">ติดต่อผู้ขาย</button>
+                </div>
+              </article>
+            `;
+          }).join("");
+
+          emptyState.hidden = true;
+        } catch (_error) {
+          grid.innerHTML = "";
+          emptyState.hidden = false;
+          emptyState.querySelector("h3").textContent = "โหลดประกาศไม่สำเร็จ";
+          emptyState.querySelector("p").textContent = _error.message || "เกิดข้อผิดพลาดระหว่างเชื่อมต่อ Supabase";
+          console.error("ROOC listings unexpected error:", _error);
+        }
+      }
+
+      const supabaseClient = getSupabaseClient();
+
+      const sellerContactModal = document.querySelector("#sellerContactModal");
+      const sellerContactItem = document.querySelector("#sellerContactItem");
+      const sellerContactValue = document.querySelector("#sellerContactValue");
+      const sellerContactLink = document.querySelector("#sellerContactLink");
+
+      function getContactProfileUrl(contact) {
+        const value = String(contact || "").trim();
+        if (!value) return "";
+        if (/^https?:\/\//i.test(value)) return value;
+        if (/^\d{16,22}$/.test(value)) return `https://discord.com/users/${value}`;
+        const discordUserMatch = value.match(/(?:discord(?:app)?\.com\/users\/)(\d{16,22})/i);
+        if (discordUserMatch) return `https://discord.com/users/${discordUserMatch[1]}`;
+        return "";
+      }
+
+      function openSellerContact(title, contact, profileUrlOverride = "") {
+        if (!sellerContactModal || !sellerContactItem || !sellerContactValue || !sellerContactLink) return;
+        const profileUrl = profileUrlOverride || getContactProfileUrl(contact);
+        sellerContactItem.textContent = title || "ประกาศขาย";
+        sellerContactValue.textContent = profileUrl
+          ? "กดปุ่มด้านบนเพื่อไปหน้าโปรไฟล์ผู้ขาย"
+          : (contact || "ผู้ขายยังไม่ได้ระบุช่องทางติดต่อ");
+        sellerContactLink.hidden = !profileUrl;
+        sellerContactLink.href = profileUrl || "#";
+        sellerContactModal.hidden = false;
+        document.body.classList.add("modal-open");
+      }
+
+      function closeSellerContact() {
+        if (!sellerContactModal) return;
+        sellerContactModal.hidden = true;
+        document.body.classList.remove("modal-open");
+      }
+
+      document.addEventListener("click", (event) => {
+        const contactButton = event.target.closest(".contact-seller-button");
+        if (contactButton) {
+          openSellerContact(contactButton.dataset.title, contactButton.dataset.contact, contactButton.dataset.profileUrl);
+          return;
+        }
+
+        if (event.target.closest("[data-close-contact]")) {
+          closeSellerContact();
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && sellerContactModal && !sellerContactModal.hidden) closeSellerContact();
+      });
+
+      async function syncAuthLink() {
+        const authLink = document.querySelector(".auth-link");
+        const adminLink = document.querySelector(".admin-link");
+        if (!authLink || !supabaseClient) return;
+        const { data } = await supabaseClient.auth.getSession();
+        if (data.session) {
+          authLink.textContent = getDiscordDisplayName(data.session);
+          authLink.href = "login.html";
+        }
+        if (adminLink) adminLink.hidden = !isAdminSession(data.session);
+      }
+
+      function getDiscordDisplayName(session) {
+        const user = session?.user || {};
+        const identityData = user.identities?.find((identity) => identity.provider === "discord")?.identity_data || {};
+        return user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
+          user.user_metadata?.preferred_username ||
+          identityData.full_name ||
+          identityData.name ||
+          identityData.preferred_username ||
+          user.email ||
+          "Discord";
+      }
+
+      function isAdminSession(session) {
+        if (!session) return false;
+        const user = session.user || {};
+        const email = (user.email || user.user_metadata?.email || user.identities?.[0]?.identity_data?.email || "").toLowerCase();
+        const identities = user.identities || [];
+        const discordIds = identities
+          .filter((identity) => identity.provider === "discord")
+          .map((identity) => identity.identity_data?.sub || identity.id)
+          .filter(Boolean);
+        return (appConfig.adminUserIds || []).includes(user.id) ||
+          (appConfig.adminEmails || []).map((entry) => entry.toLowerCase()).includes(email) ||
+          discordIds.some((id) => (appConfig.adminDiscordIds || []).includes(id));
+      }
+
+      syncAuthLink();
+      if (supabaseClient) supabaseClient.auth.onAuthStateChange(() => syncAuthLink());
+
+      const themeToggle = document.querySelector("#themeToggle");
+      const savedTheme = localStorage.getItem("theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const activeTheme = savedTheme || (prefersDark ? "dark" : "light");
+
+      document.documentElement.dataset.theme = activeTheme;
+      themeToggle.checked = activeTheme === "dark";
+
+      themeToggle.addEventListener("change", () => {
+        const nextTheme = themeToggle.checked ? "dark" : "light";
+        document.documentElement.dataset.theme = nextTheme;
+        localStorage.setItem("theme", nextTheme);
+      });
+    </script>
+  </body>
+</html>

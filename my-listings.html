@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="จัดการประกาศของฉัน | ROOC Market TH" />
+    <title>ประกาศของฉัน | ROOC Market TH</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="shell nav">
+        <a class="brand" href="index.html" aria-label="ROOC Market TH">
+          <span class="brand-mark">RO</span>
+          <span>
+            <strong>ROOC Market</strong>
+            <small>Thailand Marketplace</small>
+          </span>
+        </a>
+
+        <div class="nav-links" aria-label="เมนูหลัก">
+          <a href="index.html#market">ตลาด</a>
+          <a href="index.html#categories">หมวดหมู่</a>
+          <a href="post.html">ลงประกาศ</a>
+          <a class="my-listings-link" href="my-listings.html" hidden>ประกาศของฉัน</a>
+          <a class="admin-link" href="admin.html" hidden>Admin</a>
+        </div>
+
+        <div class="nav-actions">
+          <label class="theme-switch" aria-label="สลับโหมดสว่างและมืด">
+            <input id="themeToggle" type="checkbox" />
+            <span class="switch-track">
+              <span class="switch-ball"></span>
+            </span>
+          </label>
+          <a class="btn btn-light auth-link" href="login.html?redirect=my-listings.html">เข้าสู่ระบบ</a>
+          <a class="btn btn-primary" href="post.html">ลงประกาศ</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="shell my-listings-page">
+      <section class="post-head">
+        <div>
+          <p class="eyebrow">My Listings</p>
+          <h2>ประกาศของฉัน</h2>
+          <p>จัดการประกาศที่ลงขายด้วยบัญชี Discord นี้ ปิดประกาศที่ไม่ต้องการแสดง หรือทำเครื่องหมายว่าขายออกแล้ว</p>
+        </div>
+        <a class="btn btn-primary" href="post.html">ลงประกาศใหม่</a>
+      </section>
+
+      <section class="login-required" id="myLoginRequired" hidden>
+        <h3>ต้องเข้าสู่ระบบก่อน</h3>
+        <p>เข้าสู่ระบบด้วย Discord เพื่อดูและจัดการประกาศของตัวเอง</p>
+        <a class="btn btn-primary" href="login.html?redirect=my-listings.html">เข้าสู่ระบบ</a>
+      </section>
+
+      <section class="my-listings-panel" id="myListingsPanel" hidden>
+        <div class="panel-head">
+          <h2>รายการประกาศ</h2>
+          <button class="btn btn-light" id="refreshListings" type="button">รีเฟรช</button>
+        </div>
+        <p class="post-message" id="myListingsMessage"></p>
+        <div class="my-listing-grid" id="myListingGrid"></div>
+        <div class="empty-state" id="myListingEmpty" hidden>
+          <h3>ยังไม่มีประกาศ</h3>
+          <p>เมื่อคุณลงประกาศ รายการจะมาแสดงในหน้านี้</p>
+          <a class="btn btn-primary" href="post.html">ลงประกาศแรก</a>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const config = window.ROOC_SUPABASE || {};
+      const canUseSupabase = Boolean(config.url && config.anonKey && window.supabase);
+      const supabaseClient = canUseSupabase ? window.supabase.createClient(config.url, config.anonKey) : null;
+      const loginRequired = document.querySelector("#myLoginRequired");
+      const panel = document.querySelector("#myListingsPanel");
+      const grid = document.querySelector("#myListingGrid");
+      const emptyState = document.querySelector("#myListingEmpty");
+      const message = document.querySelector("#myListingsMessage");
+      const refreshButton = document.querySelector("#refreshListings");
+      let currentSession = null;
+
+      function escapeHtml(value) {
+        return String(value || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function setMessage(text, isError = false) {
+        message.textContent = text;
+        message.classList.toggle("is-error", isError);
+      }
+
+      function categoryLabel(category) {
+        return {
+          mvp: "MVP Cards",
+          accessories: "Accessories",
+          fashion: "Fashion",
+          account: "Account"
+        }[category] || category;
+      }
+
+      function listingStatus(listing) {
+        if (listing.sale_status === "sold") return { label: "ขายออกแล้ว", className: "mvp" };
+        if (!listing.active || listing.sale_status === "closed") return { label: "ปิดประกาศ", className: "fast" };
+        return { label: "กำลังแสดง", className: "verified" };
+      }
+
+      function renderListings(listings) {
+        emptyState.hidden = listings.length > 0;
+        grid.innerHTML = listings.map((listing) => {
+          const status = listingStatus(listing);
+          const canMarkSold = listing.sale_status !== "sold";
+          return `
+            <article class="my-listing-card" data-id="${escapeHtml(listing.id)}" data-active="${listing.active ? "true" : "false"}" data-status="${escapeHtml(listing.sale_status || "active")}">
+              <img src="${escapeHtml(listing.image_url || "assets/category-icons/mvp-c.png")}" alt="" />
+              <div>
+                <div class="listing-meta">
+                  <span>${escapeHtml(categoryLabel(listing.category))}</span>
+                  <span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>
+                  <span class="${status.className}">${status.label}</span>
+                </div>
+                <h3>${escapeHtml(listing.title || listing.item_name || "ประกาศขาย")}</h3>
+                <p>${listing.character_name ? `ตัวละคร: ${escapeHtml(listing.character_name)}` : "ยังไม่ได้ระบุชื่อตัวละคร"}</p>
+                <p>${escapeHtml(listing.description || "")}</p>
+                <strong>฿ ${escapeHtml(listing.price_text || "0")}</strong>
+              </div>
+              <div class="my-listing-actions">
+                <button class="btn btn-small" type="button" data-toggle="${escapeHtml(listing.id)}">${listing.active ? "ปิดประกาศ" : "เปิดประกาศ"}</button>
+                ${canMarkSold ? `<button class="btn btn-small btn-sold" type="button" data-sold="${escapeHtml(listing.id)}">ขายออกแล้ว</button>` : ""}
+                <button class="btn btn-small my-delete" type="button" data-delete="${escapeHtml(listing.id)}">ลบ</button>
+              </div>
+            </article>
+          `;
+        }).join("");
+      }
+
+      async function loadMyListings() {
+        if (!currentSession) return;
+        setMessage("กำลังโหลดประกาศ...");
+        const { data, error } = await supabaseClient
+          .from("marketplace_listings")
+          .select("*")
+          .or(`user_id.eq.${currentSession.user.id},user_id.is.null`)
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          setMessage(error.message, true);
+          return;
+        }
+
+        renderListings(data || []);
+        setMessage(data?.length ? `พบ ${data.length} ประกาศ` : "");
+      }
+
+      async function toggleListing(id) {
+        const card = grid.querySelector(`[data-id="${CSS.escape(id)}"]`);
+        const isActive = card?.dataset.active === "true";
+        setMessage("กำลังอัปเดตประกาศ...");
+        const nextActive = !isActive;
+        const { data, error } = await supabaseClient
+          .from("marketplace_listings")
+          .update({ active: nextActive, sale_status: nextActive ? "active" : "closed" })
+          .eq("id", id)
+          .select("id");
+
+        if (error) {
+          setMessage(error.message, true);
+          return;
+        }
+
+        if (!data || !data.length) {
+          setMessage("อัปเดตไม่ได้: ประกาศนี้อาจเป็นโพสต์เก่าที่ยังไม่ได้ผูกกับบัญชี Discord ของคุณ", true);
+          return;
+        }
+
+        await loadMyListings();
+      }
+
+      async function markListingSold(id) {
+        if (!confirm("ทำเครื่องหมายว่าประกาศนี้ขายออกแล้ว?")) return;
+        setMessage("กำลังย้ายไปขายออกแล้ว...");
+        const { data, error } = await supabaseClient
+          .from("marketplace_listings")
+          .update({ active: false, sale_status: "sold" })
+          .eq("id", id)
+          .select("id");
+
+        if (error) {
+          setMessage(error.message, true);
+          return;
+        }
+
+        if (!data || !data.length) {
+          setMessage("อัปเดตไม่ได้: ประกาศนี้อาจเป็นโพสต์เก่าที่ยังไม่ได้ผูกกับบัญชี Discord ของคุณ", true);
+          return;
+        }
+
+        await loadMyListings();
+      }
+
+      async function deleteListing(id) {
+        if (!confirm("ลบประกาศนี้?")) return;
+        setMessage("กำลังลบประกาศ...");
+        const { data, error } = await supabaseClient
+          .from("marketplace_listings")
+          .delete()
+          .eq("id", id)
+          .select("id");
+
+        if (error) {
+          setMessage(error.message, true);
+          return;
+        }
+
+        if (!data || !data.length) {
+          setMessage("ลบไม่ได้: ประกาศนี้เป็นโพสต์เก่าหรือไม่ได้ผูกกับบัญชี Discord นี้ ให้รัน SQL claim ด้านล่างก่อน", true);
+          return;
+        }
+
+        await loadMyListings();
+      }
+
+      async function syncPage() {
+        if (!canUseSupabase) {
+          loginRequired.hidden = false;
+          panel.hidden = true;
+          return;
+        }
+
+        const { data } = await supabaseClient.auth.getSession();
+        currentSession = data.session;
+        loginRequired.hidden = Boolean(currentSession);
+        panel.hidden = !currentSession;
+        if (currentSession) await loadMyListings();
+      }
+
+      refreshButton.addEventListener("click", loadMyListings);
+      grid.addEventListener("click", (event) => {
+        const toggleId = event.target.dataset.toggle;
+        const soldId = event.target.dataset.sold;
+        const deleteId = event.target.dataset.delete;
+        if (toggleId) toggleListing(toggleId);
+        if (soldId) markListingSold(soldId);
+        if (deleteId) deleteListing(deleteId);
+      });
+
+      if (canUseSupabase) {
+        supabaseClient.auth.onAuthStateChange((_event, session) => {
+          currentSession = session;
+          syncPage();
+        });
+      }
+      syncPage();
+
+      const themeToggle = document.querySelector("#themeToggle");
+      const savedTheme = localStorage.getItem("theme");
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const activeTheme = savedTheme || (prefersDark ? "dark" : "light");
+      document.documentElement.dataset.theme = activeTheme;
+      themeToggle.checked = activeTheme === "dark";
+      themeToggle.addEventListener("change", () => {
+        const nextTheme = themeToggle.checked ? "dark" : "light";
+        document.documentElement.dataset.theme = nextTheme;
+        localStorage.setItem("theme", nextTheme);
+      });
+    </script>
+  </body>
+</html>
