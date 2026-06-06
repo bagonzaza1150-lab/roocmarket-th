@@ -147,8 +147,8 @@
                 </label>
                 <label class="post-field">
                   <span>Server</span>
-                  <select id="listingServer">
-                    <option>ทั้งหมด</option>
+                  <select id="listingServer" required>
+                    <option value="">เลือก Server</option>
                     <option>Prontera 1</option>
                     <option>Prontera 2</option>
                     <option>Prontera 3</option>
@@ -184,7 +184,6 @@
 
               <div class="post-checks">
                 <label><input id="middlemanCheck" type="checkbox" checked /> รองรับ Middleman</label>
-                <label><input id="verifiedCheck" type="checkbox" checked /> ยืนยันผู้ขายแล้ว</label>
                 <label><input id="readyCheck" type="checkbox" /> พร้อมเทรดวันนี้</label>
               </div>
             </div>
@@ -207,7 +206,6 @@
                 </div>
                 <div class="listing-meta">
                   <span id="previewServer">ทั้งหมด</span>
-                  <span class="verified" id="previewVerified">Verified</span>
                   <span class="mvp" id="previewCategory">MVP Cards</span>
                 </div>
                 <h3 id="previewTitle">MVP Card Slot</h3>
@@ -366,13 +364,11 @@
       const listingContact = document.querySelector("#listingContact");
       const listingDescription = document.querySelector("#listingDescription");
       const middlemanCheck = document.querySelector("#middlemanCheck");
-      const verifiedCheck = document.querySelector("#verifiedCheck");
       const readyCheck = document.querySelector("#readyCheck");
       const postForm = document.querySelector("#postForm");
       const previewMedia = document.querySelector("#previewMedia");
       const previewImage = document.querySelector("#previewImage");
       const previewServer = document.querySelector("#previewServer");
-      const previewVerified = document.querySelector("#previewVerified");
       const previewCategory = document.querySelector("#previewCategory");
       const previewTitle = document.querySelector("#previewTitle");
       const previewDescription = document.querySelector("#previewDescription");
@@ -434,11 +430,10 @@
 
         previewTitle.textContent = title;
         previewDescription.textContent = tags.length ? `${detail} · ${tags.join(" · ")}` : detail;
-        previewPrice.textContent = formatPrice(listingPrice.value || item.price);
-        previewServer.textContent = listingServer.value;
+        previewPrice.textContent = formatPrice(listingPrice.value);
+        previewServer.textContent = listingServer.value || "เลือก Server";
         previewCategory.textContent = group.label;
         previewCategory.className = activeCategory === "mvp" ? "mvp" : "";
-        previewVerified.hidden = !verifiedCheck.checked;
         setPreviewImage(image, group.mediaClass);
       }
 
@@ -552,10 +547,23 @@
           return;
         }
 
+        if (!listingServer.value) {
+          setPostMessage("กรุณาเลือก Server ก่อนเผยแพร่ประกาศ", true);
+          listingServer.focus();
+          return;
+        }
+
         setPostMessage("กำลังเผยแพร่ประกาศ...");
 
         try {
           const isPremiumSeller = await getPremiumStatus(currentSession);
+          const activeLimit = isPremiumSeller ? 5 : 2;
+          const activeCount = await getActiveListingCount(currentSession);
+
+          if (activeCount >= activeLimit) {
+            setPostMessage(`บัญชี${isPremiumSeller ? " Premium" : "ทั่วไป"}ลงประกาศที่กำลังแสดงได้สูงสุด ${activeLimit} รายการ กรุณาปิดประกาศเก่าก่อน`, true);
+            return;
+          }
 
           if (activeCategory === "account") {
             const uploaded = await uploadAccountListingImage(accountImageInput.files && accountImageInput.files[0]);
@@ -579,10 +587,10 @@
             contact: listingContact.value.trim() || getDiscordProfileUrl(currentSession),
             description,
             middleman: middlemanCheck.checked,
-            verified_seller: verifiedCheck.checked,
             ready_today: readyCheck.checked,
             active: true,
-            sale_status: "active"
+            sale_status: "active",
+            expires_at: getExpiryIso(isPremiumSeller)
           });
 
           if (error) throw error;
@@ -618,7 +626,7 @@
         syncPreview();
       });
 
-      [listingTitle, characterName, listingPrice, listingServer, listingDescription, middlemanCheck, verifiedCheck, readyCheck].forEach((field) => {
+      [listingTitle, characterName, listingPrice, listingServer, listingDescription, middlemanCheck, readyCheck].forEach((field) => {
         field.addEventListener("input", syncPreview);
         field.addEventListener("change", syncPreview);
       });
@@ -690,6 +698,24 @@
           .maybeSingle();
         if (error) return false;
         return Boolean(data?.active);
+      }
+
+      async function getActiveListingCount(session) {
+        const now = new Date().toISOString();
+        const { count, error } = await supabaseClient
+          .from("marketplace_listings")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", session.user.id)
+          .eq("active", true)
+          .or(`expires_at.is.null,expires_at.gte.${now}`);
+        if (error) throw error;
+        return count || 0;
+      }
+
+      function getExpiryIso(isPremiumSeller) {
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + (isPremiumSeller ? 7 : 2));
+        return expiresAt.toISOString();
       }
 
       function isAdminSession(session) {

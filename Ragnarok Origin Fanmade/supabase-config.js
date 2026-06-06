@@ -25,7 +25,8 @@ window.ROOC_SUPABASE = {
   }
 
   async function fetchPublicListings() {
-    const response = await fetch(`${config.url}/rest/v1/marketplace_listings?select=*&active=eq.true&order=created_at.desc&limit=200`, {
+    const now = encodeURIComponent(new Date().toISOString());
+    const response = await fetch(`${config.url}/rest/v1/marketplace_listings?select=*&active=eq.true&or=(expires_at.is.null,expires_at.gte.${now})&order=created_at.desc&limit=200`, {
       headers: {
         apikey: config.anonKey,
         Authorization: `Bearer ${config.anonKey}`
@@ -71,7 +72,6 @@ window.ROOC_SUPABASE = {
       category: document.querySelector("#categoryFilter"),
       price: document.querySelector("#priceFilter"),
       sort: document.querySelector("#sortFilter"),
-      verified: document.querySelector("#verifiedFilter"),
       middleman: document.querySelector("#middlemanFilter"),
       ready: document.querySelector("#readyFilter"),
       reset: document.querySelector("#resetFilters"),
@@ -87,7 +87,6 @@ window.ROOC_SUPABASE = {
       category: controls.category?.value || "all",
       price: controls.price?.value || "all",
       sort: controls.sort?.value || "newest",
-      verified: Boolean(controls.verified?.checked),
       middleman: Boolean(controls.middleman?.checked),
       ready: Boolean(controls.ready?.checked)
     };
@@ -121,7 +120,6 @@ window.ROOC_SUPABASE = {
       if (filters.server !== "ทั้งหมด" && listing.server_name !== filters.server) return false;
       if (filters.category !== "all" && listing.category !== filters.category) return false;
       if (!listingMatchesPrice(listing, filters.price)) return false;
-      if (filters.verified && !listing.verified_seller) return false;
       if (filters.middleman && !listing.middleman) return false;
       if (filters.ready && !listing.ready_today) return false;
       return true;
@@ -130,6 +128,9 @@ window.ROOC_SUPABASE = {
     return filtered.sort((a, b) => {
       if (filters.sort === "price-low") return parsePrice(a.price_text) - parsePrice(b.price_text);
       if (filters.sort === "price-high") return parsePrice(b.price_text) - parsePrice(a.price_text);
+      if (Boolean(b.seller_is_premium) !== Boolean(a.seller_is_premium)) {
+        return Number(Boolean(b.seller_is_premium)) - Number(Boolean(a.seller_is_premium));
+      }
       return new Date(b.created_at || 0) - new Date(a.created_at || 0);
     });
   }
@@ -190,7 +191,6 @@ window.ROOC_SUPABASE = {
       const sellerAvatar = listing.seller_avatar_url || "assets/category-icons/account-b.png";
       const badges = [
         `<span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
-        listing.verified_seller ? '<span class="verified">Verified</span>' : "",
         listing.ready_today ? '<span class="fast">Fast Deal</span>' : "",
         listing.category === "mvp" ? '<span class="mvp">MVP</span>' : ""
       ].filter(Boolean).join("");
@@ -269,7 +269,6 @@ window.ROOC_SUPABASE = {
     controls.search?.addEventListener("input", rerender);
     controls.sort?.addEventListener("change", rerender);
     controls.price?.addEventListener("change", rerender);
-    controls.verified?.addEventListener("change", rerender);
     controls.middleman?.addEventListener("change", rerender);
     controls.ready?.addEventListener("change", rerender);
 
@@ -301,7 +300,6 @@ window.ROOC_SUPABASE = {
       syncCategoryUi("all");
       if (controls.price) controls.price.value = "all";
       if (controls.sort) controls.sort.value = "newest";
-      if (controls.verified) controls.verified.checked = false;
       if (controls.middleman) controls.middleman.checked = false;
       if (controls.ready) controls.ready.checked = false;
       rerender();

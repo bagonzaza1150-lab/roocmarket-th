@@ -38,6 +38,7 @@ create table if not exists public.marketplace_listings (
   ready_today boolean not null default false,
   active boolean not null default true,
   sale_status text not null default 'active' check (sale_status in ('active', 'closed', 'sold')),
+  expires_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -110,6 +111,9 @@ add column if not exists seller_is_premium boolean not null default false;
 
 alter table public.marketplace_listings
 add column if not exists sale_status text not null default 'active';
+
+alter table public.marketplace_listings
+add column if not exists expires_at timestamptz;
 
 update public.marketplace_listings
 set sale_status = case
@@ -323,7 +327,7 @@ create policy "Authenticated users can insert marketplace listings"
 on public.marketplace_listings
 for insert
 to authenticated
-with check (active = true and sale_status = 'active' and auth.uid() = user_id);
+with check (active = true and sale_status = 'active' and expires_at is not null and auth.uid() = user_id);
 
 drop policy if exists "Authenticated admins can update marketplace listings" on public.marketplace_listings;
 create policy "Authenticated admins can update marketplace listings"

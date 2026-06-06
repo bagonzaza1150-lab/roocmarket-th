@@ -219,9 +219,8 @@
           </label>
 
           <div class="check-list">
-            <label><input id="verifiedFilter" type="checkbox" /> ผู้ขายยืนยันแล้ว</label>
-            <label><input id="middlemanFilter" type="checkbox" /> รองรับ Middleman</label>
-            <label><input id="readyFilter" type="checkbox" /> พร้อมเทรดวันนี้</label>
+              <label><input id="middlemanFilter" type="checkbox" /> รองรับ Middleman</label>
+              <label><input id="readyFilter" type="checkbox" /> พร้อมเทรดวันนี้</label>
           </div>
         </aside>
 
@@ -443,7 +442,6 @@
             const contact = listing.contact || "";
             const badges = [
               `<span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
-              listing.verified_seller ? '<span class="verified">Verified</span>' : "",
               listing.ready_today ? '<span class="fast">Fast Deal</span>' : "",
               listing.category === "mvp" ? '<span class="mvp">MVP</span>' : ""
             ].filter(Boolean).join("");
