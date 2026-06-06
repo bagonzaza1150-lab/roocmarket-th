@@ -37,7 +37,7 @@ window.ROOC_SUPABASE = {
   }
 
   async function fetchSoldListings() {
-    const response = await fetch(`${config.url}/rest/v1/marketplace_listings?select=*&active=eq.false&order=updated_at.desc&limit=12`, {
+    const response = await fetch(`${config.url}/rest/v1/marketplace_listings?select=*&active=eq.false&sale_status=eq.sold&order=updated_at.desc&limit=12`, {
       headers: {
         apikey: config.anonKey,
         Authorization: `Bearer ${config.anonKey}`
@@ -227,8 +227,7 @@ window.ROOC_SUPABASE = {
       return;
     }
 
-    count.textContent = `${listings.length.toLocaleString("th-TH")} รายการ`;
-    scroller.innerHTML = listings.map((listing) => {
+    const cards = listings.map((listing) => {
       const title = listing.title || listing.item_name || "ประกาศขาย";
       const price = listing.price_text ? `฿ ${listing.price_text}` : "";
       return `
@@ -242,6 +241,9 @@ window.ROOC_SUPABASE = {
         </article>
       `;
     }).join("");
+    count.textContent = `${listings.length.toLocaleString("th-TH")} รายการ`;
+    scroller.classList.toggle("is-static", listings.length <= 2);
+    scroller.innerHTML = `<div class="sold-track">${cards}${listings.length > 2 ? cards : ""}</div>`;
     section.hidden = false;
   }
 

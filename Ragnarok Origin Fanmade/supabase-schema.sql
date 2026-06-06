@@ -33,12 +33,13 @@ create table if not exists public.marketplace_listings (
   verified_seller boolean not null default false,
   ready_today boolean not null default false,
   active boolean not null default true,
+  sale_status text not null default 'active' check (sale_status in ('active', 'closed', 'sold')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
 create index if not exists marketplace_listings_public_idx
-  on public.marketplace_listings (active, category, created_at desc);
+  on public.marketplace_listings (active, sale_status, category, created_at desc);
 
 create table if not exists public.marketplace_admins (
   user_id uuid primary key references auth.users(id) on delete cascade,
@@ -62,7 +63,30 @@ on conflict (user_id) do nothing;
 -- where user_id is null;
 
 alter table public.marketplace_listings
-  add column if not exists user_id uuid references auth.users(id) on delete set null;
+add column if not exists user_id uuid references auth.users(id) on delete set null;
+
+alter table public.marketplace_listings
+add column if not exists sale_status text not null default 'active';
+
+update public.marketplace_listings
+set sale_status = case
+  when active = true then 'active'
+  when active = false and sale_status = 'active' then 'closed'
+  else sale_status
+end;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'marketplace_listings_sale_status_check'
+  ) then
+    alter table public.marketplace_listings
+    add constraint marketplace_listings_sale_status_check
+    check (sale_status in ('active', 'closed', 'sold'));
+  end if;
+end $$;
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -176,7 +200,7 @@ create policy "Authenticated users can insert marketplace listings"
 on public.marketplace_listings
 for insert
 to authenticated
-with check (active = true and auth.uid() = user_id);
+with check (active = true and sale_status = 'active' and auth.uid() = user_id);
 
 drop policy if exists "Authenticated admins can update marketplace listings" on public.marketplace_listings;
 create policy "Authenticated admins can update marketplace listings"

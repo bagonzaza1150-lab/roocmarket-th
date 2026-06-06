@@ -46,7 +46,7 @@
         <div>
           <p class="eyebrow">My Listings</p>
           <h2>ประกาศของฉัน</h2>
-          <p>จัดการประกาศที่ลงขายด้วยบัญชี Discord นี้ ปิดประกาศที่ขายแล้วหรือประกาศที่ไม่ต้องการแสดงบนหน้าแรก</p>
+          <p>จัดการประกาศที่ลงขายด้วยบัญชี Discord นี้ ปิดประกาศที่ไม่ต้องการแสดง หรือทำเครื่องหมายว่าขายออกแล้ว</p>
         </div>
         <a class="btn btn-primary" href="post.html">ลงประกาศใหม่</a>
       </section>
@@ -107,27 +107,38 @@
         }[category] || category;
       }
 
+      function listingStatus(listing) {
+        if (listing.sale_status === "sold") return { label: "ขายออกแล้ว", className: "mvp" };
+        if (!listing.active || listing.sale_status === "closed") return { label: "ปิดประกาศ", className: "fast" };
+        return { label: "กำลังแสดง", className: "verified" };
+      }
+
       function renderListings(listings) {
         emptyState.hidden = listings.length > 0;
-        grid.innerHTML = listings.map((listing) => `
-          <article class="my-listing-card" data-id="${escapeHtml(listing.id)}">
-            <img src="${escapeHtml(listing.image_url || "assets/category-icons/mvp-c.png")}" alt="" />
-            <div>
-              <div class="listing-meta">
-                <span>${escapeHtml(categoryLabel(listing.category))}</span>
-                <span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>
-                ${listing.active ? '<span class="verified">กำลังแสดง</span>' : '<span class="mvp">ปิดประกาศ</span>'}
+        grid.innerHTML = listings.map((listing) => {
+          const status = listingStatus(listing);
+          const canMarkSold = listing.sale_status !== "sold";
+          return `
+            <article class="my-listing-card" data-id="${escapeHtml(listing.id)}" data-active="${listing.active ? "true" : "false"}" data-status="${escapeHtml(listing.sale_status || "active")}">
+              <img src="${escapeHtml(listing.image_url || "assets/category-icons/mvp-c.png")}" alt="" />
+              <div>
+                <div class="listing-meta">
+                  <span>${escapeHtml(categoryLabel(listing.category))}</span>
+                  <span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>
+                  <span class="${status.className}">${status.label}</span>
+                </div>
+                <h3>${escapeHtml(listing.title || listing.item_name || "ประกาศขาย")}</h3>
+                <p>${escapeHtml(listing.description || "")}</p>
+                <strong>฿ ${escapeHtml(listing.price_text || "0")}</strong>
               </div>
-              <h3>${escapeHtml(listing.title || listing.item_name || "ประกาศขาย")}</h3>
-              <p>${escapeHtml(listing.description || "")}</p>
-              <strong>฿ ${escapeHtml(listing.price_text || "0")}</strong>
-            </div>
-            <div class="my-listing-actions">
-              <button class="btn btn-small" type="button" data-toggle="${escapeHtml(listing.id)}">${listing.active ? "ปิดประกาศ" : "เปิดประกาศ"}</button>
-              <button class="btn btn-small my-delete" type="button" data-delete="${escapeHtml(listing.id)}">ลบ</button>
-            </div>
-          </article>
-        `).join("");
+              <div class="my-listing-actions">
+                <button class="btn btn-small" type="button" data-toggle="${escapeHtml(listing.id)}">${listing.active ? "ปิดประกาศ" : "เปิดประกาศ"}</button>
+                ${canMarkSold ? `<button class="btn btn-small btn-sold" type="button" data-sold="${escapeHtml(listing.id)}">ขายออกแล้ว</button>` : ""}
+                <button class="btn btn-small my-delete" type="button" data-delete="${escapeHtml(listing.id)}">ลบ</button>
+              </div>
+            </article>
+          `;
+        }).join("");
       }
 
       async function loadMyListings() {
@@ -150,11 +161,34 @@
 
       async function toggleListing(id) {
         const card = grid.querySelector(`[data-id="${CSS.escape(id)}"]`);
-        const isActive = card?.querySelector(".verified") !== null;
+        const isActive = card?.dataset.active === "true";
         setMessage("กำลังอัปเดตประกาศ...");
+        const nextActive = !isActive;
         const { data, error } = await supabaseClient
           .from("marketplace_listings")
-          .update({ active: !isActive })
+          .update({ active: nextActive, sale_status: nextActive ? "active" : "closed" })
+          .eq("id", id)
+          .select("id");
+
+        if (error) {
+          setMessage(error.message, true);
+          return;
+        }
+
+        if (!data || !data.length) {
+          setMessage("อัปเดตไม่ได้: ประกาศนี้อาจเป็นโพสต์เก่าที่ยังไม่ได้ผูกกับบัญชี Discord ของคุณ", true);
+          return;
+        }
+
+        await loadMyListings();
+      }
+
+      async function markListingSold(id) {
+        if (!confirm("ทำเครื่องหมายว่าประกาศนี้ขายออกแล้ว?")) return;
+        setMessage("กำลังย้ายไปขายออกแล้ว...");
+        const { data, error } = await supabaseClient
+          .from("marketplace_listings")
+          .update({ active: false, sale_status: "sold" })
           .eq("id", id)
           .select("id");
 
@@ -210,8 +244,10 @@
       refreshButton.addEventListener("click", loadMyListings);
       grid.addEventListener("click", (event) => {
         const toggleId = event.target.dataset.toggle;
+        const soldId = event.target.dataset.sold;
         const deleteId = event.target.dataset.delete;
         if (toggleId) toggleListing(toggleId);
+        if (soldId) markListingSold(soldId);
         if (deleteId) deleteListing(deleteId);
       });
 
