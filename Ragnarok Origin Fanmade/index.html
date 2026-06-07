@@ -283,6 +283,7 @@
         <div class="contact-modal-item">
           <span>Discord / ช่องทางติดต่อ</span>
           <a class="seller-profile-button" id="sellerContactLink" href="#" target="_blank" rel="noopener">เปิดโปรไฟล์ผู้ขาย</a>
+          <button class="seller-copy-button" id="sellerContactCopy" type="button" hidden>คัดลอก Discord ID</button>
           <strong id="sellerContactValue">-</strong>
         </div>
         <p id="sellerContactNote">ติดต่อผู้ขายโดยตรง และใช้ Middleman สำหรับดีลราคาสูง</p>
@@ -454,6 +455,8 @@
             const title = listing.title || listing.item_name || "ประกาศขาย";
             const contact = listing.contact || "";
             const profileUrl = getListingProfileUrl(listing);
+            const discordId = getListingDiscordId(listing);
+            const sellerName = listing.seller_name || "ผู้ขาย ROOC";
             const badges = [
               `<span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
               listing.ready_today ? '<span class="fast">Fast Deal</span>' : "",
@@ -473,7 +476,7 @@
                 <p>${escapeHtml(description)}</p>
                 <div class="price-row">
                   <strong>฿ ${escapeHtml(listing.price_text || "0")}</strong>
-                  <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}">ติดต่อผู้ขาย</button>
+                  <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">ติดต่อผู้ขาย</button>
                 </div>
               </article>
             `;
@@ -495,6 +498,8 @@
       const sellerContactItem = document.querySelector("#sellerContactItem");
       const sellerContactValue = document.querySelector("#sellerContactValue");
       const sellerContactLink = document.querySelector("#sellerContactLink");
+      const sellerContactCopy = document.querySelector("#sellerContactCopy");
+      let activeSellerDiscordId = "";
 
       function getContactProfileUrl(contact) {
         const value = String(contact || "").trim();
@@ -506,21 +511,41 @@
         return "";
       }
 
-      function getListingProfileUrl(listing) {
+      function getDiscordIdFromContact(contact) {
+        const value = String(contact || "").trim();
+        if (/^\d{16,22}$/.test(value)) return value;
+        return value.match(/(?:discord(?:app)?\.com\/users\/)(\d{16,22})/i)?.[1] || "";
+      }
+
+      function getListingDiscordId(listing) {
         const discordId = String(listing.seller_discord_id || "").trim();
-        if (/^\d{16,22}$/.test(discordId)) return `https://discord.com/users/${discordId}`;
+        if (/^\d{16,22}$/.test(discordId)) return discordId;
+        return getDiscordIdFromContact(listing.contact);
+      }
+
+      function getListingProfileUrl(listing) {
+        const discordId = getListingDiscordId(listing);
+        if (discordId) return `https://discord.com/users/${discordId}`;
         return getContactProfileUrl(listing.contact);
       }
 
-      function openSellerContact(title, contact, profileUrlOverride = "") {
-        if (!sellerContactModal || !sellerContactItem || !sellerContactValue || !sellerContactLink) return;
+      function openSellerContact(title, contact, profileUrlOverride = "", sellerName = "", discordIdOverride = "") {
+        if (!sellerContactModal || !sellerContactItem || !sellerContactValue || !sellerContactLink || !sellerContactCopy) return;
+        const discordId = String(discordIdOverride || getDiscordIdFromContact(profileUrlOverride) || getDiscordIdFromContact(contact)).trim();
         const profileUrl = profileUrlOverride || getContactProfileUrl(contact);
+        const discordAppUrl = discordId ? `discord://-/users/${discordId}` : "";
+        activeSellerDiscordId = discordId;
         sellerContactItem.textContent = title || "ประกาศขาย";
-        sellerContactValue.textContent = profileUrl
+        sellerContactValue.textContent = discordId
+          ? `${sellerName ? `${sellerName} · ` : ""}Discord ID: ${discordId}`
+          : profileUrl
           ? "กดปุ่มด้านบนเพื่อไปหน้าโปรไฟล์ผู้ขาย"
           : (contact || "ผู้ขายยังไม่ได้ระบุช่องทางติดต่อ");
-        sellerContactLink.hidden = !profileUrl;
-        sellerContactLink.href = profileUrl || "#";
+        sellerContactLink.hidden = !(discordAppUrl || profileUrl);
+        sellerContactLink.href = discordAppUrl || profileUrl || "#";
+        sellerContactLink.textContent = discordAppUrl ? "เปิดใน Discord" : "เปิดโปรไฟล์ผู้ขาย";
+        sellerContactCopy.hidden = !discordId;
+        sellerContactCopy.textContent = "คัดลอก Discord ID";
         sellerContactModal.hidden = false;
         document.body.classList.add("modal-open");
       }
@@ -534,7 +559,19 @@
       document.addEventListener("click", (event) => {
         const contactButton = event.target.closest(".contact-seller-button");
         if (contactButton) {
-          openSellerContact(contactButton.dataset.title, contactButton.dataset.contact, contactButton.dataset.profileUrl);
+          openSellerContact(
+            contactButton.dataset.title,
+            contactButton.dataset.contact,
+            contactButton.dataset.profileUrl,
+            contactButton.dataset.sellerName,
+            contactButton.dataset.discordId
+          );
+          return;
+        }
+
+        if (event.target.closest("#sellerContactCopy") && activeSellerDiscordId) {
+          navigator.clipboard?.writeText(activeSellerDiscordId);
+          sellerContactCopy.textContent = "คัดลอกแล้ว";
           return;
         }
 

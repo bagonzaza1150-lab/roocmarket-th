@@ -96,9 +96,21 @@ window.ROOC_SUPABASE = {
   }
 
   function getListingProfileUrl(listing) {
-    const discordId = String(listing.seller_discord_id || "").trim();
-    if (/^\d{16,22}$/.test(discordId)) return `https://discord.com/users/${discordId}`;
+    const discordId = getListingDiscordId(listing);
+    if (discordId) return `https://discord.com/users/${discordId}`;
     return getContactProfileUrl(listing.contact);
+  }
+
+  function getDiscordIdFromContact(contact) {
+    const value = String(contact || "").trim();
+    if (/^\d{16,22}$/.test(value)) return value;
+    return value.match(/(?:discord(?:app)?\.com\/users\/)(\d{16,22})/i)?.[1] || "";
+  }
+
+  function getListingDiscordId(listing) {
+    const discordId = String(listing.seller_discord_id || "").trim();
+    if (/^\d{16,22}$/.test(discordId)) return discordId;
+    return getDiscordIdFromContact(listing.contact);
   }
 
   function getFilterControls() {
@@ -235,6 +247,7 @@ window.ROOC_SUPABASE = {
       const mediaClass = listing.category === "mvp" ? "item-media card-media" : "item-media";
       const contact = listing.contact || "";
       const profileUrl = getListingProfileUrl(listing);
+      const discordId = getListingDiscordId(listing);
       const sellerName = listing.seller_name || "ผู้ขาย ROOC";
       const sellerAvatar = listing.seller_avatar_url || "assets/category-icons/account-b.png";
       const badges = [
@@ -261,7 +274,7 @@ window.ROOC_SUPABASE = {
           <p>${escapeHtml(description)}</p>
           <div class="price-row">
             <strong>฿ ${escapeHtml(listing.price_text || "0")}</strong>
-            <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}">ติดต่อผู้ขาย</button>
+            <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">ติดต่อผู้ขาย</button>
           </div>
         </article>
       `;

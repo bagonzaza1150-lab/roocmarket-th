@@ -1314,6 +1314,20 @@ h1 {
   display: none;
 }
 
+.seller-copy-button {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper-soft);
+  color: var(--blue);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.seller-copy-button[hidden] {
+  display: none;
+}
+
 .premium-page {
   padding: 48px 0 64px;
 }
