@@ -81,6 +81,20 @@ create table if not exists public.marketplace_premium_users (
 create index if not exists marketplace_premium_users_active_idx
   on public.marketplace_premium_users (active, display_name);
 
+create table if not exists public.marketplace_banned_users (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  discord_id text not null default '',
+  display_name text not null default '',
+  reason text not null default '',
+  active boolean not null default true,
+  banned_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists marketplace_banned_users_active_idx
+  on public.marketplace_banned_users (active, display_name);
+
 create table if not exists public.marketplace_site_settings (
   key text primary key,
   value jsonb not null default '{}'::jsonb,
@@ -200,6 +214,11 @@ create trigger marketplace_premium_users_set_updated_at
 before update on public.marketplace_premium_users
 for each row execute function public.set_updated_at();
 
+drop trigger if exists marketplace_banned_users_set_updated_at on public.marketplace_banned_users;
+create trigger marketplace_banned_users_set_updated_at
+before update on public.marketplace_banned_users
+for each row execute function public.set_updated_at();
+
 drop trigger if exists marketplace_site_settings_set_updated_at on public.marketplace_site_settings;
 create trigger marketplace_site_settings_set_updated_at
 before update on public.marketplace_site_settings
@@ -210,6 +229,7 @@ alter table public.marketplace_listings enable row level security;
 alter table public.marketplace_admins enable row level security;
 alter table public.marketplace_profiles enable row level security;
 alter table public.marketplace_premium_users enable row level security;
+alter table public.marketplace_banned_users enable row level security;
 alter table public.marketplace_site_settings enable row level security;
 
 create or replace function public.is_market_admin()
@@ -247,6 +267,7 @@ grant all privileges on table public.marketplace_listings to authenticated;
 grant select on table public.marketplace_admins to authenticated;
 grant all privileges on table public.marketplace_profiles to authenticated;
 grant all privileges on table public.marketplace_premium_users to authenticated;
+grant all privileges on table public.marketplace_banned_users to authenticated;
 grant select on table public.marketplace_site_settings to anon;
 grant all privileges on table public.marketplace_site_settings to authenticated;
 grant execute on function public.is_market_admin() to anon, authenticated;
@@ -349,6 +370,35 @@ for delete
 to authenticated
 using (public.is_market_admin());
 
+drop policy if exists "Authenticated users can read own ban status" on public.marketplace_banned_users;
+create policy "Authenticated users can read own ban status"
+on public.marketplace_banned_users
+for select
+to authenticated
+using (auth.uid() = user_id or public.is_market_admin());
+
+drop policy if exists "Authenticated admins can insert banned users" on public.marketplace_banned_users;
+create policy "Authenticated admins can insert banned users"
+on public.marketplace_banned_users
+for insert
+to authenticated
+with check (public.is_market_admin());
+
+drop policy if exists "Authenticated admins can update banned users" on public.marketplace_banned_users;
+create policy "Authenticated admins can update banned users"
+on public.marketplace_banned_users
+for update
+to authenticated
+using (public.is_market_admin())
+with check (public.is_market_admin());
+
+drop policy if exists "Authenticated admins can delete banned users" on public.marketplace_banned_users;
+create policy "Authenticated admins can delete banned users"
+on public.marketplace_banned_users
+for delete
+to authenticated
+using (public.is_market_admin());
+
 drop policy if exists "Public can read site settings" on public.marketplace_site_settings;
 create policy "Public can read site settings"
 on public.marketplace_site_settings
@@ -392,7 +442,18 @@ create policy "Authenticated users can insert marketplace listings"
 on public.marketplace_listings
 for insert
 to authenticated
-with check (active = true and sale_status = 'active' and expires_at is not null and auth.uid() = user_id);
+with check (
+  active = true
+  and sale_status = 'active'
+  and expires_at is not null
+  and auth.uid() = user_id
+  and not exists (
+    select 1
+    from public.marketplace_banned_users banned
+    where banned.user_id = auth.uid()
+      and banned.active = true
+  )
+);
 
 drop policy if exists "Authenticated admins can update marketplace listings" on public.marketplace_listings;
 create policy "Authenticated admins can update marketplace listings"

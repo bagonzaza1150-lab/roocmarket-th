@@ -478,7 +478,13 @@ h1 {
   min-width: 0;
   border: 0;
   outline: 0;
+  background: transparent;
   color: var(--ink);
+  caret-color: var(--blue);
+}
+
+.search-input input::placeholder {
+  color: color-mix(in srgb, var(--muted) 78%, transparent);
 }
 
 .search-card label,
@@ -2363,10 +2369,52 @@ h1 {
 .admin-item-actions {
   display: flex;
   gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .admin-delete {
   color: #d24646;
+}
+
+.admin-ban {
+  color: #ffbe3d;
+}
+
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.admin-pagination span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.admin-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.listing-admin-panel {
+  margin-top: 18px;
+}
+
+.admin-listing-card,
+.banned-user-card {
+  align-items: start;
+}
+
+.banned-user-list {
+  margin-top: 18px;
+}
+
+.banned-user-list > .eyebrow {
+  margin: 0 0 10px;
 }
 
 .admin-empty {

@@ -158,6 +158,21 @@
             </select>
           </div>
           <div class="admin-items" id="adminItems"></div>
+          <div class="admin-pagination" id="adminItemsPagination"></div>
+        </section>
+
+        <section class="admin-list-panel listing-admin-panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Listings</p>
+              <h2>จัดการประกาศและผู้ใช้</h2>
+            </div>
+            <button class="btn btn-light" id="refreshAdminListings" type="button">รีเฟรช</button>
+          </div>
+          <p class="admin-message" id="listingAdminMessage"></p>
+          <div class="admin-items" id="adminListings"></div>
+          <div class="admin-pagination" id="adminListingsPagination"></div>
+          <div class="admin-items banned-user-list" id="bannedUsers"></div>
         </section>
 
         <section class="admin-list-panel premium-admin-panel">
@@ -337,7 +352,13 @@
       const editorTitle = document.querySelector("#editorTitle");
       const editorMessage = document.querySelector("#editorMessage");
       const adminItems = document.querySelector("#adminItems");
+      const adminItemsPagination = document.querySelector("#adminItemsPagination");
       const adminCategoryFilter = document.querySelector("#adminCategoryFilter");
+      const adminListings = document.querySelector("#adminListings");
+      const adminListingsPagination = document.querySelector("#adminListingsPagination");
+      const refreshAdminListings = document.querySelector("#refreshAdminListings");
+      const listingAdminMessage = document.querySelector("#listingAdminMessage");
+      const bannedUsers = document.querySelector("#bannedUsers");
       const resetFormButton = document.querySelector("#resetFormButton");
       const itemImage = document.querySelector("#itemImage");
       const itemImagePreview = document.querySelector("#itemImagePreview");
@@ -386,7 +407,12 @@
       let itemCache = [];
       let premiumCache = [];
       let premiumProfileResults = [];
+      let listingCache = [];
+      let bannedCache = [];
       let currentSession = null;
+      let adminItemPage = 1;
+      let adminListingPage = 1;
+      const adminPageSize = 6;
 
       const premiumFields = {
         id: document.querySelector("#premiumUserId"),
@@ -437,13 +463,18 @@
         const filter = adminCategoryFilter.value;
         const visible = itemCache.filter((item) => filter === "all" || item.category === filter);
         adminItems.innerHTML = "";
+        adminItemsPagination.innerHTML = "";
 
         if (!visible.length) {
           adminItems.innerHTML = '<p class="admin-empty">ยังไม่มีไอเท็มในหมวดนี้</p>';
           return;
         }
 
-        visible.forEach((item) => {
+        const totalPages = Math.max(1, Math.ceil(visible.length / adminPageSize));
+        adminItemPage = Math.min(adminItemPage, totalPages);
+        const pageItems = visible.slice((adminItemPage - 1) * adminPageSize, adminItemPage * adminPageSize);
+
+        pageItems.forEach((item) => {
           const card = document.createElement("article");
           card.className = "admin-item-card";
           card.innerHTML = `
@@ -460,6 +491,19 @@
           `;
           adminItems.append(card);
         });
+        renderAdminPagination(adminItemsPagination, adminItemPage, totalPages, "item");
+      }
+
+      function renderAdminPagination(target, currentPage, totalPages, type) {
+        if (!target || totalPages <= 1) {
+          if (target) target.innerHTML = "";
+          return;
+        }
+        target.innerHTML = `
+          <button class="btn btn-small" type="button" data-page-type="${type}" data-page-dir="prev" ${currentPage === 1 ? "disabled" : ""}>ก่อนหน้า</button>
+          <span>หน้า ${currentPage} / ${totalPages}</span>
+          <button class="btn btn-small" type="button" data-page-type="${type}" data-page-dir="next" ${currentPage === totalPages ? "disabled" : ""}>ถัดไป</button>
+        `;
       }
 
       async function loadItems() {
@@ -526,6 +570,142 @@
 
         premiumCache = data || [];
         renderPremiumUsers();
+      }
+
+      function renderAdminListings() {
+        adminListings.innerHTML = "";
+        adminListingsPagination.innerHTML = "";
+        if (!listingCache.length) {
+          adminListings.innerHTML = '<p class="admin-empty">ยังไม่มีประกาศ</p>';
+          return;
+        }
+
+        const totalPages = Math.max(1, Math.ceil(listingCache.length / adminPageSize));
+        adminListingPage = Math.min(adminListingPage, totalPages);
+        const pageListings = listingCache.slice((adminListingPage - 1) * adminPageSize, adminListingPage * adminPageSize);
+        pageListings.forEach((listing) => {
+          const card = document.createElement("article");
+          card.className = "admin-item-card admin-listing-card";
+          card.innerHTML = `
+            <img src="${escapeHtml(listing.image_url || "assets/category-icons/mvp-c.png")}" alt="" />
+            <div>
+              <strong>${escapeHtml(listing.title || listing.item_name || "ประกาศขาย")}</strong>
+              <span>${escapeHtml(listing.seller_name || "ไม่ระบุผู้ขาย")} · ${escapeHtml(listing.category || "-")} · ${listing.active ? "กำลังแสดง" : "ปิดอยู่"}</span>
+              <small>฿ ${escapeHtml(listing.price_text || "0")} · ${escapeHtml(listing.server_name || "ทั้งหมด")}</small>
+            </div>
+            <div class="admin-item-actions">
+              <button class="btn btn-small admin-delete" type="button" data-listing-delete="${escapeHtml(listing.id)}">ลบประกาศ</button>
+              ${listing.user_id ? `<button class="btn btn-small admin-ban" type="button" data-user-ban="${escapeHtml(listing.user_id)}">แบนผู้ใช้</button>` : ""}
+            </div>
+          `;
+          adminListings.append(card);
+        });
+        renderAdminPagination(adminListingsPagination, adminListingPage, totalPages, "listing");
+      }
+
+      function renderBannedUsers() {
+        bannedUsers.innerHTML = "";
+        if (!bannedCache.length) {
+          bannedUsers.innerHTML = '<p class="admin-empty">ยังไม่มีผู้ใช้ถูกแบน</p>';
+          return;
+        }
+
+        bannedUsers.innerHTML = `
+          <p class="eyebrow">Banned Users</p>
+          ${bannedCache.map((user) => `
+            <article class="admin-item-card banned-user-card">
+              <img src="assets/category-icons/account-b.png" alt="" />
+              <div>
+                <strong>${escapeHtml(user.display_name || "Banned user")}</strong>
+                <span>${user.active ? "ถูกแบนอยู่" : "ปลดแบนแล้ว"} · ${escapeHtml(user.discord_id || "ไม่มี Discord ID")}</span>
+                <small>${escapeHtml(user.reason || "ไม่ระบุเหตุผล")}</small>
+              </div>
+              <div class="admin-item-actions">
+                <button class="btn btn-small" type="button" data-user-unban="${escapeHtml(user.user_id)}">ปลดแบน</button>
+              </div>
+            </article>
+          `).join("")}
+        `;
+      }
+
+      async function loadAdminListings() {
+        const { data, error } = await supabaseClient
+          .from("marketplace_listings")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(120);
+        if (error) {
+          setMessage(listingAdminMessage, error.message, true);
+          return;
+        }
+        listingCache = data || [];
+        renderAdminListings();
+      }
+
+      async function loadBannedUsers() {
+        const { data, error } = await supabaseClient
+          .from("marketplace_banned_users")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error) {
+          setMessage(listingAdminMessage, error.message, true);
+          return;
+        }
+        bannedCache = data || [];
+        renderBannedUsers();
+      }
+
+      async function deleteListingAdmin(listingId) {
+        if (!confirm("ลบประกาศนี้ออกจากระบบ?")) return;
+        const { error } = await supabaseClient
+          .from("marketplace_listings")
+          .delete()
+          .eq("id", listingId);
+        if (error) {
+          setMessage(listingAdminMessage, error.message, true);
+          return;
+        }
+        setMessage(listingAdminMessage, "ลบประกาศเรียบร้อย");
+        await loadAdminListings();
+      }
+
+      async function banUserAdmin(userId) {
+        const listing = listingCache.find((entry) => entry.user_id === userId) || {};
+        const reason = prompt(`เหตุผลที่แบน ${listing.seller_name || userId}`, "ละเมิดกติกาซื้อขาย") || "";
+        if (!reason) return;
+        const { error } = await supabaseClient
+          .from("marketplace_banned_users")
+          .upsert({
+            user_id: userId,
+            discord_id: listing.seller_discord_id || "",
+            display_name: listing.seller_name || "",
+            reason,
+            active: true,
+            banned_by: currentSession?.user?.id || null
+          }, { onConflict: "user_id" });
+        if (error) {
+          setMessage(listingAdminMessage, error.message, true);
+          return;
+        }
+        await supabaseClient
+          .from("marketplace_listings")
+          .update({ active: false, sale_status: "closed" })
+          .eq("user_id", userId);
+        setMessage(listingAdminMessage, "แบนผู้ใช้และปิดประกาศทั้งหมดแล้ว");
+        await Promise.all([loadAdminListings(), loadBannedUsers()]);
+      }
+
+      async function unbanUserAdmin(userId) {
+        const { error } = await supabaseClient
+          .from("marketplace_banned_users")
+          .update({ active: false })
+          .eq("user_id", userId);
+        if (error) {
+          setMessage(listingAdminMessage, error.message, true);
+          return;
+        }
+        setMessage(listingAdminMessage, "ปลดแบนผู้ใช้แล้ว");
+        await loadBannedUsers();
       }
 
       function editPremiumUser(userId) {
@@ -907,6 +1087,8 @@
           loadItems();
           loadPremiumUsers();
           loadSupportSettings();
+          loadAdminListings();
+          loadBannedUsers();
         }
       }
 
@@ -944,7 +1126,10 @@
         }
       });
       resetFormButton.addEventListener("click", resetEditor);
-      adminCategoryFilter.addEventListener("change", renderItems);
+      adminCategoryFilter.addEventListener("change", () => {
+        adminItemPage = 1;
+        renderItems();
+      });
       itemImage.addEventListener("change", () => {
         const file = itemImage.files && itemImage.files[0];
         if (file) itemImagePreview.src = URL.createObjectURL(file);
@@ -962,6 +1147,33 @@
         const deleteId = event.target.dataset.delete;
         if (editId) editItem(editId);
         if (deleteId) deleteItem(deleteId);
+      });
+      adminItemsPagination.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-page-type]");
+        if (!button || button.disabled) return;
+        adminItemPage += button.dataset.pageDir === "next" ? 1 : -1;
+        renderItems();
+      });
+      refreshAdminListings.addEventListener("click", () => {
+        adminListingPage = 1;
+        loadAdminListings();
+        loadBannedUsers();
+      });
+      adminListings.addEventListener("click", (event) => {
+        const deleteId = event.target.dataset.listingDelete;
+        const banId = event.target.dataset.userBan;
+        if (deleteId) deleteListingAdmin(deleteId);
+        if (banId) banUserAdmin(banId);
+      });
+      adminListingsPagination.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-page-type]");
+        if (!button || button.disabled) return;
+        adminListingPage += button.dataset.pageDir === "next" ? 1 : -1;
+        renderAdminListings();
+      });
+      bannedUsers.addEventListener("click", (event) => {
+        const userId = event.target.dataset.userUnban;
+        if (userId) unbanUserAdmin(userId);
       });
       premiumUsers.addEventListener("click", (event) => {
         const editId = event.target.dataset.premiumEdit;

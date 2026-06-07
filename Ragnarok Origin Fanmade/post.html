@@ -551,6 +551,11 @@
           return;
         }
 
+        if (await getBanStatus(currentSession)) {
+          setPostMessage("บัญชีนี้ถูกระงับสิทธิ์ลงประกาศ กรุณาติดต่อ Admin", true);
+          return;
+        }
+
         const item = getActiveItem();
         const title = listingTitle.value.trim() || item.name;
         const characterText = characterName.value.trim();
@@ -736,6 +741,18 @@
         if (!session) return false;
         const { data, error } = await supabaseClient
           .from("marketplace_premium_users")
+          .select("active")
+          .eq("user_id", session.user.id)
+          .eq("active", true)
+          .maybeSingle();
+        if (error) return false;
+        return Boolean(data?.active);
+      }
+
+      async function getBanStatus(session) {
+        if (!session) return false;
+        const { data, error } = await supabaseClient
+          .from("marketplace_banned_users")
           .select("active")
           .eq("user_id", session.user.id)
           .eq("active", true)
