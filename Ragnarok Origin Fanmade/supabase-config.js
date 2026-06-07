@@ -81,6 +81,20 @@ window.ROOC_SUPABASE = {
     };
   }
 
+  function toggleListingDescription(button) {
+    const card = button?.closest(".listing-card");
+    const description = card?.querySelector(".listing-description");
+    if (!description) return;
+
+    const expanded = button.dataset.expanded === "true";
+    description.textContent = expanded ? description.dataset.short || "" : description.dataset.full || "";
+    button.textContent = expanded ? "ดูเพิ่มเติม" : "ย่อข้อความ";
+    button.dataset.expanded = String(!expanded);
+    button.setAttribute("aria-expanded", String(!expanded));
+  }
+
+  window.toggleListingDescription = toggleListingDescription;
+
   async function fetchCachedJson(cacheKey, url, ttlMs, force = false) {
     if (!force) {
       try {
@@ -501,7 +515,7 @@ window.ROOC_SUPABASE = {
           <div class="listing-meta">${badges}</div>
           <h3>${escapeHtml(title)}</h3>
           <p class="listing-description" data-short="${escapeHtml(descriptionParts.shortText)}" data-full="${escapeHtml(descriptionParts.fullText)}">${escapeHtml(descriptionParts.shortText)}</p>
-          ${descriptionParts.truncated ? '<button class="description-toggle" type="button" data-description-toggle>ดูเพิ่มเติม</button>' : ""}
+          ${descriptionParts.truncated ? '<button class="description-toggle" type="button" data-description-toggle aria-expanded="false" onclick="event.stopPropagation(); window.toggleListingDescription?.(this)">ดูเพิ่มเติม</button>' : ""}
           <div class="price-row">
             <strong>฿ ${formatListingPrice(listing.price_text)}</strong>
             <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">${listingType === "buy" ? "ติดต่อผู้รับซื้อ" : listingType === "service" ? "ติดต่อผู้รับจ้าง" : "ติดต่อผู้ขาย"}</button>
@@ -937,14 +951,7 @@ window.ROOC_SUPABASE = {
 
     if (descriptionToggle) {
       event.preventDefault();
-      const card = descriptionToggle.closest(".listing-card");
-      const description = card?.querySelector(".listing-description");
-      if (description) {
-        const expanded = descriptionToggle.dataset.expanded === "true";
-        description.textContent = expanded ? description.dataset.short || "" : description.dataset.full || "";
-        descriptionToggle.textContent = expanded ? "ดูเพิ่มเติม" : "ย่อข้อความ";
-        descriptionToggle.dataset.expanded = String(!expanded);
-      }
+      toggleListingDescription(descriptionToggle);
       return;
     }
 
