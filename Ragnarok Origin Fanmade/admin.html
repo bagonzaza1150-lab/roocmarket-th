@@ -161,6 +161,39 @@
           <div class="admin-pagination" id="adminItemsPagination"></div>
         </section>
 
+        <section class="admin-list-panel server-admin-panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Servers</p>
+              <h2>จัดการรายชื่อ Server</h2>
+            </div>
+          </div>
+
+          <form class="server-admin-form" id="serverForm">
+            <input id="serverId" type="hidden" />
+            <div class="post-grid">
+              <label class="post-field">
+                <span>ชื่อ Server</span>
+                <input id="serverName" type="text" placeholder="เช่น Prontera 1" required />
+              </label>
+              <label class="post-field">
+                <span>ลำดับแสดงผล</span>
+                <input id="serverSortOrder" type="number" value="0" />
+              </label>
+            </div>
+            <div class="post-checks">
+              <label><input id="serverActive" type="checkbox" checked /> เปิดใช้งาน</label>
+            </div>
+            <div class="post-actions">
+              <button class="btn btn-light" id="serverResetButton" type="button">ล้างฟอร์ม</button>
+              <button class="btn btn-primary" type="submit">บันทึก Server</button>
+            </div>
+            <p class="admin-message" id="serverMessage"></p>
+          </form>
+
+          <div class="admin-items server-list" id="adminServers"></div>
+        </section>
+
         <section class="admin-list-panel listing-admin-panel">
           <div class="section-head">
             <div>
@@ -354,6 +387,10 @@
       const adminItems = document.querySelector("#adminItems");
       const adminItemsPagination = document.querySelector("#adminItemsPagination");
       const adminCategoryFilter = document.querySelector("#adminCategoryFilter");
+      const serverForm = document.querySelector("#serverForm");
+      const adminServers = document.querySelector("#adminServers");
+      const serverResetButton = document.querySelector("#serverResetButton");
+      const serverMessage = document.querySelector("#serverMessage");
       const adminListings = document.querySelector("#adminListings");
       const adminListingsPagination = document.querySelector("#adminListingsPagination");
       const refreshAdminListings = document.querySelector("#refreshAdminListings");
@@ -404,7 +441,15 @@
         active: document.querySelector("#itemActive")
       };
 
+      const serverFields = {
+        id: document.querySelector("#serverId"),
+        name: document.querySelector("#serverName"),
+        sortOrder: document.querySelector("#serverSortOrder"),
+        active: document.querySelector("#serverActive")
+      };
+
       let itemCache = [];
+      let serverCache = [];
       let premiumCache = [];
       let premiumProfileResults = [];
       let listingCache = [];
@@ -521,6 +566,116 @@
 
         itemCache = data || [];
         renderItems();
+      }
+
+      function resetServerForm() {
+        serverForm.reset();
+        serverFields.id.value = "";
+        serverFields.sortOrder.value = "0";
+        serverFields.active.checked = true;
+        setMessage(serverMessage, "");
+      }
+
+      function renderServers() {
+        adminServers.innerHTML = "";
+        if (!serverCache.length) {
+          adminServers.innerHTML = '<p class="admin-empty">ยังไม่มีรายชื่อ Server</p>';
+          return;
+        }
+
+        serverCache.forEach((server) => {
+          const card = document.createElement("article");
+          card.className = "admin-item-card server-item-card";
+          card.innerHTML = `
+            <div class="server-icon" aria-hidden="true">${escapeHtml(server.name).slice(0, 2).toUpperCase()}</div>
+            <div>
+              <strong>${escapeHtml(server.name)}</strong>
+              <span>${server.active ? "เปิดใช้งาน" : "ปิดใช้งาน"} · ลำดับ ${Number(server.sort_order || 0)}</span>
+            </div>
+            <div class="admin-item-actions">
+              <button class="btn btn-small" type="button" data-server-edit="${escapeHtml(server.id)}">แก้ไข</button>
+              <button class="btn btn-small admin-delete" type="button" data-server-delete="${escapeHtml(server.id)}">ลบ</button>
+            </div>
+          `;
+          adminServers.append(card);
+        });
+      }
+
+      async function loadServers() {
+        const { data, error } = await supabaseClient
+          .from("marketplace_servers")
+          .select("*")
+          .order("sort_order", { ascending: true })
+          .order("name", { ascending: true });
+
+        if (error) {
+          setMessage(serverMessage, error.message, true);
+          return;
+        }
+
+        serverCache = data || [];
+        renderServers();
+      }
+
+      function editServer(serverId) {
+        const server = serverCache.find((entry) => entry.id === serverId);
+        if (!server) return;
+        serverFields.id.value = server.id;
+        serverFields.name.value = server.name || "";
+        serverFields.sortOrder.value = server.sort_order || 0;
+        serverFields.active.checked = Boolean(server.active);
+        setMessage(serverMessage, "");
+        serverForm.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+
+      async function deleteServer(serverId) {
+        const server = serverCache.find((entry) => entry.id === serverId);
+        if (!server) return;
+        if (!confirm(`ลบ Server "${server.name}" ออกจากตัวเลือก?`)) return;
+
+        const { error } = await supabaseClient
+          .from("marketplace_servers")
+          .delete()
+          .eq("id", serverId);
+
+        if (error) {
+          setMessage(serverMessage, error.message, true);
+          return;
+        }
+
+        setMessage(serverMessage, "ลบ Server เรียบร้อย");
+        resetServerForm();
+        await loadServers();
+      }
+
+      async function saveServer(event) {
+        event.preventDefault();
+        const payload = {
+          name: serverFields.name.value.trim(),
+          sort_order: Number(serverFields.sortOrder.value || 0),
+          active: serverFields.active.checked
+        };
+
+        if (!payload.name) {
+          setMessage(serverMessage, "กรุณาใส่ชื่อ Server", true);
+          serverFields.name.focus();
+          return;
+        }
+
+        setMessage(serverMessage, "กำลังบันทึก Server...");
+        const request = serverFields.id.value
+          ? supabaseClient.from("marketplace_servers").update(payload).eq("id", serverFields.id.value)
+          : supabaseClient.from("marketplace_servers").insert(payload);
+        const { error } = await request;
+
+        if (error) {
+          setMessage(serverMessage, error.message, true);
+          return;
+        }
+
+        setMessage(serverMessage, "บันทึก Server เรียบร้อย");
+        resetServerForm();
+        await loadServers();
       }
 
       function resetPremiumForm() {
@@ -1085,6 +1240,7 @@
         }
         if (isAdmin) {
           loadItems();
+          loadServers();
           loadPremiumUsers();
           loadSupportSettings();
           loadAdminListings();
@@ -1115,8 +1271,10 @@
 
       logoutButton.addEventListener("click", () => supabaseClient.auth.signOut());
       itemForm.addEventListener("submit", saveItem);
+      serverForm.addEventListener("submit", saveServer);
       premiumForm.addEventListener("submit", savePremiumUser);
       supportSettingsForm.addEventListener("submit", saveSupportSettings);
+      serverResetButton.addEventListener("click", resetServerForm);
       premiumResetButton.addEventListener("click", resetPremiumForm);
       premiumSearchButton.addEventListener("click", searchPremiumProfiles);
       premiumSearchInput.addEventListener("keydown", (event) => {
@@ -1153,6 +1311,12 @@
         if (!button || button.disabled) return;
         adminItemPage += button.dataset.pageDir === "next" ? 1 : -1;
         renderItems();
+      });
+      adminServers.addEventListener("click", (event) => {
+        const editId = event.target.dataset.serverEdit;
+        const deleteId = event.target.dataset.serverDelete;
+        if (editId) editServer(editId);
+        if (deleteId) deleteServer(deleteId);
       });
       refreshAdminListings.addEventListener("click", () => {
         adminListingPage = 1;

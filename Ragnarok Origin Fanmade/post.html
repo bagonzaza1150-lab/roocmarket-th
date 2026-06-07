@@ -387,10 +387,25 @@
         ? window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey)
         : null;
       let currentSession = null;
+      const fallbackServers = [
+        "Prontera 1", "Prontera 2", "Prontera 3", "Prontera 4", "Prontera 5",
+        "Prontera 6", "Prontera 7", "Prontera 8", "Prontera 9", "Prontera 10",
+        "Geffen 1", "Geffen 2", "Geffen 3", "Geffen 4", "Geffen 5",
+        "Geffen 6", "Geffen 7", "Geffen 8", "Geffen 9", "Geffen 10"
+      ];
 
       function setPostMessage(message, isError = false) {
         postMessage.textContent = message;
         postMessage.classList.toggle("is-error", isError);
+      }
+
+      function escapeHtml(value) {
+        return String(value || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
       }
 
       function setPostAccess(session) {
@@ -399,6 +414,36 @@
         loginRequiredPanel.hidden = canPost;
         postForm.hidden = !canPost;
         document.querySelector(".preview-panel").hidden = !canPost;
+      }
+
+      function populateServerOptions(servers) {
+        const activeServers = servers?.length ? servers : fallbackServers;
+        const selected = listingServer.value;
+        listingServer.innerHTML = [
+          '<option value="">เลือก Server</option>',
+          ...activeServers.map((server) => `<option>${escapeHtml(server)}</option>`)
+        ].join("");
+        if (activeServers.includes(selected)) listingServer.value = selected;
+        syncPreview();
+      }
+
+      async function loadServerOptions() {
+        if (!canUseSupabase) {
+          populateServerOptions(fallbackServers);
+          return;
+        }
+        const { data, error } = await supabaseClient
+          .from("marketplace_servers")
+          .select("name")
+          .eq("active", true)
+          .order("sort_order", { ascending: true })
+          .order("name", { ascending: true });
+        if (error) {
+          console.warn("ROOC server options failed:", error);
+          populateServerOptions(fallbackServers);
+          return;
+        }
+        populateServerOptions((data || []).map((server) => server.name).filter(Boolean));
       }
 
       function getActiveItem() {
@@ -678,6 +723,7 @@
 
       postForm.addEventListener("submit", publishListing);
 
+      loadServerOptions();
       loadRemoteListingAssets().finally(() => populateItems(activeCategory));
 
       if (canUseSupabase) {

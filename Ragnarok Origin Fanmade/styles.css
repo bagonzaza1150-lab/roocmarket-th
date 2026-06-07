@@ -2409,6 +2409,29 @@ h1 {
   align-items: start;
 }
 
+.server-admin-form {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.server-item-card {
+  grid-template-columns: 54px minmax(0, 1fr) auto;
+}
+
+.server-icon {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--blue) 18%, var(--paper));
+  color: var(--blue);
+  font-size: 16px;
+  font-weight: 1000;
+}
+
 .banned-user-list {
   margin-top: 18px;
 }

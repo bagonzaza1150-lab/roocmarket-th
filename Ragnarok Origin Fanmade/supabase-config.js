@@ -16,6 +16,12 @@ window.ROOC_SUPABASE = {
   let soldListings = [];
   const listingsPerPage = 6;
   let currentListingPage = 1;
+  const fallbackServers = [
+    "Prontera 1", "Prontera 2", "Prontera 3", "Prontera 4", "Prontera 5",
+    "Prontera 6", "Prontera 7", "Prontera 8", "Prontera 9", "Prontera 10",
+    "Geffen 1", "Geffen 2", "Geffen 3", "Geffen 4", "Geffen 5",
+    "Geffen 6", "Geffen 7", "Geffen 8", "Geffen 9", "Geffen 10"
+  ];
 
   function escapeHtml(value) {
     return String(value || "")
@@ -62,6 +68,19 @@ window.ROOC_SUPABASE = {
     if (!response.ok) throw new Error(await response.text());
     const rows = await response.json();
     return rows?.[0]?.value || {};
+  }
+
+  async function fetchActiveServers() {
+    const response = await fetch(`${config.url}/rest/v1/marketplace_servers?select=name&active=eq.true&order=sort_order.asc,name.asc`, {
+      headers: {
+        apikey: config.anonKey,
+        Authorization: `Bearer ${config.anonKey}`
+      }
+    });
+
+    if (!response.ok) throw new Error(await response.text());
+    const rows = await response.json();
+    return rows.map((row) => row.name).filter(Boolean);
   }
 
   function parsePrice(value) {
@@ -215,6 +234,23 @@ window.ROOC_SUPABASE = {
     const controls = getFilterControls();
     if (source !== controls.heroServer && controls.heroServer) controls.heroServer.value = value;
     if (source !== controls.sidebarServer && controls.sidebarServer) controls.sidebarServer.value = value;
+  }
+
+  function populateServerSelects(servers) {
+    const activeServers = servers?.length ? servers : fallbackServers;
+    const controls = getFilterControls();
+    [controls.heroServer, controls.sidebarServer].forEach((select) => {
+      if (!select) return;
+      const selected = select.value || "ทั้งหมด";
+      select.innerHTML = [
+        '<option>ทั้งหมด</option>',
+        ...activeServers.map((server) => `<option>${escapeHtml(server)}</option>`)
+      ].join("");
+      select.value = activeServers.includes(selected) ? selected : "ทั้งหมด";
+    });
+
+    const serverCount = document.querySelector(".trust-row > div:nth-child(3) strong");
+    if (serverCount) serverCount.textContent = String(activeServers.length);
   }
 
   function renderCounts(listings) {
@@ -531,6 +567,12 @@ window.ROOC_SUPABASE = {
     if (!document.querySelector("#latestListingGrid")) return;
     try {
       bindFilters();
+      fetchActiveServers()
+        .then(populateServerSelects)
+        .catch((error) => {
+          console.warn("ROOC servers failed:", error);
+          populateServerSelects(fallbackServers);
+        });
       fetchSiteSettings()
         .then(renderSupportSidebar)
         .catch((error) => console.warn("ROOC support settings failed:", error));
