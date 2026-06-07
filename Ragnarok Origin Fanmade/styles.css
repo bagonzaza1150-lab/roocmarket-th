@@ -116,10 +116,15 @@ a:focus-visible {
   height: 42px;
   place-items: center;
   border-radius: 12px;
-  background: linear-gradient(145deg, var(--blue), var(--blue-2));
-  color: #fff;
-  font-weight: 900;
-  box-shadow: 0 10px 28px rgba(23, 125, 220, 0.24);
+  background: var(--paper-soft);
+  box-shadow: 0 10px 28px rgba(23, 125, 220, 0.2);
+  overflow: hidden;
+}
+
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .brand strong,
