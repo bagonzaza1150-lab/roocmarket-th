@@ -874,6 +874,58 @@ h1 {
   gap: 14px;
 }
 
+.listing-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+  padding: 12px;
+}
+
+.listing-pagination[hidden] {
+  display: none;
+}
+
+.listing-pagination span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.listing-pagination div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.listing-pagination button {
+  min-width: 40px;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper-soft);
+  color: var(--text);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.listing-pagination button:hover:not(:disabled),
+.listing-pagination button.is-active {
+  border-color: color-mix(in srgb, var(--blue) 58%, var(--line));
+  background: var(--blue);
+  color: #fff;
+}
+
+.listing-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .empty-state {
   display: grid;
   min-height: 280px;
@@ -1040,6 +1092,16 @@ h1 {
 .listing-meta .mvp {
   background: rgba(240, 70, 70, 0.14);
   color: #d24646;
+}
+
+.listing-meta .time-left {
+  background: rgba(55, 160, 236, 0.14);
+  color: var(--blue);
+}
+
+.listing-meta .expired {
+  background: rgba(239, 68, 68, 0.14);
+  color: #ff8b8b;
 }
 
 .listing-card h3 {
@@ -2196,6 +2258,42 @@ h1 {
   padding: 18px;
 }
 
+.listing-quota {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.listing-quota[hidden] {
+  display: none;
+}
+
+.listing-quota div {
+  min-height: 78px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--blue-soft) 42%, transparent);
+  padding: 14px;
+}
+
+.listing-quota span,
+.listing-quota strong {
+  display: block;
+}
+
+.listing-quota span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.listing-quota strong {
+  margin-top: 6px;
+  color: var(--ink);
+  font-size: 22px;
+}
+
 .my-listing-grid {
   display: grid;
   gap: 12px;
@@ -2383,6 +2481,15 @@ h1 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .listing-pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .listing-pagination div {
+    justify-content: center;
+  }
+
   .post-layout {
     grid-template-columns: 1fr;
   }
@@ -2565,6 +2672,10 @@ h1 {
 
   .my-listing-actions .btn {
     width: 100%;
+  }
+
+  .listing-quota {
+    grid-template-columns: 1fr;
   }
 
   .admin-item-card img {

@@ -557,11 +557,11 @@
 
         try {
           const isPremiumSeller = await getPremiumStatus(currentSession);
-          const activeLimit = isPremiumSeller ? 5 : 2;
-          const activeCount = await getActiveListingCount(currentSession);
+          const listingLimit = isPremiumSeller ? 5 : 2;
+          const usedCount = await getUsedListingCount(currentSession);
 
-          if (activeCount >= activeLimit) {
-            setPostMessage(`บัญชี${isPremiumSeller ? " Premium" : "ทั่วไป"}ลงประกาศที่กำลังแสดงได้สูงสุด ${activeLimit} รายการ กรุณาปิดประกาศเก่าก่อน`, true);
+          if (usedCount >= listingLimit) {
+            setPostMessage(`บัญชี${isPremiumSeller ? " Premium" : "ทั่วไป"}ลงประกาศได้ทั้งหมด ${listingLimit} ครั้ง ใช้ครบแล้ว`, true);
             return;
           }
 
@@ -700,14 +700,11 @@
         return Boolean(data?.active);
       }
 
-      async function getActiveListingCount(session) {
-        const now = new Date().toISOString();
+      async function getUsedListingCount(session) {
         const { count, error } = await supabaseClient
           .from("marketplace_listings")
           .select("id", { count: "exact", head: true })
-          .eq("user_id", session.user.id)
-          .eq("active", true)
-          .or(`expires_at.is.null,expires_at.gte.${now}`);
+          .eq("user_id", session.user.id);
         if (error) throw error;
         return count || 0;
       }

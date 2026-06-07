@@ -14,6 +14,8 @@ window.ROOC_SUPABASE = {
   const supabaseClient = canUseSupabase ? window.supabase.createClient(config.url, config.anonKey) : null;
   let publicListings = [];
   let soldListings = [];
+  const listingsPerPage = 6;
+  let currentListingPage = 1;
 
   function escapeHtml(value) {
     return String(value || "")
@@ -189,17 +191,27 @@ window.ROOC_SUPABASE = {
   function renderListingCards(listings, isFiltered = false) {
     const grid = document.querySelector("#latestListingGrid");
     const emptyState = document.querySelector("#latestEmptyState");
+    const pagination = document.querySelector("#listingPagination");
     if (!grid || !emptyState) return;
 
     if (!listings.length) {
       grid.innerHTML = "";
+      if (pagination) {
+        pagination.hidden = true;
+        pagination.innerHTML = "";
+      }
       emptyState.hidden = false;
       emptyState.querySelector("h3").textContent = isFiltered ? "ไม่พบประกาศที่ตรงกับตัวกรอง" : "ยังไม่มีประกาศขาย";
       emptyState.querySelector("p").textContent = isFiltered ? "ลองล้างตัวกรองหรือเปลี่ยนคำค้นหา" : "เมื่อมีผู้ขายลงประกาศ รายการล่าสุดจะแสดงในส่วนนี้";
       return;
     }
 
-    grid.innerHTML = listings.map((listing) => {
+    const totalPages = Math.max(1, Math.ceil(listings.length / listingsPerPage));
+    currentListingPage = Math.min(Math.max(currentListingPage, 1), totalPages);
+    const pageStart = (currentListingPage - 1) * listingsPerPage;
+    const pageListings = listings.slice(pageStart, pageStart + listingsPerPage);
+
+    grid.innerHTML = pageListings.map((listing) => {
       const title = listing.title || listing.item_name || "ประกาศขาย";
       const mediaClass = listing.category === "mvp" ? "item-media card-media" : "item-media";
       const contact = listing.contact || "";
@@ -237,6 +249,35 @@ window.ROOC_SUPABASE = {
     }).join("");
 
     emptyState.hidden = true;
+    renderListingPagination(listings.length, totalPages);
+  }
+
+  function renderListingPagination(totalItems, totalPages) {
+    const pagination = document.querySelector("#listingPagination");
+    if (!pagination) return;
+
+    if (totalPages <= 1) {
+      pagination.hidden = true;
+      pagination.innerHTML = "";
+      return;
+    }
+
+    const pageButtons = Array.from({ length: totalPages }, (_item, index) => {
+      const page = index + 1;
+      return `<button class="${page === currentListingPage ? "is-active" : ""}" type="button" data-page="${page}" aria-current="${page === currentListingPage ? "page" : "false"}">${page}</button>`;
+    }).join("");
+
+    const firstItem = ((currentListingPage - 1) * listingsPerPage) + 1;
+    const lastItem = Math.min(currentListingPage * listingsPerPage, totalItems);
+    pagination.innerHTML = `
+      <span>แสดง ${firstItem}-${lastItem} จาก ${totalItems.toLocaleString("th-TH")} ประกาศ</span>
+      <div>
+        <button type="button" data-page-prev ${currentListingPage === 1 ? "disabled" : ""}>ก่อนหน้า</button>
+        ${pageButtons}
+        <button type="button" data-page-next ${currentListingPage === totalPages ? "disabled" : ""}>ถัดไป</button>
+      </div>
+    `;
+    pagination.hidden = false;
   }
 
   function renderSoldListings(listings) {
@@ -279,6 +320,10 @@ window.ROOC_SUPABASE = {
     renderListingCards(getFilteredListings(), true);
   }
 
+  function resetListingPage() {
+    currentListingPage = 1;
+  }
+
   async function refreshListings() {
     const controls = getFilterControls();
     if (controls.refresh) {
@@ -314,7 +359,10 @@ window.ROOC_SUPABASE = {
     if (document.body.dataset.filtersBound === "true") return;
     document.body.dataset.filtersBound = "true";
     const controls = getFilterControls();
-    const rerender = () => renderFilteredListings();
+    const rerender = () => {
+      resetListingPage();
+      renderFilteredListings();
+    };
 
     controls.search?.addEventListener("input", rerender);
     controls.sort?.addEventListener("change", rerender);
@@ -354,6 +402,19 @@ window.ROOC_SUPABASE = {
       if (controls.middleman) controls.middleman.checked = false;
       if (controls.ready) controls.ready.checked = false;
       rerender();
+    });
+
+    document.querySelector("#listingPagination")?.addEventListener("click", (event) => {
+      const pageButton = event.target.closest("[data-page]");
+      const prevButton = event.target.closest("[data-page-prev]");
+      const nextButton = event.target.closest("[data-page-next]");
+      if (pageButton) currentListingPage = Number(pageButton.dataset.page) || 1;
+      if (prevButton) currentListingPage = Math.max(1, currentListingPage - 1);
+      if (nextButton) currentListingPage += 1;
+      if (pageButton || prevButton || nextButton) {
+        renderFilteredListings();
+        document.querySelector("#market")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     });
 
     const searchForm = controls.search?.closest("form");

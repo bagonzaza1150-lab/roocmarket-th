@@ -62,6 +62,20 @@
           <h2>รายการประกาศ</h2>
           <button class="btn btn-light" id="refreshListings" type="button">รีเฟรช</button>
         </div>
+        <div class="listing-quota" id="listingQuota" hidden>
+          <div>
+            <span>โควต้าประกาศ</span>
+            <strong id="quotaUsed">0/2</strong>
+          </div>
+          <div>
+            <span>คงเหลือ</span>
+            <strong id="quotaRemaining">2 ครั้ง</strong>
+          </div>
+          <div>
+            <span>สถานะบัญชี</span>
+            <strong id="quotaPlan">Free</strong>
+          </div>
+        </div>
         <p class="post-message" id="myListingsMessage"></p>
         <div class="my-listing-grid" id="myListingGrid"></div>
         <div class="empty-state" id="myListingEmpty" hidden>
@@ -82,6 +96,10 @@
       const emptyState = document.querySelector("#myListingEmpty");
       const message = document.querySelector("#myListingsMessage");
       const refreshButton = document.querySelector("#refreshListings");
+      const listingQuota = document.querySelector("#listingQuota");
+      const quotaUsed = document.querySelector("#quotaUsed");
+      const quotaRemaining = document.querySelector("#quotaRemaining");
+      const quotaPlan = document.querySelector("#quotaPlan");
       let currentSession = null;
 
       function escapeHtml(value) {
@@ -109,8 +127,34 @@
 
       function listingStatus(listing) {
         if (listing.sale_status === "sold") return { label: "ขายออกแล้ว", className: "mvp" };
+        if (listing.sale_status === "deleted") return { label: "ลบแล้ว", className: "expired" };
+        if (listing.expires_at && new Date(listing.expires_at).getTime() <= Date.now()) return { label: "หมดอายุ", className: "expired" };
         if (!listing.active || listing.sale_status === "closed") return { label: "ปิดประกาศ", className: "fast" };
         return { label: "กำลังแสดง", className: "verified" };
+      }
+
+      function daysRemainingLabel(listing) {
+        if (listing.sale_status === "sold") return "ขายออกแล้ว";
+        if (!listing.expires_at) return "ไม่จำกัดวัน";
+        const expiresAt = new Date(listing.expires_at);
+        if (Number.isNaN(expiresAt.getTime())) return "ไม่จำกัดวัน";
+        const diff = expiresAt.getTime() - Date.now();
+        if (diff <= 0) return "หมดอายุแล้ว";
+        const days = Math.ceil(diff / 86400000);
+        return `เหลือ ${days} วัน`;
+      }
+
+      function daysRemainingClass(listing) {
+        if (!listing.expires_at || listing.sale_status === "sold") return "time-left";
+        return new Date(listing.expires_at).getTime() <= Date.now() ? "expired" : "time-left";
+      }
+
+      function renderQuota({ used, limit, isPremium }) {
+        const remaining = Math.max(0, limit - used);
+        listingQuota.hidden = false;
+        quotaUsed.textContent = `${used}/${limit}`;
+        quotaRemaining.textContent = `${remaining} ครั้ง`;
+        quotaPlan.textContent = isPremium ? "Premium" : "Free";
       }
 
       function renderListings(listings) {
@@ -126,6 +170,7 @@
                   <span>${escapeHtml(categoryLabel(listing.category))}</span>
                   <span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>
                   <span class="${status.className}">${status.label}</span>
+                  <span class="${daysRemainingClass(listing)}">${daysRemainingLabel(listing)}</span>
                 </div>
                 <h3>${escapeHtml(listing.title || listing.item_name || "ประกาศขาย")}</h3>
                 <p>${listing.character_name ? `ตัวละคร: ${escapeHtml(listing.character_name)}` : "ยังไม่ได้ระบุชื่อตัวละคร"}</p>
@@ -145,19 +190,41 @@
       async function loadMyListings() {
         if (!currentSession) return;
         setMessage("กำลังโหลดประกาศ...");
-        const { data, error } = await supabaseClient
+        const [premiumResult, listingsResult] = await Promise.all([
+          getPremiumStatus(currentSession),
+          supabaseClient
           .from("marketplace_listings")
           .select("*")
-          .or(`user_id.eq.${currentSession.user.id},user_id.is.null`)
-          .order("created_at", { ascending: false });
+          .eq("user_id", currentSession.user.id)
+          .order("created_at", { ascending: false })
+        ]);
+
+        const { data, error } = listingsResult;
 
         if (error) {
           setMessage(error.message, true);
           return;
         }
 
-        renderListings(data || []);
-        setMessage(data?.length ? `พบ ${data.length} ประกาศ` : "");
+        const allListings = data || [];
+        const visibleListings = allListings.filter((listing) => listing.sale_status !== "deleted");
+        const isPremium = Boolean(premiumResult);
+        const limit = isPremium ? 5 : 2;
+        renderQuota({ used: allListings.length, limit, isPremium });
+        renderListings(visibleListings);
+        setMessage(visibleListings.length ? `พบ ${visibleListings.length} ประกาศ · ใช้โควต้า ${allListings.length}/${limit}` : `ยังไม่มีประกาศที่แสดง · ใช้โควต้า ${allListings.length}/${limit}`);
+      }
+
+      async function getPremiumStatus(session) {
+        if (!session) return false;
+        const { data, error } = await supabaseClient
+          .from("marketplace_premium_users")
+          .select("active")
+          .eq("user_id", session.user.id)
+          .eq("active", true)
+          .maybeSingle();
+        if (error) return false;
+        return Boolean(data?.active);
       }
 
       async function toggleListing(id) {
@@ -207,11 +274,11 @@
       }
 
       async function deleteListing(id) {
-        if (!confirm("ลบประกาศนี้?")) return;
+        if (!confirm("ลบประกาศนี้ออกจากรายการของฉัน? โควต้าการลงประกาศจะยังถูกนับอยู่")) return;
         setMessage("กำลังลบประกาศ...");
         const { data, error } = await supabaseClient
           .from("marketplace_listings")
-          .delete()
+          .update({ active: false, sale_status: "deleted" })
           .eq("id", id)
           .select("id");
 

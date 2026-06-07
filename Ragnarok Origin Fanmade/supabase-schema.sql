@@ -37,7 +37,7 @@ create table if not exists public.marketplace_listings (
   verified_seller boolean not null default false,
   ready_today boolean not null default false,
   active boolean not null default true,
-  sale_status text not null default 'active' check (sale_status in ('active', 'closed', 'sold')),
+  sale_status text not null default 'active' check (sale_status in ('active', 'closed', 'sold', 'deleted')),
   expires_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -124,15 +124,18 @@ end;
 
 do $$
 begin
-  if not exists (
+  if exists (
     select 1
     from pg_constraint
     where conname = 'marketplace_listings_sale_status_check'
   ) then
     alter table public.marketplace_listings
-    add constraint marketplace_listings_sale_status_check
-    check (sale_status in ('active', 'closed', 'sold'));
+    drop constraint marketplace_listings_sale_status_check;
   end if;
+
+  alter table public.marketplace_listings
+  add constraint marketplace_listings_sale_status_check
+  check (sale_status in ('active', 'closed', 'sold', 'deleted'));
 end $$;
 
 create or replace function public.set_updated_at()
