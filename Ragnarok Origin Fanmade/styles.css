@@ -2172,7 +2172,7 @@ h1 {
 }
 
 .admin-page {
-  margin: 28px auto 56px;
+  margin: 18px auto 42px;
 }
 
 .admin-head {
@@ -2240,7 +2240,7 @@ h1 {
 .admin-card,
 .admin-editor,
 .admin-list-panel {
-  padding: 20px;
+  padding: 16px;
 }
 
 .admin-setup {
@@ -2261,7 +2261,7 @@ h1 {
 
 .admin-login {
   display: grid;
-  min-height: 360px;
+  min-height: 220px;
   place-items: center;
 }
 
@@ -2288,8 +2288,14 @@ h1 {
 .admin-workspace {
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(380px, 1.05fr);
-  gap: 22px;
+  gap: 12px;
   align-items: start;
+}
+
+.admin-column {
+  display: grid;
+  gap: 12px;
+  align-content: start;
 }
 
 .admin-upload-row {
@@ -2316,16 +2322,16 @@ h1 {
 .support-admin-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 12px;
 }
 
 .support-admin-card {
   display: grid;
-  gap: 14px;
+  gap: 10px;
   border: 1px solid var(--line);
   border-radius: 18px;
   background: color-mix(in srgb, var(--paper-soft) 68%, transparent);
-  padding: 16px;
+  padding: 12px;
 }
 
 .admin-item-card {
@@ -2401,7 +2407,7 @@ h1 {
 }
 
 .listing-admin-panel {
-  margin-top: 18px;
+  margin-top: 0;
 }
 
 .admin-listing-card,

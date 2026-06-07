@@ -69,7 +69,7 @@
         </p>
       </section>
 
-      <section class="admin-login" id="loginPanel">
+      <section class="admin-login" id="loginPanel" hidden>
         <form class="admin-card" id="loginForm">
           <p class="eyebrow">Login</p>
           <h2>เข้าสู่ระบบผู้ดูแล</h2>
@@ -144,7 +144,7 @@
           <p class="admin-message" id="editorMessage"></p>
         </form>
 
-        <section class="admin-list-panel">
+        <section class="admin-list-panel item-admin-panel">
           <div class="section-head">
             <div>
               <p class="eyebrow">Items</p>
@@ -472,6 +472,26 @@
         note: document.querySelector("#premiumNote"),
         active: document.querySelector("#premiumActive")
       };
+
+      function arrangeAdminPanels() {
+        if (adminWorkspace.dataset.arranged === "true") return;
+        const leftColumn = document.createElement("div");
+        const rightColumn = document.createElement("div");
+        leftColumn.className = "admin-column";
+        rightColumn.className = "admin-column";
+
+        const itemPanel = document.querySelector(".item-admin-panel");
+        const serverPanel = document.querySelector(".server-admin-panel");
+        const listingPanel = document.querySelector(".listing-admin-panel");
+        const premiumPanel = document.querySelector(".premium-admin-panel");
+        const supportPanel = document.querySelector(".support-admin-panel");
+
+        [itemForm, serverPanel, premiumPanel].filter(Boolean).forEach((panel) => leftColumn.append(panel));
+        [itemPanel, listingPanel, supportPanel].filter(Boolean).forEach((panel) => rightColumn.append(panel));
+
+        adminWorkspace.append(leftColumn, rightColumn);
+        adminWorkspace.dataset.arranged = "true";
+      }
 
       function setMessage(target, message, isError = false) {
         target.textContent = message;
@@ -1237,7 +1257,7 @@
       function showApp(session) {
         currentSession = session;
         const isAdmin = isAdminSession(session);
-        loginPanel.hidden = isAdmin;
+        loginPanel.hidden = true;
         adminWorkspace.hidden = !isAdmin;
         logoutButton.hidden = !session;
         connectionStatus.textContent = isAdmin ? "เชื่อมต่อแล้ว" : session ? "ไม่มีสิทธิ์ Admin" : "พร้อมล็อกอิน";
@@ -1251,12 +1271,15 @@
           setMessage(loginMessage, "");
         }
         if (isAdmin) {
+          arrangeAdminPanels();
           loadItems();
           loadServers();
           loadPremiumUsers();
           loadSupportSettings();
           loadAdminListings();
           loadBannedUsers();
+        } else if (!session) {
+          window.location.replace("login.html");
         }
       }
 
