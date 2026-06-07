@@ -132,7 +132,7 @@ window.ROOC_SUPABASE = {
   function getActiveFilters() {
     const controls = getFilterControls();
     return {
-      search: (controls.search?.value || "").trim().toLowerCase(),
+      search: normalizeSearch(controls.search?.value || ""),
       server: controls.sidebarServer?.value || controls.heroServer?.value || "ทั้งหมด",
       category: controls.category?.value || "all",
       price: controls.price?.value || "all",
@@ -144,14 +144,32 @@ window.ROOC_SUPABASE = {
 
   function listingMatchesSearch(listing, search) {
     if (!search) return true;
+    const categoryNames = {
+      mvp: "mvp cards card การ์ด",
+      accessories: "accessories accessory ประดับ",
+      fashion: "fashion แฟชั่น",
+      account: "account บัญชี"
+    };
     return [
       listing.title,
       listing.item_name,
       listing.character_name,
       listing.description,
       listing.server_name,
-      listing.contact
-    ].some((value) => String(value || "").toLowerCase().includes(search));
+      listing.contact,
+      listing.seller_name,
+      listing.price_text,
+      categoryNames[listing.category]
+    ].some((value) => normalizeSearch(value).includes(search));
+  }
+
+  function normalizeSearch(value) {
+    return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+  }
+
+  function getListingImages(listing) {
+    const gallery = Array.isArray(listing.image_urls) ? listing.image_urls.filter(Boolean) : [];
+    return gallery.length ? gallery : [listing.image_url || "assets/category-icons/mvp-c.png"];
   }
 
   function listingMatchesPrice(listing, priceFilter) {
@@ -244,7 +262,8 @@ window.ROOC_SUPABASE = {
 
     grid.innerHTML = pageListings.map((listing) => {
       const title = listing.title || listing.item_name || "ประกาศขาย";
-      const mediaClass = listing.category === "mvp" ? "item-media card-media" : "item-media";
+      const mediaClass = listing.category === "mvp" ? "item-media card-media" : listing.category === "account" ? "item-media account-listing-media" : "item-media";
+      const listingImages = getListingImages(listing);
       const contact = listing.contact || "";
       const profileUrl = getListingProfileUrl(listing);
       const discordId = getListingDiscordId(listing);
@@ -262,7 +281,13 @@ window.ROOC_SUPABASE = {
       return `
         <article class="listing-card">
           <div class="${mediaClass}">
-            <img src="${escapeHtml(listing.image_url || "assets/category-icons/mvp-c.png")}" alt="" />
+            <img src="${escapeHtml(listingImages[0])}" alt="" />
+            ${listing.category === "account" && listingImages.length > 1 ? `
+              <div class="account-gallery-count">${listingImages.length} รูป</div>
+              <div class="account-gallery-strip">
+                ${listingImages.slice(0, 5).map((src) => `<span><img src="${escapeHtml(src)}" alt="" /></span>`).join("")}
+              </div>
+            ` : ""}
           </div>
           <div class="listing-seller">
             <img src="${escapeHtml(sellerAvatar)}" alt="" />
@@ -440,6 +465,8 @@ window.ROOC_SUPABASE = {
     };
 
     controls.search?.addEventListener("input", rerender);
+    controls.search?.addEventListener("search", rerender);
+    controls.search?.addEventListener("change", rerender);
     controls.sort?.addEventListener("change", rerender);
     controls.refresh?.addEventListener("click", refreshListings);
     controls.price?.addEventListener("change", rerender);

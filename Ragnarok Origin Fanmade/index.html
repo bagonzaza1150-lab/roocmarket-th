@@ -458,7 +458,8 @@
           console.info(`ROOC listings loaded ${data.length} rows`);
 
           grid.innerHTML = data.map((listing) => {
-            const mediaClass = listing.category === "mvp" ? "item-media card-media" : "item-media";
+            const mediaClass = listing.category === "mvp" ? "item-media card-media" : listing.category === "account" ? "item-media account-listing-media" : "item-media";
+            const listingImages = getListingImages(listing);
             const title = listing.title || listing.item_name || "ประกาศขาย";
             const contact = listing.contact || "";
             const profileUrl = getListingProfileUrl(listing);
@@ -476,7 +477,13 @@
             return `
               <article class="listing-card">
                 <div class="${mediaClass}">
-                  <img src="${escapeHtml(listing.image_url || "assets/category-icons/mvp-c.png")}" alt="" />
+                  <img src="${escapeHtml(listingImages[0])}" alt="" />
+                  ${listing.category === "account" && listingImages.length > 1 ? `
+                    <div class="account-gallery-count">${listingImages.length} รูป</div>
+                    <div class="account-gallery-strip">
+                      ${listingImages.slice(0, 5).map((src) => `<span><img src="${escapeHtml(src)}" alt="" /></span>`).join("")}
+                    </div>
+                  ` : ""}
                 </div>
                 <div class="listing-meta">${badges}</div>
                 <h3>${escapeHtml(title)}</h3>
@@ -522,6 +529,11 @@
         const value = String(contact || "").trim();
         if (/^\d{16,22}$/.test(value)) return value;
         return value.match(/(?:discord(?:app)?\.com\/users\/)(\d{16,22})/i)?.[1] || "";
+      }
+
+      function getListingImages(listing) {
+        const gallery = Array.isArray(listing.image_urls) ? listing.image_urls.filter(Boolean) : [];
+        return gallery.length ? gallery : [listing.image_url || "assets/category-icons/mvp-c.png"];
       }
 
       function getListingDiscordId(listing) {

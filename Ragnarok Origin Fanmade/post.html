@@ -120,10 +120,11 @@
               </div>
 
               <label class="upload-drop" for="accountImageInput">
-                <input id="accountImageInput" type="file" accept="image/*" />
+                <input id="accountImageInput" type="file" accept="image/*" multiple />
                 <span>อัปโหลดรูปบัญชี</span>
-                <small>PNG หรือ JPG</small>
+                <small>PNG หรือ JPG สูงสุด 5 ภาพ</small>
               </label>
+              <div class="account-upload-preview" id="accountUploadPreview"></div>
             </div>
 
             <div class="form-block">
@@ -359,6 +360,7 @@
       const gameItemBlock = document.querySelector("#gameItemBlock");
       const accountUploadBlock = document.querySelector("#accountUploadBlock");
       const accountImageInput = document.querySelector("#accountImageInput");
+      const accountUploadPreview = document.querySelector("#accountUploadPreview");
       const postMessage = document.querySelector("#postMessage");
       const listingTitle = document.querySelector("#listingTitle");
       const characterName = document.querySelector("#characterName");
@@ -377,7 +379,7 @@
       const previewDescription = document.querySelector("#previewDescription");
       const previewPrice = document.querySelector("#previewPrice");
       let activeCategory = "mvp";
-      let uploadedAccountImage = "";
+      let uploadedAccountImages = [];
       const supabaseConfig = window.ROOC_SUPABASE || {};
       const canUseSupabase = Boolean(supabaseConfig.url && supabaseConfig.anonKey && window.supabase);
       const listingBucket = supabaseConfig.listingBucket || "listing-images";
@@ -425,7 +427,7 @@
         const item = getActiveItem();
         const title = listingTitle.value.trim() || item.name;
         const detail = listingDescription.value.trim() || item.description;
-        const image = activeCategory === "account" && uploadedAccountImage ? uploadedAccountImage : item.image;
+        const image = activeCategory === "account" && uploadedAccountImages.length ? uploadedAccountImages[0] : item.image;
         const tags = [];
 
         if (middlemanCheck.checked) tags.push("รองรับ Middleman");
@@ -499,19 +501,38 @@
         }
       }
 
-      async function uploadAccountListingImage(file) {
-        if (!file) return { imageUrl: listingAssets.account.items[0].image, imagePath: null };
-        const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
-        const path = `account/${Date.now()}-${safeName}`;
-        const { error } = await supabaseClient.storage.from(listingBucket).upload(path, file, {
-          cacheControl: "3600",
-          upsert: false
-        });
+      async function uploadAccountListingImages(files) {
+        const selectedFiles = Array.from(files || []).slice(0, 5);
+        if (!selectedFiles.length) {
+          return {
+            imageUrl: listingAssets.account.items[0].image,
+            imagePath: null,
+            imageUrls: [listingAssets.account.items[0].image],
+            imagePaths: []
+          };
+        }
 
-        if (error) throw error;
+        const uploadedImages = [];
+        for (const [index, file] of selectedFiles.entries()) {
+          const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
+          const path = `account/${Date.now()}-${index}-${safeName}`;
+          const { error } = await supabaseClient.storage.from(listingBucket).upload(path, file, {
+            cacheControl: "3600",
+            upsert: false
+          });
 
-        const { data } = supabaseClient.storage.from(listingBucket).getPublicUrl(path);
-        return { imageUrl: data.publicUrl, imagePath: path };
+          if (error) throw error;
+
+          const { data } = supabaseClient.storage.from(listingBucket).getPublicUrl(path);
+          uploadedImages.push({ imageUrl: data.publicUrl, imagePath: path });
+        }
+
+        return {
+          imageUrl: uploadedImages[0].imageUrl,
+          imagePath: uploadedImages[0].imagePath,
+          imageUrls: uploadedImages.map((item) => item.imageUrl),
+          imagePaths: uploadedImages.map((item) => item.imagePath)
+        };
       }
 
       async function publishListing(event) {
@@ -537,6 +558,8 @@
         const description = listingDescription.value.trim() || item.description;
         let imageUrl = item.image;
         let imagePath = null;
+        let imageUrls = [item.image];
+        let imagePaths = [];
 
         if (!characterText) {
           setPostMessage("กรุณาใส่ชื่อตัวละครก่อนเผยแพร่ประกาศ", true);
@@ -569,9 +592,15 @@
           }
 
           if (activeCategory === "account") {
-            const uploaded = await uploadAccountListingImage(accountImageInput.files && accountImageInput.files[0]);
+            const accountFiles = Array.from(accountImageInput.files || []);
+            if (accountFiles.length > 5) {
+              setPostMessage("อัปโหลดรูป Account ได้สูงสุด 5 ภาพ ระบบจะใช้ 5 ภาพแรก");
+            }
+            const uploaded = await uploadAccountListingImages(accountFiles);
             imageUrl = uploaded.imageUrl;
             imagePath = uploaded.imagePath;
+            imageUrls = uploaded.imageUrls;
+            imagePaths = uploaded.imagePaths;
           }
 
           const { error } = await supabaseClient.from("marketplace_listings").insert({
@@ -581,6 +610,8 @@
             title,
             image_url: imageUrl,
             image_path: imagePath,
+            image_urls: imageUrls,
+            image_paths: imagePaths,
             character_name: characterText,
             seller_name: getDiscordDisplayName(currentSession),
             seller_avatar_url: getDiscordAvatarUrl(currentSession),
@@ -624,9 +655,14 @@
       });
 
       accountImageInput.addEventListener("change", () => {
-        const file = accountImageInput.files && accountImageInput.files[0];
-        if (!file) return;
-        uploadedAccountImage = URL.createObjectURL(file);
+        const files = Array.from(accountImageInput.files || []).slice(0, 5);
+        uploadedAccountImages = files.map((file) => URL.createObjectURL(file));
+        accountUploadPreview.innerHTML = uploadedAccountImages.map((src) => `<img src="${src}" alt="" />`).join("");
+        if ((accountImageInput.files?.length || 0) > 5) {
+          setPostMessage("เลือกได้สูงสุด 5 ภาพ ระบบจะใช้ 5 ภาพแรก", true);
+        } else {
+          setPostMessage("");
+        }
         syncPreview();
       });
 

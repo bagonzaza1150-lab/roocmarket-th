@@ -30,6 +30,8 @@ create table if not exists public.marketplace_listings (
   seller_is_premium boolean not null default false,
   image_url text not null,
   image_path text,
+  image_urls jsonb not null default '[]'::jsonb,
+  image_paths jsonb not null default '[]'::jsonb,
   price_text text not null default '',
   server_name text not null default 'ทั้งหมด',
   contact text not null default '',
@@ -120,6 +122,17 @@ add column if not exists seller_discord_id text not null default '';
 
 alter table public.marketplace_listings
 add column if not exists seller_is_premium boolean not null default false;
+
+alter table public.marketplace_listings
+add column if not exists image_urls jsonb not null default '[]'::jsonb;
+
+alter table public.marketplace_listings
+add column if not exists image_paths jsonb not null default '[]'::jsonb;
+
+update public.marketplace_listings
+set image_urls = jsonb_build_array(image_url)
+where image_urls = '[]'::jsonb
+  and image_url <> '';
 
 update public.marketplace_listings as listings
 set seller_discord_id = profiles.discord_id
