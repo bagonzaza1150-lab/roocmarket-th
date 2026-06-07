@@ -654,6 +654,20 @@
       }
 
       document.addEventListener("click", (event) => {
+        const descriptionToggle = event.target.closest("[data-description-toggle]");
+        if (descriptionToggle) {
+          event.preventDefault();
+          const card = descriptionToggle.closest(".listing-card");
+          const description = card?.querySelector(".listing-description");
+          if (description) {
+            const expanded = descriptionToggle.dataset.expanded === "true";
+            description.textContent = expanded ? description.dataset.short || "" : description.dataset.full || "";
+            descriptionToggle.textContent = expanded ? "ดูเพิ่มเติม" : "ย่อข้อความ";
+            descriptionToggle.dataset.expanded = String(!expanded);
+          }
+          return;
+        }
+
         const accountMedia = event.target.closest("[data-account-gallery]");
         if (accountMedia) {
           try {

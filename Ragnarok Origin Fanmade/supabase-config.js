@@ -867,6 +867,7 @@ window.ROOC_SUPABASE = {
     const logout = event.target.closest("[data-user-logout]");
 
     if (descriptionToggle) {
+      event.preventDefault();
       const card = descriptionToggle.closest(".listing-card");
       const description = card?.querySelector(".listing-description");
       if (description) {
@@ -875,6 +876,7 @@ window.ROOC_SUPABASE = {
         descriptionToggle.textContent = expanded ? "ดูเพิ่มเติม" : "ย่อข้อความ";
         descriptionToggle.dataset.expanded = String(!expanded);
       }
+      return;
     }
 
     document.querySelectorAll(".user-menu-panel").forEach((panel) => {
