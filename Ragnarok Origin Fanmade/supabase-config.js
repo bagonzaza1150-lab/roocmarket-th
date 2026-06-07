@@ -51,6 +51,19 @@ window.ROOC_SUPABASE = {
     return response.json();
   }
 
+  async function fetchSiteSettings() {
+    const response = await fetch(`${config.url}/rest/v1/marketplace_site_settings?select=key,value&key=eq.support_sidebar`, {
+      headers: {
+        apikey: config.anonKey,
+        Authorization: `Bearer ${config.anonKey}`
+      }
+    });
+
+    if (!response.ok) throw new Error(await response.text());
+    const rows = await response.json();
+    return rows?.[0]?.value || {};
+  }
+
   function parsePrice(value) {
     const number = Number(String(value || "").replace(/[^\d]/g, ""));
     return Number.isFinite(number) ? number : 0;
@@ -314,6 +327,49 @@ window.ROOC_SUPABASE = {
     section.hidden = false;
   }
 
+  function renderSupportSidebar(settings) {
+    const sidebar = document.querySelector("#supportSidebar");
+    if (!sidebar) return;
+
+    const cards = [
+      {
+        enabled: settings.donate_enabled,
+        eyebrow: "Donate",
+        title: settings.donate_title || "สนับสนุน ROOC Market TH",
+        text: settings.donate_text || "",
+        qr: settings.donate_qr_url || "",
+        button: settings.donate_button_label || "โดเนท",
+        url: settings.donate_button_url || ""
+      },
+      {
+        enabled: settings.middleman_enabled,
+        eyebrow: "Middleman",
+        title: settings.middleman_title || "ติดต่อ Middleman",
+        text: settings.middleman_text || "",
+        qr: settings.middleman_qr_url || "",
+        button: settings.middleman_button_label || "ติดต่อ Middleman",
+        url: settings.middleman_button_url || ""
+      }
+    ].filter((card) => card.enabled);
+
+    if (!cards.length) {
+      sidebar.hidden = true;
+      sidebar.innerHTML = "";
+      return;
+    }
+
+    sidebar.innerHTML = cards.map((card) => `
+      <article class="support-card">
+        <p class="eyebrow">${escapeHtml(card.eyebrow)}</p>
+        <h3>${escapeHtml(card.title)}</h3>
+        ${card.text ? `<p>${escapeHtml(card.text)}</p>` : ""}
+        ${card.qr ? `<img class="support-qr" src="${escapeHtml(card.qr)}" alt="QR Code ${escapeHtml(card.title)}" />` : ""}
+        ${card.url ? `<a class="btn btn-primary support-button" href="${escapeHtml(card.url)}" target="_blank" rel="noopener">${escapeHtml(card.button)}</a>` : ""}
+      </article>
+    `).join("");
+    sidebar.hidden = false;
+  }
+
   function renderFilteredListings() {
     if (!document.querySelector("#latestListingGrid")) return;
     renderCounts(publicListings);
@@ -429,6 +485,9 @@ window.ROOC_SUPABASE = {
     if (!document.querySelector("#latestListingGrid")) return;
     try {
       bindFilters();
+      fetchSiteSettings()
+        .then(renderSupportSidebar)
+        .catch((error) => console.warn("ROOC support settings failed:", error));
       await refreshListings();
       console.info(`ROOC public listings loaded ${publicListings.length} active rows, ${soldListings.length} sold rows`);
     } catch (error) {

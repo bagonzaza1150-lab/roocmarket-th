@@ -213,6 +213,108 @@
 
           <div class="admin-items premium-user-list" id="premiumUsers"></div>
         </section>
+
+        <section class="admin-list-panel support-admin-panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Support Bar</p>
+              <h2>ตั้งค่าโดเนทและ Middleman</h2>
+            </div>
+          </div>
+
+          <form class="support-admin-form" id="supportSettingsForm">
+            <div class="support-admin-grid">
+              <div class="support-admin-card">
+                <div class="form-block-head">
+                  <span>฿</span>
+                  <div>
+                    <h3>แถบโดเนท</h3>
+                    <p>ข้อความ QR Code และปุ่มลิงก์สำหรับสนับสนุนเว็บ</p>
+                  </div>
+                </div>
+                <div class="post-checks">
+                  <label><input id="donateEnabled" type="checkbox" /> เปิดแสดงแถบโดเนท</label>
+                </div>
+                <label class="post-field">
+                  <span>หัวข้อ</span>
+                  <input id="donateTitle" type="text" placeholder="สนับสนุน ROOC Market TH" />
+                </label>
+                <label class="post-field">
+                  <span>ข้อความ</span>
+                  <textarea id="donateText" rows="3" placeholder="ข้อความสั้น ๆ ที่จะแสดงใต้หัวข้อ"></textarea>
+                </label>
+                <label class="post-field">
+                  <span>ข้อความบนปุ่ม</span>
+                  <input id="donateButtonLabel" type="text" placeholder="โดเนทตอนนี้" />
+                </label>
+                <label class="post-field">
+                  <span>ลิงก์ปุ่ม</span>
+                  <input id="donateButtonUrl" type="url" placeholder="https://..." />
+                </label>
+                <input id="donateQrUrl" type="hidden" />
+                <input id="donateQrPath" type="hidden" />
+                <div class="admin-upload-row">
+                  <label class="upload-drop" for="donateQrImage">
+                    <input id="donateQrImage" type="file" accept="image/*" />
+                    <span>อัปโหลด QR โดเนท</span>
+                    <small>PNG หรือ JPG</small>
+                  </label>
+                  <div class="auto-image-box admin-image-preview">
+                    <img id="donateQrPreview" src="assets/site-icons/rooc-icon-192.png" alt="" />
+                    <small>ตัวอย่าง QR</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="support-admin-card">
+                <div class="form-block-head">
+                  <span>M</span>
+                  <div>
+                    <h3>ติดต่อ Middleman</h3>
+                    <p>ข้อความ QR Code และปุ่มลิงก์สำหรับติดต่อทีมกลาง</p>
+                  </div>
+                </div>
+                <div class="post-checks">
+                  <label><input id="middlemanEnabled" type="checkbox" /> เปิดแสดงแถบ Middleman</label>
+                </div>
+                <label class="post-field">
+                  <span>หัวข้อ</span>
+                  <input id="middlemanTitle" type="text" placeholder="ติดต่อ Middleman" />
+                </label>
+                <label class="post-field">
+                  <span>ข้อความ</span>
+                  <textarea id="middlemanText" rows="3" placeholder="ข้อความสั้น ๆ ที่จะแสดงใต้หัวข้อ"></textarea>
+                </label>
+                <label class="post-field">
+                  <span>ข้อความบนปุ่ม</span>
+                  <input id="middlemanButtonLabel" type="text" placeholder="ติดต่อ Middleman" />
+                </label>
+                <label class="post-field">
+                  <span>ลิงก์ปุ่ม</span>
+                  <input id="middlemanButtonUrl" type="url" placeholder="https://discord.gg/..." />
+                </label>
+                <input id="middlemanQrUrl" type="hidden" />
+                <input id="middlemanQrPath" type="hidden" />
+                <div class="admin-upload-row">
+                  <label class="upload-drop" for="middlemanQrImage">
+                    <input id="middlemanQrImage" type="file" accept="image/*" />
+                    <span>อัปโหลด QR Middleman</span>
+                    <small>PNG หรือ JPG</small>
+                  </label>
+                  <div class="auto-image-box admin-image-preview">
+                    <img id="middlemanQrPreview" src="assets/site-icons/rooc-icon-192.png" alt="" />
+                    <small>ตัวอย่าง QR</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="post-actions">
+              <button class="btn btn-primary" type="submit">บันทึกแถบข้อความ</button>
+            </div>
+            <p class="admin-message" id="supportSettingsMessage"></p>
+          </form>
+        </section>
       </section>
     </main>
 
@@ -246,6 +348,28 @@
       const premiumSearchInput = document.querySelector("#premiumSearchInput");
       const premiumSearchButton = document.querySelector("#premiumSearchButton");
       const premiumSearchResults = document.querySelector("#premiumSearchResults");
+      const supportSettingsForm = document.querySelector("#supportSettingsForm");
+      const supportSettingsMessage = document.querySelector("#supportSettingsMessage");
+      const supportFields = {
+        donateEnabled: document.querySelector("#donateEnabled"),
+        donateTitle: document.querySelector("#donateTitle"),
+        donateText: document.querySelector("#donateText"),
+        donateButtonLabel: document.querySelector("#donateButtonLabel"),
+        donateButtonUrl: document.querySelector("#donateButtonUrl"),
+        donateQrUrl: document.querySelector("#donateQrUrl"),
+        donateQrPath: document.querySelector("#donateQrPath"),
+        donateQrImage: document.querySelector("#donateQrImage"),
+        donateQrPreview: document.querySelector("#donateQrPreview"),
+        middlemanEnabled: document.querySelector("#middlemanEnabled"),
+        middlemanTitle: document.querySelector("#middlemanTitle"),
+        middlemanText: document.querySelector("#middlemanText"),
+        middlemanButtonLabel: document.querySelector("#middlemanButtonLabel"),
+        middlemanButtonUrl: document.querySelector("#middlemanButtonUrl"),
+        middlemanQrUrl: document.querySelector("#middlemanQrUrl"),
+        middlemanQrPath: document.querySelector("#middlemanQrPath"),
+        middlemanQrImage: document.querySelector("#middlemanQrImage"),
+        middlemanQrPreview: document.querySelector("#middlemanQrPreview")
+      };
 
       const fields = {
         id: document.querySelector("#itemId"),
@@ -574,6 +698,109 @@
         return { imageUrl: data.publicUrl, imagePath: path };
       }
 
+      async function uploadSupportImage(file, type) {
+        const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
+        const path = `site-settings/${type}-${Date.now()}-${safeName}`;
+        const { error } = await supabaseClient.storage.from(bucketName).upload(path, file, {
+          cacheControl: "3600",
+          upsert: false
+        });
+
+        if (error) throw error;
+
+        const { data } = supabaseClient.storage.from(bucketName).getPublicUrl(path);
+        return { imageUrl: data.publicUrl, imagePath: path };
+      }
+
+      function getSupportPayload() {
+        return {
+          donate_enabled: supportFields.donateEnabled.checked,
+          donate_title: supportFields.donateTitle.value.trim(),
+          donate_text: supportFields.donateText.value.trim(),
+          donate_button_label: supportFields.donateButtonLabel.value.trim(),
+          donate_button_url: supportFields.donateButtonUrl.value.trim(),
+          donate_qr_url: supportFields.donateQrUrl.value,
+          donate_qr_path: supportFields.donateQrPath.value,
+          middleman_enabled: supportFields.middlemanEnabled.checked,
+          middleman_title: supportFields.middlemanTitle.value.trim(),
+          middleman_text: supportFields.middlemanText.value.trim(),
+          middleman_button_label: supportFields.middlemanButtonLabel.value.trim(),
+          middleman_button_url: supportFields.middlemanButtonUrl.value.trim(),
+          middleman_qr_url: supportFields.middlemanQrUrl.value,
+          middleman_qr_path: supportFields.middlemanQrPath.value
+        };
+      }
+
+      function setSupportForm(settings = {}) {
+        supportFields.donateEnabled.checked = Boolean(settings.donate_enabled);
+        supportFields.donateTitle.value = settings.donate_title || "";
+        supportFields.donateText.value = settings.donate_text || "";
+        supportFields.donateButtonLabel.value = settings.donate_button_label || "";
+        supportFields.donateButtonUrl.value = settings.donate_button_url || "";
+        supportFields.donateQrUrl.value = settings.donate_qr_url || "";
+        supportFields.donateQrPath.value = settings.donate_qr_path || "";
+        supportFields.donateQrPreview.src = settings.donate_qr_url || "assets/site-icons/rooc-icon-192.png";
+        supportFields.middlemanEnabled.checked = Boolean(settings.middleman_enabled);
+        supportFields.middlemanTitle.value = settings.middleman_title || "";
+        supportFields.middlemanText.value = settings.middleman_text || "";
+        supportFields.middlemanButtonLabel.value = settings.middleman_button_label || "";
+        supportFields.middlemanButtonUrl.value = settings.middleman_button_url || "";
+        supportFields.middlemanQrUrl.value = settings.middleman_qr_url || "";
+        supportFields.middlemanQrPath.value = settings.middleman_qr_path || "";
+        supportFields.middlemanQrPreview.src = settings.middleman_qr_url || "assets/site-icons/rooc-icon-192.png";
+      }
+
+      async function loadSupportSettings() {
+        const { data, error } = await supabaseClient
+          .from("marketplace_site_settings")
+          .select("value")
+          .eq("key", "support_sidebar")
+          .maybeSingle();
+
+        if (error) {
+          setMessage(supportSettingsMessage, error.message, true);
+          return;
+        }
+
+        setSupportForm(data?.value || {});
+      }
+
+      async function saveSupportSettings(event) {
+        event.preventDefault();
+        setMessage(supportSettingsMessage, "กำลังบันทึกแถบข้อความ...");
+
+        try {
+          if (supportFields.donateQrImage.files?.[0]) {
+            const uploaded = await uploadSupportImage(supportFields.donateQrImage.files[0], "donate");
+            supportFields.donateQrUrl.value = uploaded.imageUrl;
+            supportFields.donateQrPath.value = uploaded.imagePath;
+            supportFields.donateQrPreview.src = uploaded.imageUrl;
+          }
+
+          if (supportFields.middlemanQrImage.files?.[0]) {
+            const uploaded = await uploadSupportImage(supportFields.middlemanQrImage.files[0], "middleman");
+            supportFields.middlemanQrUrl.value = uploaded.imageUrl;
+            supportFields.middlemanQrPath.value = uploaded.imagePath;
+            supportFields.middlemanQrPreview.src = uploaded.imageUrl;
+          }
+
+          const { error } = await supabaseClient
+            .from("marketplace_site_settings")
+            .upsert({
+              key: "support_sidebar",
+              value: getSupportPayload(),
+              updated_by: currentSession?.user?.id || null
+            }, { onConflict: "key" });
+
+          if (error) throw error;
+          supportFields.donateQrImage.value = "";
+          supportFields.middlemanQrImage.value = "";
+          setMessage(supportSettingsMessage, "บันทึกแถบข้อความเรียบร้อย");
+        } catch (error) {
+          setMessage(supportSettingsMessage, error.message || "บันทึกไม่สำเร็จ", true);
+        }
+      }
+
       async function saveItem(event) {
         event.preventDefault();
         setMessage(editorMessage, "กำลังบันทึก...");
@@ -679,6 +906,7 @@
         if (isAdmin) {
           loadItems();
           loadPremiumUsers();
+          loadSupportSettings();
         }
       }
 
@@ -706,6 +934,7 @@
       logoutButton.addEventListener("click", () => supabaseClient.auth.signOut());
       itemForm.addEventListener("submit", saveItem);
       premiumForm.addEventListener("submit", savePremiumUser);
+      supportSettingsForm.addEventListener("submit", saveSupportSettings);
       premiumResetButton.addEventListener("click", resetPremiumForm);
       premiumSearchButton.addEventListener("click", searchPremiumProfiles);
       premiumSearchInput.addEventListener("keydown", (event) => {
@@ -719,6 +948,14 @@
       itemImage.addEventListener("change", () => {
         const file = itemImage.files && itemImage.files[0];
         if (file) itemImagePreview.src = URL.createObjectURL(file);
+      });
+      supportFields.donateQrImage.addEventListener("change", () => {
+        const file = supportFields.donateQrImage.files && supportFields.donateQrImage.files[0];
+        if (file) supportFields.donateQrPreview.src = URL.createObjectURL(file);
+      });
+      supportFields.middlemanQrImage.addEventListener("change", () => {
+        const file = supportFields.middlemanQrImage.files && supportFields.middlemanQrImage.files[0];
+        if (file) supportFields.middlemanQrPreview.src = URL.createObjectURL(file);
       });
       adminItems.addEventListener("click", (event) => {
         const editId = event.target.dataset.edit;

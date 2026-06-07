@@ -770,6 +770,51 @@ h1 {
   font-size: 13px;
 }
 
+.support-sidebar {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.support-sidebar[hidden] {
+  display: none;
+}
+
+.support-card {
+  border: 1px solid color-mix(in srgb, var(--blue) 28%, var(--line));
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--blue-soft) 48%, var(--paper));
+  padding: 16px;
+}
+
+.support-card h3 {
+  margin: 4px 0 8px;
+  font-size: 20px;
+}
+
+.support-card p:not(.eyebrow) {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.support-qr {
+  display: block;
+  width: min(100%, 190px);
+  aspect-ratio: 1;
+  margin: 12px auto;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  object-fit: contain;
+  padding: 8px;
+}
+
+.support-button {
+  width: 100%;
+}
+
 .check-list input {
   width: 16px;
   height: 16px;
@@ -2113,6 +2158,21 @@ h1 {
   gap: 10px;
 }
 
+.support-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.support-admin-card {
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--paper-soft) 68%, transparent);
+  padding: 16px;
+}
+
 .admin-item-card {
   display: grid;
   grid-template-columns: 74px minmax(0, 1fr) auto;
@@ -2571,6 +2631,10 @@ h1 {
   .auto-item-row,
   .post-grid,
   .admin-upload-row {
+    grid-template-columns: 1fr;
+  }
+
+  .support-admin-grid {
     grid-template-columns: 1fr;
   }
 }

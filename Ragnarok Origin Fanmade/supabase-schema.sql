@@ -78,6 +78,14 @@ create table if not exists public.marketplace_premium_users (
 create index if not exists marketplace_premium_users_active_idx
   on public.marketplace_premium_users (active, display_name);
 
+create table if not exists public.marketplace_site_settings (
+  key text primary key,
+  value jsonb not null default '{}'::jsonb,
+  updated_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 insert into public.marketplace_admins (user_id)
 select id from auth.users
 where lower(email) = 'bagonzaza1150@gmail.com'
@@ -168,11 +176,17 @@ create trigger marketplace_premium_users_set_updated_at
 before update on public.marketplace_premium_users
 for each row execute function public.set_updated_at();
 
+drop trigger if exists marketplace_site_settings_set_updated_at on public.marketplace_site_settings;
+create trigger marketplace_site_settings_set_updated_at
+before update on public.marketplace_site_settings
+for each row execute function public.set_updated_at();
+
 alter table public.marketplace_items enable row level security;
 alter table public.marketplace_listings enable row level security;
 alter table public.marketplace_admins enable row level security;
 alter table public.marketplace_profiles enable row level security;
 alter table public.marketplace_premium_users enable row level security;
+alter table public.marketplace_site_settings enable row level security;
 
 create or replace function public.is_market_admin()
 returns boolean
@@ -209,6 +223,8 @@ grant all privileges on table public.marketplace_listings to authenticated;
 grant select on table public.marketplace_admins to authenticated;
 grant all privileges on table public.marketplace_profiles to authenticated;
 grant all privileges on table public.marketplace_premium_users to authenticated;
+grant select on table public.marketplace_site_settings to anon;
+grant all privileges on table public.marketplace_site_settings to authenticated;
 grant execute on function public.is_market_admin() to anon, authenticated;
 grant execute on function public.is_market_premium(uuid) to anon, authenticated;
 
@@ -308,6 +324,28 @@ on public.marketplace_premium_users
 for delete
 to authenticated
 using (public.is_market_admin());
+
+drop policy if exists "Public can read site settings" on public.marketplace_site_settings;
+create policy "Public can read site settings"
+on public.marketplace_site_settings
+for select
+to anon, authenticated
+using (true);
+
+drop policy if exists "Authenticated admins can insert site settings" on public.marketplace_site_settings;
+create policy "Authenticated admins can insert site settings"
+on public.marketplace_site_settings
+for insert
+to authenticated
+with check (public.is_market_admin());
+
+drop policy if exists "Authenticated admins can update site settings" on public.marketplace_site_settings;
+create policy "Authenticated admins can update site settings"
+on public.marketplace_site_settings
+for update
+to authenticated
+using (public.is_market_admin())
+with check (public.is_market_admin());
 
 drop policy if exists "Public can read active marketplace listings" on public.marketplace_listings;
 drop policy if exists "Public can read marketplace listings" on public.marketplace_listings;
