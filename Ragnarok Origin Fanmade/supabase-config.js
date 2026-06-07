@@ -622,6 +622,27 @@ window.ROOC_SUPABASE = {
     sidebar.hidden = false;
   }
 
+  function renderHeroAnnouncement(settings) {
+    const announcement = document.querySelector("#heroAnnouncement");
+    if (!announcement) return;
+
+    const text = String(settings.announcement_text || "").trim();
+    if (!settings.announcement_enabled || !text) {
+      announcement.hidden = true;
+      announcement.innerHTML = "";
+      return;
+    }
+
+    const escapedText = escapeHtml(text);
+    announcement.innerHTML = `
+      <div class="announcement-marquee" role="status" aria-live="polite">
+        <span>${escapedText}</span>
+        <span aria-hidden="true">${escapedText}</span>
+      </div>
+    `;
+    announcement.hidden = false;
+  }
+
   function renderFilteredListings() {
     if (!document.querySelector("#latestListingGrid")) return;
     renderCounts(publicListings);
@@ -764,7 +785,10 @@ window.ROOC_SUPABASE = {
           populateServerSelects(fallbackServers);
         });
       fetchSiteSettings()
-        .then(renderSupportSidebar)
+        .then((settings) => {
+          renderSupportSidebar(settings);
+          renderHeroAnnouncement(settings);
+        })
         .catch((error) => console.warn("ROOC support settings failed:", error));
       await refreshListings();
       console.info(`ROOC public listings loaded ${publicListings.length} active rows, ${soldListings.length} sold rows`);

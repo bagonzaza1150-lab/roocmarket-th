@@ -311,6 +311,23 @@
 
           <form class="support-admin-form" id="supportSettingsForm">
             <div class="support-admin-grid">
+              <div class="support-admin-card announcement-admin-card">
+                <div class="form-block-head">
+                  <span>!</span>
+                  <div>
+                    <h3>ประกาศหน้าแรก</h3>
+                    <p>ข้อความวิ่งขนาดเล็กที่แสดงบน Head หน้าแรก สีเหลืองเข้ม</p>
+                  </div>
+                </div>
+                <div class="post-checks">
+                  <label><input id="announcementEnabled" type="checkbox" /> เปิดแสดงประกาศหน้าแรก</label>
+                </div>
+                <label class="post-field">
+                  <span>ข้อความประกาศ</span>
+                  <textarea id="announcementText" rows="3" placeholder="เช่น แจ้งเตือนกิจกรรม / ข่าวตลาด / ติดต่อทีมงาน"></textarea>
+                </label>
+              </div>
+
               <div class="support-admin-card">
                 <div class="form-block-head">
                   <span>฿</span>
@@ -454,6 +471,8 @@
       const supportSettingsForm = document.querySelector("#supportSettingsForm");
       const supportSettingsMessage = document.querySelector("#supportSettingsMessage");
       const supportFields = {
+        announcementEnabled: document.querySelector("#announcementEnabled"),
+        announcementText: document.querySelector("#announcementText"),
         donateEnabled: document.querySelector("#donateEnabled"),
         donateTitle: document.querySelector("#donateTitle"),
         donateText: document.querySelector("#donateText"),
@@ -1262,6 +1281,8 @@
 
       function getSupportPayload() {
         return {
+          announcement_enabled: supportFields.announcementEnabled.checked,
+          announcement_text: supportFields.announcementText.value.trim(),
           donate_enabled: supportFields.donateEnabled.checked,
           donate_title: supportFields.donateTitle.value.trim(),
           donate_text: supportFields.donateText.value.trim(),
@@ -1280,6 +1301,8 @@
       }
 
       function setSupportForm(settings = {}) {
+        supportFields.announcementEnabled.checked = Boolean(settings.announcement_enabled);
+        supportFields.announcementText.value = settings.announcement_text || "";
         supportFields.donateEnabled.checked = Boolean(settings.donate_enabled);
         supportFields.donateTitle.value = settings.donate_title || "";
         supportFields.donateText.value = settings.donate_text || "";
