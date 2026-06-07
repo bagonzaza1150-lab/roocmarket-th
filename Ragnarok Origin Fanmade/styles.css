@@ -28,6 +28,10 @@
   --shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
 }
 
+[hidden] {
+  display: none !important;
+}
+
 * {
   box-sizing: border-box;
 }
