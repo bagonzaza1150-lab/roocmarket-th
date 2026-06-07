@@ -515,6 +515,11 @@
         }[category] || category;
       }
 
+      function formatListingPrice(value) {
+        const price = Number(String(value || "").replace(/[^\d]/g, ""));
+        return Number.isFinite(price) && price > 0 ? price.toLocaleString("th-TH") : "0";
+      }
+
       function resetEditor() {
         itemForm.reset();
         fields.id.value = "";
@@ -778,7 +783,7 @@
             <div>
               <strong>${escapeHtml(listing.title || listing.item_name || "ประกาศขาย")}</strong>
               <span>${escapeHtml(listing.seller_name || "ไม่ระบุผู้ขาย")} · ${escapeHtml(listing.category || "-")} · ${listing.active ? "กำลังแสดง" : "ปิดอยู่"}</span>
-              <small>฿ ${escapeHtml(listing.price_text || "0")} · ${escapeHtml(listing.server_name || "ทั้งหมด")}</small>
+              <small>฿ ${formatListingPrice(listing.price_text)} · ${escapeHtml(listing.server_name || "ทั้งหมด")}</small>
             </div>
             <div class="admin-item-actions">
               <button class="btn btn-small admin-delete" type="button" data-listing-delete="${escapeHtml(listing.id)}">ลบประกาศ</button>

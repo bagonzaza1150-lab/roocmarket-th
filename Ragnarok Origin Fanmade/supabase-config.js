@@ -88,6 +88,11 @@ window.ROOC_SUPABASE = {
     return Number.isFinite(number) ? number : 0;
   }
 
+  function formatListingPrice(value) {
+    const price = parsePrice(value);
+    return price > 0 ? price.toLocaleString("th-TH") : "0";
+  }
+
   function compareListingPrice(a, b, direction) {
     const priceA = parsePrice(a.price_text);
     const priceB = parsePrice(b.price_text);
@@ -332,7 +337,7 @@ window.ROOC_SUPABASE = {
           <h3>${escapeHtml(title)}</h3>
           <p>${escapeHtml(description)}</p>
           <div class="price-row">
-            <strong>฿ ${escapeHtml(listing.price_text || "0")}</strong>
+            <strong>฿ ${formatListingPrice(listing.price_text)}</strong>
             <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">ติดต่อผู้ขาย</button>
           </div>
         </article>
@@ -386,7 +391,7 @@ window.ROOC_SUPABASE = {
 
     const cards = listings.map((listing) => {
       const title = listing.title || listing.item_name || "ประกาศขาย";
-      const price = listing.price_text ? `฿ ${listing.price_text}` : "";
+      const price = listing.price_text ? `฿ ${formatListingPrice(listing.price_text)}` : "";
       const sellerName = listing.seller_name || "ผู้ขาย ROOC";
       return `
         <article class="sold-card">
