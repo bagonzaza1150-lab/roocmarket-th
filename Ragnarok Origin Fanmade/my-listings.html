@@ -67,12 +67,12 @@
         </div>
         <div class="listing-quota" id="listingQuota" hidden>
           <div>
-            <span>โควต้าประกาศ</span>
+            <span>ลงประกาศใน 1 ชั่วโมง</span>
             <strong id="quotaUsed">0/2</strong>
           </div>
           <div>
-            <span>คงเหลือ</span>
-            <strong id="quotaRemaining">2 ครั้ง</strong>
+            <span>กำลังแสดง / คงเหลือ</span>
+            <strong id="quotaRemaining">0/2</strong>
           </div>
           <div>
             <span>สถานะบัญชี</span>
@@ -152,11 +152,17 @@
         return new Date(listing.expires_at).getTime() <= Date.now() ? "expired" : "time-left";
       }
 
-      function renderQuota({ used, limit, isPremium }) {
-        const remaining = Math.max(0, limit - used);
+      function isListingCurrentlyActive(listing) {
+        if (!listing.active || listing.sale_status !== "active") return false;
+        if (!listing.expires_at) return true;
+        return new Date(listing.expires_at).getTime() > Date.now();
+      }
+
+      function renderQuota({ hourlyUsed, activeUsed, limit, isPremium }) {
+        const activeRemaining = Math.max(0, limit - activeUsed);
         listingQuota.hidden = false;
-        quotaUsed.textContent = `${used}/${limit}`;
-        quotaRemaining.textContent = `${remaining} ครั้ง`;
+        quotaUsed.textContent = `${hourlyUsed}/${limit}`;
+        quotaRemaining.textContent = `${activeUsed}/${limit} · เหลือ ${activeRemaining}`;
         quotaPlan.textContent = isPremium ? "Premium" : "Free";
       }
 
@@ -213,9 +219,12 @@
         const visibleListings = allListings.filter((listing) => listing.sale_status !== "deleted");
         const isPremium = Boolean(premiumResult);
         const limit = isPremium ? 5 : 2;
-        renderQuota({ used: allListings.length, limit, isPremium });
+        const oneHourAgo = Date.now() - 3600000;
+        const hourlyUsed = allListings.filter((listing) => new Date(listing.created_at).getTime() >= oneHourAgo).length;
+        const activeUsed = allListings.filter(isListingCurrentlyActive).length;
+        renderQuota({ hourlyUsed, activeUsed, limit, isPremium });
         renderListings(visibleListings);
-        setMessage(visibleListings.length ? `พบ ${visibleListings.length} ประกาศ · ใช้โควต้า ${allListings.length}/${limit}` : `ยังไม่มีประกาศที่แสดง · ใช้โควต้า ${allListings.length}/${limit}`);
+        setMessage(visibleListings.length ? `พบ ${visibleListings.length} ประกาศ · กำลังแสดง ${activeUsed}/${limit}` : `ยังไม่มีประกาศที่แสดง · ลงใน 1 ชั่วโมง ${hourlyUsed}/${limit}`);
       }
 
       async function getPremiumStatus(session) {

@@ -287,6 +287,45 @@ as $$
   );
 $$;
 
+create or replace function public.market_listing_limit(target_user_id uuid default auth.uid())
+returns integer
+language sql
+security definer
+set search_path = public
+as $$
+  select case when public.is_market_premium(target_user_id) then 5 else 2 end;
+$$;
+
+create or replace function public.market_hourly_listing_count(target_user_id uuid default auth.uid())
+returns integer
+language sql
+security definer
+set search_path = public
+as $$
+  select count(*)::integer
+  from public.marketplace_listings
+  where user_id = target_user_id
+    and created_at >= now() - interval '1 hour';
+$$;
+
+create or replace function public.market_active_listing_count(
+  target_user_id uuid default auth.uid(),
+  excluded_listing_id uuid default null
+)
+returns integer
+language sql
+security definer
+set search_path = public
+as $$
+  select count(*)::integer
+  from public.marketplace_listings
+  where user_id = target_user_id
+    and active = true
+    and sale_status = 'active'
+    and (expires_at is null or expires_at > now())
+    and (excluded_listing_id is null or id <> excluded_listing_id);
+$$;
+
 grant usage on schema public to anon, authenticated;
 grant select on table public.marketplace_items to anon;
 grant all privileges on table public.marketplace_items to authenticated;
@@ -302,6 +341,9 @@ grant select on table public.marketplace_site_settings to anon;
 grant all privileges on table public.marketplace_site_settings to authenticated;
 grant execute on function public.is_market_admin() to anon, authenticated;
 grant execute on function public.is_market_premium(uuid) to anon, authenticated;
+grant execute on function public.market_listing_limit(uuid) to anon, authenticated;
+grant execute on function public.market_hourly_listing_count(uuid) to anon, authenticated;
+grant execute on function public.market_active_listing_count(uuid, uuid) to anon, authenticated;
 
 grant usage on schema storage to anon, authenticated;
 grant select on table storage.objects to anon;
@@ -513,6 +555,8 @@ with check (
   and sale_status = 'active'
   and expires_at is not null
   and auth.uid() = user_id
+  and public.market_hourly_listing_count(auth.uid()) < public.market_listing_limit(auth.uid())
+  and public.market_active_listing_count(auth.uid(), null) < public.market_listing_limit(auth.uid())
   and not exists (
     select 1
     from public.marketplace_banned_users banned
@@ -527,7 +571,23 @@ on public.marketplace_listings
 for update
 to authenticated
 using (public.is_market_admin() or auth.uid() = user_id)
-with check (public.is_market_admin() or auth.uid() = user_id);
+with check (
+  public.is_market_admin()
+  or (
+    auth.uid() = user_id
+    and not exists (
+      select 1
+      from public.marketplace_banned_users banned
+      where banned.user_id = auth.uid()
+        and banned.active = true
+    )
+    and (
+      active = false
+      or sale_status <> 'active'
+      or public.market_active_listing_count(auth.uid(), id) < public.market_listing_limit(auth.uid())
+    )
+  )
+);
 
 drop policy if exists "Authenticated admins can delete marketplace listings" on public.marketplace_listings;
 create policy "Authenticated admins can delete marketplace listings"

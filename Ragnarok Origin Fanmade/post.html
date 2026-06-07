@@ -634,10 +634,15 @@
         try {
           const isPremiumSeller = await getPremiumStatus(currentSession);
           const listingLimit = isPremiumSeller ? 5 : 2;
-          const usedCount = await getUsedListingCount(currentSession);
+          const quota = await getListingQuota(currentSession);
 
-          if (usedCount >= listingLimit) {
-            setPostMessage(`บัญชี${isPremiumSeller ? " Premium" : "ทั่วไป"}ลงประกาศได้ทั้งหมด ${listingLimit} ครั้ง ใช้ครบแล้ว`, true);
+          if (quota.hourlyCount >= listingLimit) {
+            setPostMessage(`บัญชี${isPremiumSeller ? " Premium" : "ทั่วไป"}ลงประกาศได้ ${listingLimit} ครั้งต่อ 1 ชั่วโมง ตอนนี้ใช้ครบแล้ว`, true);
+            return;
+          }
+
+          if (quota.activeCount >= listingLimit) {
+            setPostMessage(`บัญชี${isPremiumSeller ? " Premium" : "ทั่วไป"}แสดงประกาศพร้อมกันได้ ${listingLimit} ประกาศ กรุณาปิดประกาศเก่าก่อน`, true);
             return;
           }
 
@@ -805,6 +810,30 @@
           .maybeSingle();
         if (error) return false;
         return Boolean(data?.active);
+      }
+
+      async function getListingQuota(session) {
+        const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
+        const [{ count: hourlyCount, error: hourlyError }, { count: activeCount, error: activeError }] = await Promise.all([
+          supabaseClient
+            .from("marketplace_listings")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", session.user.id)
+            .gte("created_at", oneHourAgo),
+          supabaseClient
+            .from("marketplace_listings")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", session.user.id)
+            .eq("active", true)
+            .eq("sale_status", "active")
+            .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+        ]);
+        if (hourlyError) throw hourlyError;
+        if (activeError) throw activeError;
+        return {
+          hourlyCount: hourlyCount || 0,
+          activeCount: activeCount || 0
+        };
       }
 
       async function getUsedListingCount(session) {
