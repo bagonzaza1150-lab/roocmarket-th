@@ -98,8 +98,12 @@
 
             <div class="trust-row" aria-label="สถิติตลาด">
               <div>
-                <strong id="totalListingCount">0</strong>
-                <span>ประกาศ</span>
+                <strong id="totalSellListingCount">0</strong>
+                <span>ประกาศขาย</span>
+              </div>
+              <div>
+                <strong id="totalBuyListingCount">0</strong>
+                <span>ประกาศรับซื้อ</span>
               </div>
             </div>
           </div>
@@ -239,6 +243,11 @@
                 </svg>
               </button>
             </div>
+          </div>
+
+          <div class="market-tabs listing-type-tabs" aria-label="เลือกประเภทประกาศ">
+            <button class="is-active" type="button" data-listing-type="sell">ประกาศขาย</button>
+            <button type="button" data-listing-type="buy">ประกาศรับซื้อ</button>
           </div>
 
           <div class="market-tabs" aria-label="เลือกหมวดประกาศ">

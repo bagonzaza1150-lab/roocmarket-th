@@ -32,6 +32,7 @@ create index if not exists marketplace_servers_public_idx
 create table if not exists public.marketplace_listings (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete set null,
+  listing_type text not null default 'sell' check (listing_type in ('sell', 'buy')),
   category text not null check (category in ('mvp', 'accessories', 'fashion', 'account')),
   item_name text not null,
   title text not null,
@@ -59,7 +60,7 @@ create table if not exists public.marketplace_listings (
 );
 
 create index if not exists marketplace_listings_public_idx
-  on public.marketplace_listings (active, sale_status, category, created_at desc);
+  on public.marketplace_listings (active, sale_status, listing_type, category, created_at desc);
 
 create table if not exists public.marketplace_admins (
   user_id uuid primary key references auth.users(id) on delete cascade,
@@ -145,6 +146,9 @@ alter table public.marketplace_listings
 add column if not exists user_id uuid references auth.users(id) on delete set null;
 
 alter table public.marketplace_listings
+add column if not exists listing_type text not null default 'sell';
+
+alter table public.marketplace_listings
 add column if not exists character_name text not null default '';
 
 alter table public.marketplace_listings
@@ -204,6 +208,22 @@ begin
   alter table public.marketplace_listings
   add constraint marketplace_listings_sale_status_check
   check (sale_status in ('active', 'closed', 'sold', 'deleted'));
+end $$;
+
+do $$
+begin
+  if exists (
+    select 1
+    from pg_constraint
+    where conname = 'marketplace_listings_listing_type_check'
+  ) then
+    alter table public.marketplace_listings
+    drop constraint marketplace_listings_listing_type_check;
+  end if;
+
+  alter table public.marketplace_listings
+  add constraint marketplace_listings_listing_type_check
+  check (listing_type in ('sell', 'buy'));
 end $$;
 
 create or replace function public.set_updated_at()
@@ -296,21 +316,9 @@ as $$
   select case when public.is_market_premium(target_user_id) then 5 else 2 end;
 $$;
 
-create or replace function public.market_hourly_listing_count(target_user_id uuid default auth.uid())
-returns integer
-language sql
-security definer
-set search_path = public
-as $$
-  select count(*)::integer
-  from public.marketplace_listings
-  where user_id = target_user_id
-    and created_at >= now() - interval '1 hour';
-$$;
-
-create or replace function public.market_active_listing_count(
+create or replace function public.market_hourly_listing_count(
   target_user_id uuid default auth.uid(),
-  excluded_listing_id uuid default null
+  target_listing_type text default 'sell'
 )
 returns integer
 language sql
@@ -320,6 +328,24 @@ as $$
   select count(*)::integer
   from public.marketplace_listings
   where user_id = target_user_id
+    and listing_type = target_listing_type
+    and created_at >= now() - interval '1 hour';
+$$;
+
+create or replace function public.market_active_listing_count(
+  target_user_id uuid default auth.uid(),
+  excluded_listing_id uuid default null,
+  target_listing_type text default 'sell'
+)
+returns integer
+language sql
+security definer
+set search_path = public
+as $$
+  select count(*)::integer
+  from public.marketplace_listings
+  where user_id = target_user_id
+    and listing_type = target_listing_type
     and active = true
     and sale_status = 'active'
     and (expires_at is null or expires_at > now())
@@ -342,8 +368,8 @@ grant all privileges on table public.marketplace_site_settings to authenticated;
 grant execute on function public.is_market_admin() to anon, authenticated;
 grant execute on function public.is_market_premium(uuid) to anon, authenticated;
 grant execute on function public.market_listing_limit(uuid) to anon, authenticated;
-grant execute on function public.market_hourly_listing_count(uuid) to anon, authenticated;
-grant execute on function public.market_active_listing_count(uuid, uuid) to anon, authenticated;
+grant execute on function public.market_hourly_listing_count(uuid, text) to anon, authenticated;
+grant execute on function public.market_active_listing_count(uuid, uuid, text) to anon, authenticated;
 
 grant usage on schema storage to anon, authenticated;
 grant select on table storage.objects to anon;
@@ -553,10 +579,12 @@ to authenticated
 with check (
   active = true
   and sale_status = 'active'
+  and listing_type in ('sell', 'buy')
+  and (listing_type = 'sell' or category <> 'account')
   and expires_at is not null
   and auth.uid() = user_id
-  and public.market_hourly_listing_count(auth.uid()) < public.market_listing_limit(auth.uid())
-  and public.market_active_listing_count(auth.uid(), null) < public.market_listing_limit(auth.uid())
+  and public.market_hourly_listing_count(auth.uid(), listing_type) < public.market_listing_limit(auth.uid())
+  and public.market_active_listing_count(auth.uid(), null, listing_type) < public.market_listing_limit(auth.uid())
   and not exists (
     select 1
     from public.marketplace_banned_users banned
@@ -584,7 +612,7 @@ with check (
     and (
       active = false
       or sale_status <> 'active'
-      or public.market_active_listing_count(auth.uid(), id) < public.market_listing_limit(auth.uid())
+      or public.market_active_listing_count(auth.uid(), id, listing_type) < public.market_listing_limit(auth.uid())
     )
   )
 );

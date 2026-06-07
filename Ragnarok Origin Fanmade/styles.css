@@ -514,7 +514,7 @@ h1 {
 
 .trust-row {
   display: grid;
-  grid-template-columns: minmax(150px, 180px);
+  grid-template-columns: repeat(2, minmax(150px, 180px));
   gap: 12px;
   max-width: 560px;
   margin-top: 18px;
@@ -909,6 +909,14 @@ h1 {
   padding-bottom: 2px;
 }
 
+.listing-type-tabs {
+  margin: 0 0 10px;
+}
+
+.listing-type-tabs button {
+  min-width: 116px;
+}
+
 .market-tabs button {
   min-height: 38px;
   border: 1px solid var(--line);
@@ -926,6 +934,11 @@ h1 {
   border-color: color-mix(in srgb, var(--blue) 42%, var(--line));
   background: color-mix(in srgb, var(--blue) 12%, var(--paper));
   color: var(--blue);
+}
+
+.market-tabs button[disabled] {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .listing-grid {
@@ -1245,6 +1258,11 @@ h1 {
 .listing-meta .fast {
   background: rgba(240, 173, 36, 0.16);
   color: #b06f00;
+}
+
+.listing-meta .buy {
+  background: rgba(55, 160, 236, 0.16);
+  color: var(--blue);
 }
 
 .listing-meta .mvp {
@@ -2110,6 +2128,10 @@ h1 {
   gap: 10px;
 }
 
+.listing-type-picker {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .category-picker button {
   min-height: 54px;
   border: 1px solid var(--line);
@@ -2125,6 +2147,11 @@ h1 {
   border-color: color-mix(in srgb, var(--blue) 55%, var(--line));
   background: color-mix(in srgb, var(--blue) 12%, var(--paper));
   color: var(--blue);
+}
+
+.category-picker button[disabled] {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .auto-item-row {

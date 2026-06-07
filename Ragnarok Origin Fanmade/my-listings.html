@@ -67,11 +67,11 @@
         </div>
         <div class="listing-quota" id="listingQuota" hidden>
           <div>
-            <span>ลงประกาศใน 1 ชั่วโมง</span>
+            <span>ประกาศขาย</span>
             <strong id="quotaUsed">0/2</strong>
           </div>
           <div>
-            <span>กำลังแสดง / คงเหลือ</span>
+            <span>ประกาศรับซื้อ</span>
             <strong id="quotaRemaining">0/2</strong>
           </div>
           <div>
@@ -163,11 +163,16 @@
         return new Date(listing.expires_at).getTime() > Date.now();
       }
 
-      function renderQuota({ hourlyUsed, activeUsed, limit, isPremium }) {
-        const activeRemaining = Math.max(0, limit - activeUsed);
+      function getListingType(listing) {
+        return listing.listing_type === "buy" ? "buy" : "sell";
+      }
+
+      function renderQuota({ sellHourlyUsed, sellActiveUsed, buyHourlyUsed, buyActiveUsed, limit, isPremium }) {
+        const sellRemaining = Math.max(0, limit - sellActiveUsed);
+        const buyRemaining = Math.max(0, limit - buyActiveUsed);
         listingQuota.hidden = false;
-        quotaUsed.textContent = `${hourlyUsed}/${limit}`;
-        quotaRemaining.textContent = `${activeUsed}/${limit} · เหลือ ${activeRemaining}`;
+        quotaUsed.textContent = `ลง ${sellHourlyUsed}/${limit} · แสดง ${sellActiveUsed}/${limit} · เหลือ ${sellRemaining}`;
+        quotaRemaining.textContent = `ลง ${buyHourlyUsed}/${limit} · แสดง ${buyActiveUsed}/${limit} · เหลือ ${buyRemaining}`;
         quotaPlan.textContent = isPremium ? "Premium" : "Free";
       }
 
@@ -181,6 +186,7 @@
               <img src="${escapeHtml(listing.image_url || "assets/category-icons/mvp-c.png")}" alt="" />
               <div>
                 <div class="listing-meta">
+                  <span class="${getListingType(listing) === "buy" ? "buy" : "fast"}">${getListingType(listing) === "buy" ? "รับซื้อ" : "ขาย"}</span>
                   <span>${escapeHtml(categoryLabel(listing.category))}</span>
                   <span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>
                   <span class="${status.className}">${status.label}</span>
@@ -225,11 +231,13 @@
         const isPremium = Boolean(premiumResult);
         const limit = isPremium ? 5 : 2;
         const oneHourAgo = Date.now() - 3600000;
-        const hourlyUsed = allListings.filter((listing) => new Date(listing.created_at).getTime() >= oneHourAgo).length;
-        const activeUsed = allListings.filter(isListingCurrentlyActive).length;
-        renderQuota({ hourlyUsed, activeUsed, limit, isPremium });
+        const sellHourlyUsed = allListings.filter((listing) => getListingType(listing) === "sell" && new Date(listing.created_at).getTime() >= oneHourAgo).length;
+        const buyHourlyUsed = allListings.filter((listing) => getListingType(listing) === "buy" && new Date(listing.created_at).getTime() >= oneHourAgo).length;
+        const sellActiveUsed = allListings.filter((listing) => getListingType(listing) === "sell" && isListingCurrentlyActive(listing)).length;
+        const buyActiveUsed = allListings.filter((listing) => getListingType(listing) === "buy" && isListingCurrentlyActive(listing)).length;
+        renderQuota({ sellHourlyUsed, sellActiveUsed, buyHourlyUsed, buyActiveUsed, limit, isPremium });
         renderListings(visibleListings);
-        setMessage(visibleListings.length ? `พบ ${visibleListings.length} ประกาศ · กำลังแสดง ${activeUsed}/${limit}` : `ยังไม่มีประกาศที่แสดง · ลงใน 1 ชั่วโมง ${hourlyUsed}/${limit}`);
+        setMessage(visibleListings.length ? `พบ ${visibleListings.length} ประกาศ · ขาย ${sellActiveUsed}/${limit} · รับซื้อ ${buyActiveUsed}/${limit}` : `ยังไม่มีประกาศที่แสดง · ขาย ${sellHourlyUsed}/${limit} · รับซื้อ ${buyHourlyUsed}/${limit}`);
       }
 
       async function getPremiumStatus(session) {

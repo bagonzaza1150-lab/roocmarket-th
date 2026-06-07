@@ -52,10 +52,10 @@
         <div class="post-head">
           <div>
             <p class="eyebrow">Post Listing</p>
-            <h2>ลงประกาศขาย</h2>
+            <h2>ลงประกาศ</h2>
             <p>
-              เลือกหมวดและชื่อไอเท็มจากฐานข้อมูล รูปของ MVP Cards, Accessories และ Fashion
-              จะขึ้นอัตโนมัติ ส่วน Account ให้อัปโหลดรูปเอง
+              เลือกประกาศขายหรือรับซื้อ พร้อมหมวดและชื่อไอเท็มจากฐานข้อมูล รูปของไอเท็มจะขึ้นอัตโนมัติ
+              ส่วน Account ใช้ได้เฉพาะประกาศขายและต้องอัปโหลดรูปเอง
             </p>
           </div>
           <div class="post-status">
@@ -76,8 +76,23 @@
               <div class="form-block-head">
                 <span>1</span>
                 <div>
+                  <h3>ประเภทประกาศ</h3>
+                  <p>เลือกว่าต้องการขายหรือรับซื้อไอเท็ม</p>
+                </div>
+              </div>
+
+              <div class="category-picker listing-type-picker" role="tablist" aria-label="ประเภทประกาศ">
+                <button class="is-active" type="button" data-listing-type="sell">ประกาศขาย</button>
+                <button type="button" data-listing-type="buy">ประกาศรับซื้อ</button>
+              </div>
+            </div>
+
+            <div class="form-block">
+              <div class="form-block-head">
+                <span>2</span>
+                <div>
                   <h3>หมวดประกาศ</h3>
-                  <p>เลือกประเภทสินค้าที่ต้องการลงขาย</p>
+                  <p>ประกาศรับซื้อเลือกได้เฉพาะ MVP Cards, Accessories และ Fashion</p>
                 </div>
               </div>
 
@@ -91,7 +106,7 @@
 
             <div class="form-block" id="gameItemBlock">
               <div class="form-block-head">
-                <span>2</span>
+                <span>3</span>
                 <div>
                   <h3 id="itemSelectTitle">เลือกชื่อการ์ด</h3>
                   <p>รูปจะขึ้นอัตโนมัติจากไฟล์ไอเท็มในเว็บ</p>
@@ -112,7 +127,7 @@
 
             <div class="form-block is-hidden" id="accountUploadBlock">
               <div class="form-block-head">
-                <span>2</span>
+                <span>3</span>
                 <div>
                   <h3>อัปโหลดรูปบัญชี</h3>
                   <p>ใช้ภาพหน้าตัวละครหรือรายละเอียดบัญชีที่ต้องการโชว์</p>
@@ -129,7 +144,7 @@
 
             <div class="form-block">
               <div class="form-block-head">
-                <span>3</span>
+                <span>4</span>
                 <div>
                   <h3>ข้อมูลประกาศ</h3>
                   <p>ใส่ราคา Server และรายละเอียดสำหรับผู้ซื้อ</p>
@@ -351,7 +366,8 @@
         }
       };
 
-      const categoryButtons = document.querySelectorAll(".category-picker button");
+      const categoryButtons = document.querySelectorAll(".category-picker:not(.listing-type-picker) button");
+      const listingTypeButtons = document.querySelectorAll(".listing-type-picker button");
       const itemSelect = document.querySelector("#itemSelect");
       const itemSelectTitle = document.querySelector("#itemSelectTitle");
       const itemSelectLabel = document.querySelector("#itemSelectLabel");
@@ -378,8 +394,10 @@
       const previewTitle = document.querySelector("#previewTitle");
       const previewDescription = document.querySelector("#previewDescription");
       const previewPrice = document.querySelector("#previewPrice");
+      let activeListingType = "sell";
       let activeCategory = "mvp";
       let uploadedAccountImages = [];
+      let optimizedAccountFiles = [];
       const supabaseConfig = window.ROOC_SUPABASE || {};
       const canUseSupabase = Boolean(supabaseConfig.url && supabaseConfig.anonKey && window.supabase);
       const listingBucket = supabaseConfig.listingBucket || "listing-images";
@@ -479,10 +497,60 @@
         return { selectedFiles, oversized };
       }
 
+      function loadImageFile(file) {
+        return new Promise((resolve, reject) => {
+          const image = new Image();
+          const url = URL.createObjectURL(file);
+          image.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(image);
+          };
+          image.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error(`อ่านไฟล์รูป ${file.name} ไม่สำเร็จ`));
+          };
+          image.src = url;
+        });
+      }
+
+      async function optimizeAccountImage(file) {
+        if (!file.type.startsWith("image/") || file.type === "image/gif") return file;
+        const image = await loadImageFile(file);
+        const maxSide = 1200;
+        const scale = Math.min(1, maxSide / Math.max(image.naturalWidth || image.width, image.naturalHeight || image.height));
+        const width = Math.max(1, Math.round((image.naturalWidth || image.width) * scale));
+        const height = Math.max(1, Math.round((image.naturalHeight || image.height) * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0, width, height);
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", 0.78));
+        if (!blob) return file;
+        const basename = file.name.replace(/\.[^.]+$/, "") || "account";
+        return new File([blob], `${basename}.webp`, { type: "image/webp", lastModified: Date.now() });
+      }
+
+      function revokeAccountPreviews() {
+        uploadedAccountImages.forEach((src) => URL.revokeObjectURL(src));
+        uploadedAccountImages = [];
+      }
+
+      async function prepareAccountImages(files) {
+        const selectedFiles = Array.from(files || []).slice(0, 5);
+        const optimizedFiles = [];
+        for (const file of selectedFiles) {
+          optimizedFiles.push(await optimizeAccountImage(file));
+        }
+        const oversized = optimizedFiles.filter((file) => file.size > accountImageMaxBytes);
+        return { selectedFiles: optimizedFiles, oversized };
+      }
+
       function syncPreview() {
         const group = listingAssets[activeCategory];
         const item = getActiveItem();
-        const title = listingTitle.value.trim() || item.name;
+        const typePrefix = activeListingType === "buy" ? "รับซื้อ" : "ขาย";
+        const title = listingTitle.value.trim() || `${typePrefix} ${item.name}`;
         const detail = listingDescription.value.trim() || item.description;
         const image = activeCategory === "account" && uploadedAccountImages.length ? uploadedAccountImages[0] : item.image;
         const tags = [];
@@ -517,6 +585,23 @@
         listingTitle.value = group.items[0].name;
         listingPrice.value = "";
         listingDescription.value = group.items[0].description;
+        syncPreview();
+      }
+
+      function syncListingTypeUi(type) {
+        activeListingType = type === "buy" ? "buy" : "sell";
+        listingTypeButtons.forEach((button) => {
+          button.classList.toggle("is-active", button.dataset.listingType === activeListingType);
+        });
+        categoryButtons.forEach((button) => {
+          const isAccount = button.dataset.category === "account";
+          button.disabled = activeListingType === "buy" && isAccount;
+        });
+        if (activeListingType === "buy" && activeCategory === "account") {
+          activeCategory = "mvp";
+          categoryButtons.forEach((item) => item.classList.toggle("is-active", item.dataset.category === activeCategory));
+          populateItems(activeCategory);
+        }
         syncPreview();
       }
 
@@ -577,7 +662,7 @@
           const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
           const path = `${currentSession.user.id}/account/${Date.now()}-${index}-${safeName}`;
           const { error } = await supabaseClient.storage.from(listingBucket).upload(path, file, {
-            cacheControl: "3600",
+            cacheControl: "86400",
             upsert: false
           });
 
@@ -617,7 +702,8 @@
         }
 
         const item = getActiveItem();
-        const title = listingTitle.value.trim() || item.name;
+        const typePrefix = activeListingType === "buy" ? "รับซื้อ" : "ขาย";
+        const title = listingTitle.value.trim() || `${typePrefix} ${item.name}`;
         const characterText = characterName.value.trim();
         const priceText = plainPrice(listingPrice.value);
         const description = listingDescription.value.trim() || item.description;
@@ -644,20 +730,26 @@
           return;
         }
 
+        if (activeListingType === "buy" && activeCategory === "account") {
+          setPostMessage("ประกาศรับซื้อรองรับเฉพาะ MVP Cards, Accessories และ Fashion", true);
+          return;
+        }
+
         setPostMessage("กำลังเผยแพร่ประกาศ...");
 
         try {
           const isPremiumSeller = await getPremiumStatus(currentSession);
           const listingLimit = isPremiumSeller ? 5 : 2;
-          const quota = await getListingQuota(currentSession);
+          const listingTypeLabel = activeListingType === "buy" ? "ประกาศรับซื้อ" : "ประกาศขาย";
+          const quota = await getListingQuota(currentSession, activeListingType);
 
           if (quota.hourlyCount >= listingLimit) {
-            setPostMessage(`บัญชี${isPremiumSeller ? " Premium" : "ทั่วไป"}ลงประกาศได้ ${listingLimit} ครั้งต่อ 1 ชั่วโมง ตอนนี้ใช้ครบแล้ว`, true);
+            setPostMessage(`บัญชี${isPremiumSeller ? " Premium" : "ทั่วไป"}ลง${listingTypeLabel}ได้ ${listingLimit} ครั้งต่อ 1 ชั่วโมง ตอนนี้ใช้ครบแล้ว`, true);
             return;
           }
 
           if (quota.activeCount >= listingLimit) {
-            setPostMessage(`บัญชี${isPremiumSeller ? " Premium" : "ทั่วไป"}แสดงประกาศพร้อมกันได้ ${listingLimit} ประกาศ กรุณาปิดประกาศเก่าก่อน`, true);
+            setPostMessage(`บัญชี${isPremiumSeller ? " Premium" : "ทั่วไป"}แสดง${listingTypeLabel}พร้อมกันได้ ${listingLimit} ประกาศ กรุณาปิดประกาศเก่าก่อน`, true);
             return;
           }
 
@@ -666,13 +758,17 @@
             if (accountFiles.length > 5) {
               setPostMessage("อัปโหลดรูป Account ได้สูงสุด 5 ภาพ ระบบจะใช้ 5 ภาพแรก");
             }
-            const { oversized } = validateAccountImages(accountFiles);
+            if (accountFiles.length && !optimizedAccountFiles.length) {
+              const prepared = await prepareAccountImages(accountFiles);
+              optimizedAccountFiles = prepared.selectedFiles;
+            }
+            const { oversized } = validateAccountImages(optimizedAccountFiles);
             if (oversized.length) {
               setPostMessage(`รูป Account ต้องไม่เกิน 2 MB ต่อรูป: ${oversized.map((file) => `${file.name} (${formatFileSize(file.size)})`).join(", ")}`, true);
               accountImageInput.focus();
               return;
             }
-            const uploaded = await uploadAccountListingImages(accountFiles);
+            const uploaded = await uploadAccountListingImages(optimizedAccountFiles);
             imageUrl = uploaded.imageUrl;
             imagePath = uploaded.imagePath;
             imageUrls = uploaded.imageUrls;
@@ -680,6 +776,7 @@
           }
 
           const { error } = await supabaseClient.from("marketplace_listings").insert({
+            listing_type: activeListingType,
             category: activeCategory,
             user_id: currentSession.user.id,
             item_name: item.name,
@@ -714,6 +811,7 @@
 
       categoryButtons.forEach((button) => {
         button.addEventListener("click", () => {
+          if (button.disabled) return;
           categoryButtons.forEach((item) => item.classList.remove("is-active"));
           button.classList.add("is-active");
           activeCategory = button.dataset.category;
@@ -730,27 +828,39 @@
         syncPreview();
       });
 
-      accountImageInput.addEventListener("change", () => {
-        const { selectedFiles, oversized } = validateAccountImages(accountImageInput.files);
-        if (oversized.length) {
-          uploadedAccountImages.forEach((src) => URL.revokeObjectURL(src));
-          uploadedAccountImages = [];
-          accountUploadPreview.innerHTML = "";
-          accountImageInput.value = "";
-          setPostMessage(`รูป Account ต้องไม่เกิน 2 MB ต่อรูป: ${oversized.map((file) => `${file.name} (${formatFileSize(file.size)})`).join(", ")}`, true);
-          syncPreview();
-          return;
-        }
+      listingTypeButtons.forEach((button) => {
+        button.addEventListener("click", () => syncListingTypeUi(button.dataset.listingType || "sell"));
+      });
 
-        const files = selectedFiles;
-        uploadedAccountImages = files.map((file) => URL.createObjectURL(file));
-        accountUploadPreview.innerHTML = uploadedAccountImages.map((src) => `<img src="${src}" alt="" />`).join("");
-        if ((accountImageInput.files?.length || 0) > 5) {
-          setPostMessage("เลือกได้สูงสุด 5 ภาพ ระบบจะใช้ 5 ภาพแรก", true);
-        } else {
-          setPostMessage("");
+      accountImageInput.addEventListener("change", async () => {
+        revokeAccountPreviews();
+        optimizedAccountFiles = [];
+        accountUploadPreview.innerHTML = "";
+        setPostMessage("กำลังย่อและบีบอัดรูป Account...");
+
+        try {
+          const { selectedFiles, oversized } = await prepareAccountImages(accountImageInput.files);
+          if (oversized.length) {
+            accountImageInput.value = "";
+            setPostMessage(`รูป Account หลังบีบอัดแล้วต้องไม่เกิน 2 MB ต่อรูป: ${oversized.map((file) => `${file.name} (${formatFileSize(file.size)})`).join(", ")}`, true);
+            syncPreview();
+            return;
+          }
+
+          optimizedAccountFiles = selectedFiles;
+          uploadedAccountImages = optimizedAccountFiles.map((file) => URL.createObjectURL(file));
+          accountUploadPreview.innerHTML = uploadedAccountImages.map((src) => `<img src="${src}" alt="" loading="lazy" decoding="async" />`).join("");
+          if ((accountImageInput.files?.length || 0) > 5) {
+            setPostMessage("เลือกได้สูงสุด 5 ภาพ ระบบจะใช้ 5 ภาพแรก และย่อรูปให้ก่อนอัปโหลด", true);
+          } else {
+            setPostMessage(optimizedAccountFiles.length ? "ย่อรูป Account เรียบร้อย พร้อมอัปโหลด" : "");
+          }
+          syncPreview();
+        } catch (error) {
+          accountImageInput.value = "";
+          setPostMessage(error.message || "ย่อรูป Account ไม่สำเร็จ", true);
+          syncPreview();
         }
-        syncPreview();
       });
 
       [listingTitle, characterName, listingPrice, listingServer, listingDescription, middlemanCheck, readyCheck].forEach((field) => {
@@ -844,18 +954,20 @@
         return Boolean(data?.active);
       }
 
-      async function getListingQuota(session) {
+      async function getListingQuota(session, listingType = "sell") {
         const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
         const [{ count: hourlyCount, error: hourlyError }, { count: activeCount, error: activeError }] = await Promise.all([
           supabaseClient
             .from("marketplace_listings")
             .select("id", { count: "exact", head: true })
             .eq("user_id", session.user.id)
+            .eq("listing_type", listingType)
             .gte("created_at", oneHourAgo),
           supabaseClient
             .from("marketplace_listings")
             .select("id", { count: "exact", head: true })
             .eq("user_id", session.user.id)
+            .eq("listing_type", listingType)
             .eq("active", true)
             .eq("sale_status", "active")
             .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)

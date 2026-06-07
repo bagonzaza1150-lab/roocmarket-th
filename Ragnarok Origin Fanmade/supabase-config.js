@@ -15,7 +15,35 @@ window.ROOC_SUPABASE = {
   let publicListings = [];
   let soldListings = [];
   const listingsPerPage = 6;
+  const listingCacheMs = 45000;
+  const soldListingCacheMs = 120000;
+  const listingSelectColumns = [
+    "id",
+    "listing_type",
+    "category",
+    "item_name",
+    "title",
+    "image_url",
+    "image_urls",
+    "character_name",
+    "seller_name",
+    "seller_avatar_url",
+    "seller_discord_id",
+    "seller_is_premium",
+    "price_text",
+    "server_name",
+    "contact",
+    "description",
+    "middleman",
+    "ready_today",
+    "active",
+    "sale_status",
+    "expires_at",
+    "created_at",
+    "updated_at"
+  ].join(",");
   let currentListingPage = 1;
+  let activeListingType = "sell";
   const fallbackServers = [
     "Prontera 1", "Prontera 2", "Prontera 3", "Prontera 4", "Prontera 5",
     "Prontera 6", "Prontera 7", "Prontera 8", "Prontera 9", "Prontera 10",
@@ -32,9 +60,17 @@ window.ROOC_SUPABASE = {
       .replace(/'/g, "&#039;");
   }
 
-  async function fetchPublicListings() {
-    const now = encodeURIComponent(new Date().toISOString());
-    const response = await fetch(`${config.url}/rest/v1/marketplace_listings?select=*&active=eq.true&or=(expires_at.is.null,expires_at.gte.${now})&order=created_at.desc&limit=200`, {
+  async function fetchCachedJson(cacheKey, url, ttlMs, force = false) {
+    if (!force) {
+      try {
+        const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+        if (cached && Date.now() - cached.savedAt < ttlMs) return cached.data;
+      } catch (_error) {
+        localStorage.removeItem(cacheKey);
+      }
+    }
+
+    const response = await fetch(url, {
       headers: {
         apikey: config.anonKey,
         Authorization: `Bearer ${config.anonKey}`
@@ -42,19 +78,32 @@ window.ROOC_SUPABASE = {
     });
 
     if (!response.ok) throw new Error(await response.text());
-    return response.json();
+    const data = await response.json();
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify({ savedAt: Date.now(), data }));
+    } catch (_error) {
+      localStorage.removeItem(cacheKey);
+    }
+    return data;
   }
 
-  async function fetchSoldListings() {
-    const response = await fetch(`${config.url}/rest/v1/marketplace_listings?select=*&active=eq.false&sale_status=eq.sold&order=updated_at.desc&limit=12`, {
-      headers: {
-        apikey: config.anonKey,
-        Authorization: `Bearer ${config.anonKey}`
-      }
-    });
+  async function fetchPublicListings(force = false) {
+    const now = encodeURIComponent(new Date().toISOString());
+    return fetchCachedJson(
+      "rooc-public-listings-v3",
+      `${config.url}/rest/v1/marketplace_listings?select=${listingSelectColumns}&active=eq.true&or=(expires_at.is.null,expires_at.gte.${now})&order=created_at.desc&limit=200`,
+      listingCacheMs,
+      force
+    );
+  }
 
-    if (!response.ok) throw new Error(await response.text());
-    return response.json();
+  async function fetchSoldListings(force = false) {
+    return fetchCachedJson(
+      "rooc-sold-listings-v2",
+      `${config.url}/rest/v1/marketplace_listings?select=${listingSelectColumns}&active=eq.false&sale_status=eq.sold&order=updated_at.desc&limit=12`,
+      soldListingCacheMs,
+      force
+    );
   }
 
   async function fetchSiteSettings() {
@@ -149,16 +198,19 @@ window.ROOC_SUPABASE = {
       middleman: document.querySelector("#middlemanFilter"),
       ready: document.querySelector("#readyFilter"),
       reset: document.querySelector("#resetFilters"),
+      typeTabs: Array.from(document.querySelectorAll(".listing-type-tabs [data-listing-type]")),
       tabs: Array.from(document.querySelectorAll(".market-tabs [data-category]"))
     };
   }
 
   function getActiveFilters() {
     const controls = getFilterControls();
+    const rawCategory = controls.category?.value || "all";
     return {
       search: normalizeSearch(controls.search?.value || ""),
       server: controls.sidebarServer?.value || controls.heroServer?.value || "ทั้งหมด",
-      category: controls.category?.value || "all",
+      category: activeListingType === "buy" && rawCategory === "account" ? "all" : rawCategory,
+      listingType: activeListingType,
       price: controls.price?.value || "all",
       sort: controls.sort?.value || "newest",
       middleman: Boolean(controls.middleman?.checked),
@@ -174,7 +226,9 @@ window.ROOC_SUPABASE = {
       fashion: "fashion แฟชั่น",
       account: "account บัญชี"
     };
+    const typeText = listing.listing_type === "buy" ? "รับซื้อ buy" : "ขาย sell";
     return [
+      typeText,
       listing.title,
       listing.item_name,
       listing.character_name,
@@ -208,6 +262,7 @@ window.ROOC_SUPABASE = {
   function getFilteredListings() {
     const filters = getActiveFilters();
     const filtered = publicListings.filter((listing) => {
+      if ((listing.listing_type || "sell") !== filters.listingType) return false;
       if (!listingMatchesSearch(listing, filters.search)) return false;
       if (filters.server !== "ทั้งหมด" && listing.server_name !== filters.server) return false;
       if (filters.category !== "all" && listing.category !== filters.category) return false;
@@ -230,9 +285,31 @@ window.ROOC_SUPABASE = {
   function syncCategoryUi(category) {
     const controls = getFilterControls();
     if (controls.category) controls.category.value = category;
+    if (activeListingType === "buy" && category === "account" && controls.category) {
+      controls.category.value = "all";
+    }
+    if (controls.category) {
+      Array.from(controls.category.options).forEach((option) => {
+        option.disabled = activeListingType === "buy" && option.value === "account";
+      });
+    }
     controls.tabs.forEach((button) => {
       button.classList.toggle("is-active", button.dataset.category === category);
+      button.disabled = activeListingType === "buy" && button.dataset.category === "account";
     });
+  }
+
+  function syncListingTypeUi(type) {
+    activeListingType = type === "buy" ? "buy" : "sell";
+    const controls = getFilterControls();
+    controls.typeTabs.forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.listingType === activeListingType);
+    });
+    if (activeListingType === "buy" && controls.category?.value === "account") {
+      syncCategoryUi("all");
+    } else {
+      syncCategoryUi(controls.category?.value || "all");
+    }
   }
 
   function syncServerUi(value, source) {
@@ -258,7 +335,7 @@ window.ROOC_SUPABASE = {
 
   function renderCounts(listings) {
     const counts = { mvp: 0, accessories: 0, fashion: 0, account: 0 };
-    listings.forEach((listing) => {
+    listings.filter((listing) => (listing.listing_type || "sell") === activeListingType).forEach((listing) => {
       if (counts[listing.category] !== undefined) counts[listing.category] += 1;
     });
 
@@ -272,8 +349,12 @@ window.ROOC_SUPABASE = {
       if (target) target.textContent = counts[category].toLocaleString("th-TH");
     });
 
-    const totalTarget = document.querySelector("#totalListingCount");
-    if (totalTarget) totalTarget.textContent = listings.length.toLocaleString("th-TH");
+    const sellTotal = listings.filter((listing) => (listing.listing_type || "sell") === "sell").length;
+    const buyTotal = listings.filter((listing) => (listing.listing_type || "sell") === "buy").length;
+    const sellTarget = document.querySelector("#totalSellListingCount");
+    const buyTarget = document.querySelector("#totalBuyListingCount");
+    if (sellTarget) sellTarget.textContent = sellTotal.toLocaleString("th-TH");
+    if (buyTarget) buyTarget.textContent = buyTotal.toLocaleString("th-TH");
   }
 
   function renderListingCards(listings, isFiltered = false) {
@@ -289,8 +370,9 @@ window.ROOC_SUPABASE = {
         pagination.innerHTML = "";
       }
       emptyState.hidden = false;
-      emptyState.querySelector("h3").textContent = isFiltered ? "ไม่พบประกาศที่ตรงกับตัวกรอง" : "ยังไม่มีประกาศขาย";
-      emptyState.querySelector("p").textContent = isFiltered ? "ลองล้างตัวกรองหรือเปลี่ยนคำค้นหา" : "เมื่อมีผู้ขายลงประกาศ รายการล่าสุดจะแสดงในส่วนนี้";
+      const typeLabel = activeListingType === "buy" ? "ประกาศรับซื้อ" : "ประกาศขาย";
+      emptyState.querySelector("h3").textContent = isFiltered ? `ไม่พบ${typeLabel}ที่ตรงกับตัวกรอง` : `ยังไม่มี${typeLabel}`;
+      emptyState.querySelector("p").textContent = isFiltered ? "ลองล้างตัวกรองหรือเปลี่ยนคำค้นหา" : `เมื่อมีผู้ใช้ลง${typeLabel} รายการล่าสุดจะแสดงในส่วนนี้`;
       return;
     }
 
@@ -301,6 +383,7 @@ window.ROOC_SUPABASE = {
 
     grid.innerHTML = pageListings.map((listing) => {
       const title = listing.title || listing.item_name || "ประกาศขาย";
+      const listingType = listing.listing_type || "sell";
       const mediaClass = listing.category === "mvp" ? "item-media card-media" : listing.category === "account" ? "item-media account-listing-media" : "item-media";
       const listingImages = getListingImages(listing);
       const contact = listing.contact || "";
@@ -312,6 +395,7 @@ window.ROOC_SUPABASE = {
         ? ` data-account-gallery="${escapeHtml(encodeURIComponent(JSON.stringify(listingImages)))}" data-account-title="${escapeHtml(title)}"`
         : "";
       const badges = [
+        `<span class="${listingType === "buy" ? "buy" : "fast"}">${listingType === "buy" ? "รับซื้อ" : "ขาย"}</span>`,
         `<span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
         listing.ready_today ? '<span class="fast">Fast Deal</span>' : "",
         listing.category === "mvp" ? '<span class="mvp">MVP</span>' : ""
@@ -323,16 +407,16 @@ window.ROOC_SUPABASE = {
       return `
         <article class="listing-card">
           <div class="${mediaClass}"${galleryData}>
-            <img src="${escapeHtml(listingImages[0])}" alt="" />
+            <img src="${escapeHtml(listingImages[0])}" alt="" loading="lazy" decoding="async" />
             ${listing.category === "account" && listingImages.length > 1 ? `
               <div class="account-gallery-count">${listingImages.length} รูป</div>
               <div class="account-gallery-strip">
-                ${listingImages.slice(0, 5).map((src) => `<span><img src="${escapeHtml(src)}" alt="" /></span>`).join("")}
+                ${listingImages.slice(0, 5).map((src) => `<span><img src="${escapeHtml(src)}" alt="" loading="lazy" decoding="async" /></span>`).join("")}
               </div>
             ` : ""}
           </div>
           <div class="listing-seller">
-            <img src="${escapeHtml(sellerAvatar)}" alt="" />
+            <img src="${escapeHtml(sellerAvatar)}" alt="" loading="lazy" decoding="async" />
             <span>${escapeHtml(sellerName)}</span>
             ${listing.seller_is_premium ? '<strong title="Premium">♛</strong>' : ""}
           </div>
@@ -341,7 +425,7 @@ window.ROOC_SUPABASE = {
           <p>${escapeHtml(description)}</p>
           <div class="price-row">
             <strong>฿ ${formatListingPrice(listing.price_text)}</strong>
-            <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">ติดต่อผู้ขาย</button>
+            <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">${listingType === "buy" ? "ติดต่อผู้รับซื้อ" : "ติดต่อผู้ขาย"}</button>
           </div>
         </article>
       `;
@@ -398,7 +482,7 @@ window.ROOC_SUPABASE = {
       const sellerName = listing.seller_name || "ผู้ขาย ROOC";
       return `
         <article class="sold-card">
-          <img src="${escapeHtml(listing.image_url || "assets/category-icons/mvp-c.png")}" alt="" />
+          <img src="${escapeHtml(listing.image_url || "assets/category-icons/mvp-c.png")}" alt="" loading="lazy" decoding="async" />
           <div>
             <h3>${escapeHtml(title)}</h3>
             <p>${escapeHtml(price)} · ${escapeHtml(sellerName)}</p>
@@ -449,7 +533,7 @@ window.ROOC_SUPABASE = {
         <p class="eyebrow">${escapeHtml(card.eyebrow)}</p>
         <h3>${escapeHtml(card.title)}</h3>
         ${card.text ? `<p>${escapeHtml(card.text)}</p>` : ""}
-        ${card.qr ? `<img class="support-qr" src="${escapeHtml(card.qr)}" alt="QR Code ${escapeHtml(card.title)}" />` : ""}
+        ${card.qr ? `<img class="support-qr" src="${escapeHtml(card.qr)}" alt="QR Code ${escapeHtml(card.title)}" loading="lazy" decoding="async" />` : ""}
         ${card.url ? `<a class="btn btn-primary support-button" href="${escapeHtml(card.url)}" target="_blank" rel="noopener">${escapeHtml(card.button)}</a>` : ""}
       </article>
     `).join("");
@@ -466,7 +550,7 @@ window.ROOC_SUPABASE = {
     currentListingPage = 1;
   }
 
-  async function refreshListings() {
+  async function refreshListings(force = false) {
     const controls = getFilterControls();
     if (controls.refresh) {
       controls.refresh.disabled = true;
@@ -476,8 +560,8 @@ window.ROOC_SUPABASE = {
 
     try {
       [publicListings, soldListings] = await Promise.all([
-        fetchPublicListings(),
-        fetchSoldListings().catch((error) => {
+        fetchPublicListings(Boolean(force)),
+        fetchSoldListings(Boolean(force)).catch((error) => {
           console.warn("ROOC sold listings failed:", error);
           return [];
         })
@@ -510,10 +594,17 @@ window.ROOC_SUPABASE = {
     controls.search?.addEventListener("search", rerender);
     controls.search?.addEventListener("change", rerender);
     controls.sort?.addEventListener("change", rerender);
-    controls.refresh?.addEventListener("click", refreshListings);
+    controls.refresh?.addEventListener("click", () => refreshListings(true));
     controls.price?.addEventListener("change", rerender);
     controls.middleman?.addEventListener("change", rerender);
     controls.ready?.addEventListener("change", rerender);
+
+    controls.typeTabs.forEach((button) => {
+      button.addEventListener("click", () => {
+        syncListingTypeUi(button.dataset.listingType || "sell");
+        rerender();
+      });
+    });
 
     controls.heroServer?.addEventListener("change", (event) => {
       syncServerUi(event.target.value, event.target);
@@ -526,6 +617,9 @@ window.ROOC_SUPABASE = {
     });
 
     controls.category?.addEventListener("change", (event) => {
+      if (activeListingType === "buy" && event.target.value === "account") {
+        event.target.value = "all";
+      }
       syncCategoryUi(event.target.value);
       rerender();
     });
@@ -539,6 +633,7 @@ window.ROOC_SUPABASE = {
 
     controls.reset?.addEventListener("click", () => {
       if (controls.search) controls.search.value = "";
+      syncListingTypeUi("sell");
       syncServerUi("ทั้งหมด");
       syncCategoryUi("all");
       if (controls.price) controls.price.value = "all";
