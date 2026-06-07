@@ -439,6 +439,7 @@
         ? window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey)
         : null;
       let currentSession = null;
+      let accountListingEnabled = true;
       const accountImageMaxBytes = 2 * 1024 * 1024;
       const fallbackServers = [
         "Prontera 1", "Prontera 2", "Prontera 3", "Prontera 4", "Prontera 5",
@@ -459,6 +460,39 @@
           .replace(/>/g, "&gt;")
           .replace(/"/g, "&quot;")
           .replace(/'/g, "&#039;");
+      }
+
+      async function loadSiteSettings() {
+        if (!canUseSupabase) return {};
+        try {
+          const response = await fetch(`${supabaseConfig.url}/rest/v1/marketplace_site_settings?select=value&key=eq.support_sidebar`, {
+            headers: {
+              apikey: supabaseConfig.anonKey,
+              Authorization: `Bearer ${supabaseConfig.anonKey}`
+            }
+          });
+          if (!response.ok) throw new Error(await response.text());
+          const rows = await response.json();
+          return rows?.[0]?.value || {};
+        } catch (error) {
+          console.warn("ROOC site settings failed:", error);
+          return {};
+        }
+      }
+
+      function syncAccountListingAvailability() {
+        const accountButton = Array.from(categoryButtons).find((button) => button.dataset.category === "account");
+        if (!accountButton) return;
+
+        accountButton.hidden = !accountListingEnabled;
+        accountButton.disabled = !accountListingEnabled || activeListingType === "service" || activeListingType === "buy";
+        accountButton.title = accountListingEnabled ? "" : "Admin ปิดการลงประกาศขาย Account ชั่วคราว";
+
+        if (!accountListingEnabled && activeCategory === "account") {
+          activeCategory = "mvp";
+          categoryButtons.forEach((item) => item.classList.toggle("is-active", item.dataset.category === activeCategory));
+          populateItems(activeCategory);
+        }
       }
 
       function setPostAccess(session) {
@@ -641,13 +675,17 @@
         listingPrice.required = true;
         categoryButtons.forEach((button) => {
           const isAccount = button.dataset.category === "account";
-          button.disabled = activeListingType === "service" || (activeListingType === "buy" && isAccount);
+          button.disabled = activeListingType === "service" || (isAccount && (activeListingType === "buy" || !accountListingEnabled));
+          if (isAccount) {
+            button.hidden = !accountListingEnabled;
+            button.title = accountListingEnabled ? "" : "Admin ปิดการลงประกาศขาย Account ชั่วคราว";
+          }
         });
         if (activeListingType === "service") {
           activeCategory = "dungeon";
           categoryButtons.forEach((item) => item.classList.toggle("is-active", false));
           populateItems(activeCategory);
-        } else if (activeListingType === "buy" && activeCategory === "account") {
+        } else if ((activeListingType === "buy" || !accountListingEnabled) && activeCategory === "account") {
           activeCategory = "mvp";
           categoryButtons.forEach((item) => item.classList.toggle("is-active", item.dataset.category === activeCategory));
           populateItems(activeCategory);
@@ -820,6 +858,11 @@
           return;
         }
 
+        if (activeListingType === "sell" && activeCategory === "account" && !accountListingEnabled) {
+          setPostMessage("Admin ปิดการลงประกาศขาย Account ชั่วคราว", true);
+          return;
+        }
+
         setPostMessage("กำลังเผยแพร่ประกาศ...");
 
         try {
@@ -973,7 +1016,16 @@
       postForm.addEventListener("submit", publishListing);
 
       loadServerOptions();
-      Promise.all([loadRemoteListingAssets(), loadRemoteDungeons()]).finally(() => populateItems(activeCategory));
+      Promise.all([loadRemoteListingAssets(), loadRemoteDungeons(), loadSiteSettings()])
+        .then((results) => {
+          const settings = results[2] || {};
+          accountListingEnabled = settings.account_listing_enabled !== false;
+        })
+        .finally(() => {
+          syncAccountListingAvailability();
+          populateItems(activeCategory);
+          syncListingTypeUi(activeListingType);
+        });
 
       if (canUseSupabase) {
         supabaseClient.auth.getSession().then(({ data }) => setPostAccess(data.session));

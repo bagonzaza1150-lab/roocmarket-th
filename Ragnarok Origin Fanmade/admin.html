@@ -328,6 +328,19 @@
                 </label>
               </div>
 
+              <div class="support-admin-card announcement-admin-card">
+                <div class="form-block-head">
+                  <span>A</span>
+                  <div>
+                    <h3>ประกาศขาย Account</h3>
+                    <p>เปิดหรือปิดการสร้างประกาศขาย Account ใหม่บนหน้าลงประกาศ</p>
+                  </div>
+                </div>
+                <div class="post-checks">
+                  <label><input id="accountListingEnabled" type="checkbox" /> เปิดให้ลงประกาศขาย Account</label>
+                </div>
+              </div>
+
               <div class="support-admin-card">
                 <div class="form-block-head">
                   <span>฿</span>
@@ -473,6 +486,7 @@
       const supportFields = {
         announcementEnabled: document.querySelector("#announcementEnabled"),
         announcementText: document.querySelector("#announcementText"),
+        accountListingEnabled: document.querySelector("#accountListingEnabled"),
         donateEnabled: document.querySelector("#donateEnabled"),
         donateTitle: document.querySelector("#donateTitle"),
         donateText: document.querySelector("#donateText"),
@@ -1283,6 +1297,7 @@
         return {
           announcement_enabled: supportFields.announcementEnabled.checked,
           announcement_text: supportFields.announcementText.value.trim(),
+          account_listing_enabled: supportFields.accountListingEnabled.checked,
           donate_enabled: supportFields.donateEnabled.checked,
           donate_title: supportFields.donateTitle.value.trim(),
           donate_text: supportFields.donateText.value.trim(),
@@ -1303,6 +1318,7 @@
       function setSupportForm(settings = {}) {
         supportFields.announcementEnabled.checked = Boolean(settings.announcement_enabled);
         supportFields.announcementText.value = settings.announcement_text || "";
+        supportFields.accountListingEnabled.checked = settings.account_listing_enabled !== false;
         supportFields.donateEnabled.checked = Boolean(settings.donate_enabled);
         supportFields.donateTitle.value = settings.donate_title || "";
         supportFields.donateText.value = settings.donate_text || "";
