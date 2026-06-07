@@ -283,7 +283,7 @@
         <div class="contact-modal-item">
           <span>Discord / ช่องทางติดต่อ</span>
           <a class="seller-profile-button" id="sellerContactLink" href="#" target="_blank" rel="noopener">เปิดโปรไฟล์ผู้ขาย</a>
-          <button class="seller-copy-button" id="sellerContactCopy" type="button" hidden>คัดลอก Discord ID</button>
+          <button class="seller-copy-button" id="sellerContactCopy" type="button" hidden>คัดลอกชื่อ Discord</button>
           <strong id="sellerContactValue">-</strong>
         </div>
         <p id="sellerContactNote">ติดต่อผู้ขายโดยตรง และใช้ Middleman สำหรับดีลราคาสูง</p>
@@ -499,7 +499,7 @@
       const sellerContactValue = document.querySelector("#sellerContactValue");
       const sellerContactLink = document.querySelector("#sellerContactLink");
       const sellerContactCopy = document.querySelector("#sellerContactCopy");
-      let activeSellerDiscordId = "";
+      let activeSellerName = "";
 
       function getContactProfileUrl(contact) {
         const value = String(contact || "").trim();
@@ -533,19 +533,18 @@
         if (!sellerContactModal || !sellerContactItem || !sellerContactValue || !sellerContactLink || !sellerContactCopy) return;
         const discordId = String(discordIdOverride || getDiscordIdFromContact(profileUrlOverride) || getDiscordIdFromContact(contact)).trim();
         const profileUrl = profileUrlOverride || getContactProfileUrl(contact);
-        const discordAppUrl = discordId ? `discord://-/users/${discordId}` : "";
-        activeSellerDiscordId = discordId;
+        activeSellerName = sellerName || "";
         sellerContactItem.textContent = title || "ประกาศขาย";
-        sellerContactValue.textContent = discordId
-          ? `${sellerName ? `${sellerName} · ` : ""}Discord ID: ${discordId}`
+        sellerContactValue.textContent = sellerName
+          ? sellerName
           : profileUrl
           ? "กดปุ่มด้านบนเพื่อไปหน้าโปรไฟล์ผู้ขาย"
           : (contact || "ผู้ขายยังไม่ได้ระบุช่องทางติดต่อ");
-        sellerContactLink.hidden = !(discordAppUrl || profileUrl);
-        sellerContactLink.href = discordAppUrl || profileUrl || "#";
-        sellerContactLink.textContent = discordAppUrl ? "เปิดใน Discord" : "เปิดโปรไฟล์ผู้ขาย";
-        sellerContactCopy.hidden = !discordId;
-        sellerContactCopy.textContent = "คัดลอก Discord ID";
+        sellerContactLink.hidden = !profileUrl;
+        sellerContactLink.href = profileUrl || "#";
+        sellerContactLink.textContent = "เปิดโปรไฟล์ผู้ขาย";
+        sellerContactCopy.hidden = !sellerName;
+        sellerContactCopy.textContent = "คัดลอกชื่อ Discord";
         sellerContactModal.hidden = false;
         document.body.classList.add("modal-open");
       }
@@ -569,8 +568,8 @@
           return;
         }
 
-        if (event.target.closest("#sellerContactCopy") && activeSellerDiscordId) {
-          navigator.clipboard?.writeText(activeSellerDiscordId);
+        if (event.target.closest("#sellerContactCopy") && activeSellerName) {
+          navigator.clipboard?.writeText(activeSellerName);
           sellerContactCopy.textContent = "คัดลอกแล้ว";
           return;
         }
