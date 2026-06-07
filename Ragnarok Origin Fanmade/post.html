@@ -122,7 +122,7 @@
               <label class="upload-drop" for="accountImageInput">
                 <input id="accountImageInput" type="file" accept="image/*" multiple />
                 <span>อัปโหลดรูปบัญชี</span>
-                <small>PNG หรือ JPG สูงสุด 5 ภาพ</small>
+                <small>PNG, JPG หรือ WebP สูงสุด 5 ภาพ · ไม่เกิน 2 MB ต่อรูป</small>
               </label>
               <div class="account-upload-preview" id="accountUploadPreview"></div>
             </div>
@@ -387,6 +387,7 @@
         ? window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey)
         : null;
       let currentSession = null;
+      const accountImageMaxBytes = 2 * 1024 * 1024;
       const fallbackServers = [
         "Prontera 1", "Prontera 2", "Prontera 3", "Prontera 4", "Prontera 5",
         "Prontera 6", "Prontera 7", "Prontera 8", "Prontera 9", "Prontera 10",
@@ -465,6 +466,17 @@
 
       function plainPrice(value) {
         return value.replace(/[^\d,]/g, "").trim();
+      }
+
+      function formatFileSize(bytes) {
+        if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+        return `${Math.ceil(bytes / 1024)} KB`;
+      }
+
+      function validateAccountImages(files) {
+        const selectedFiles = Array.from(files || []).slice(0, 5);
+        const oversized = selectedFiles.filter((file) => file.size > accountImageMaxBytes);
+        return { selectedFiles, oversized };
       }
 
       function syncPreview() {
@@ -547,7 +559,10 @@
       }
 
       async function uploadAccountListingImages(files) {
-        const selectedFiles = Array.from(files || []).slice(0, 5);
+        const { selectedFiles, oversized } = validateAccountImages(files);
+        if (oversized.length) {
+          throw new Error(`รูป Account ต้องไม่เกิน 2 MB ต่อรูป: ${oversized.map((file) => `${file.name} (${formatFileSize(file.size)})`).join(", ")}`);
+        }
         if (!selectedFiles.length) {
           return {
             imageUrl: listingAssets.account.items[0].image,
@@ -651,6 +666,12 @@
             if (accountFiles.length > 5) {
               setPostMessage("อัปโหลดรูป Account ได้สูงสุด 5 ภาพ ระบบจะใช้ 5 ภาพแรก");
             }
+            const { oversized } = validateAccountImages(accountFiles);
+            if (oversized.length) {
+              setPostMessage(`รูป Account ต้องไม่เกิน 2 MB ต่อรูป: ${oversized.map((file) => `${file.name} (${formatFileSize(file.size)})`).join(", ")}`, true);
+              accountImageInput.focus();
+              return;
+            }
             const uploaded = await uploadAccountListingImages(accountFiles);
             imageUrl = uploaded.imageUrl;
             imagePath = uploaded.imagePath;
@@ -710,10 +731,13 @@
       });
 
       accountImageInput.addEventListener("change", () => {
-        const files = Array.from(accountImageInput.files || []).slice(0, 5);
+        const { selectedFiles, oversized } = validateAccountImages(accountImageInput.files);
+        const files = selectedFiles;
         uploadedAccountImages = files.map((file) => URL.createObjectURL(file));
         accountUploadPreview.innerHTML = uploadedAccountImages.map((src) => `<img src="${src}" alt="" />`).join("");
-        if ((accountImageInput.files?.length || 0) > 5) {
+        if (oversized.length) {
+          setPostMessage(`รูป Account ต้องไม่เกิน 2 MB ต่อรูป: ${oversized.map((file) => `${file.name} (${formatFileSize(file.size)})`).join(", ")}`, true);
+        } else if ((accountImageInput.files?.length || 0) > 5) {
           setPostMessage("เลือกได้สูงสุด 5 ภาพ ระบบจะใช้ 5 ภาพแรก", true);
         } else {
           setPostMessage("");
