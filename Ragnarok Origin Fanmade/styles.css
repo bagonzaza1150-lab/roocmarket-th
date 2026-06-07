@@ -1121,6 +1121,24 @@ h1 {
     radial-gradient(circle at 50% 20%, rgba(85, 184, 255, 0.14), transparent 8rem);
 }
 
+.account-listing-media[data-account-gallery] {
+  cursor: zoom-in;
+}
+
+.account-listing-media[data-account-gallery]::after {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  content: "คลิกดูรูปใหญ่";
+  border-radius: 999px;
+  background: rgba(3, 12, 24, 0.68);
+  color: white;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 900;
+  pointer-events: none;
+}
+
 .account-listing-media > img {
   width: 100%;
   max-height: 218px;
@@ -1753,6 +1771,138 @@ h1 {
   color: var(--muted);
   font-size: 13px;
   line-height: 1.5;
+}
+
+.image-modal[hidden] {
+  display: none;
+}
+
+.image-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+
+.image-modal-card {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: min(980px, 100%);
+  max-height: calc(100vh - 36px);
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--paper) 96%, transparent);
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.34);
+  padding: 18px;
+  animation: modalCardIn 260ms cubic-bezier(.18, .9, .28, 1.12) both;
+}
+
+.image-modal-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 44px;
+  padding-right: 42px;
+}
+
+.image-modal-head h2 {
+  margin: 4px 0 0;
+  font-size: 24px;
+}
+
+.image-modal-head span {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper-soft);
+  color: var(--blue);
+  padding: 8px 12px;
+  font-weight: 1000;
+}
+
+.image-modal-view {
+  position: relative;
+  display: grid;
+  min-height: min(64vh, 640px);
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(223, 246, 255, 0.52), rgba(255, 255, 255, 0.82)),
+    radial-gradient(circle at 50% 12%, rgba(85, 184, 255, 0.14), transparent 18rem);
+}
+
+:root[data-theme="dark"] .image-modal-view {
+  background:
+    linear-gradient(135deg, rgba(7, 20, 33, 0.96), rgba(16, 27, 42, 0.94)),
+    radial-gradient(circle at 50% 12%, rgba(85, 184, 255, 0.15), transparent 18rem);
+}
+
+.image-modal-view img {
+  display: block;
+  max-width: 100%;
+  max-height: min(64vh, 640px);
+  object-fit: contain;
+}
+
+.image-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1;
+  transform: translateY(-50%);
+}
+
+.image-prev {
+  left: 14px;
+}
+
+.image-next {
+  right: 14px;
+}
+
+.image-thumbs {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.image-thumbs button {
+  flex: 0 0 74px;
+  width: 74px;
+  height: 74px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  background: var(--paper-soft);
+  cursor: pointer;
+  padding: 0;
+}
+
+.image-thumbs button.is-active {
+  border-color: var(--blue);
+}
+
+.image-thumbs img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 @keyframes modalBackdropIn {

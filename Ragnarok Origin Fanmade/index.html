@@ -289,6 +289,26 @@
       </section>
     </div>
 
+    <div class="image-modal" id="accountImageModal" hidden>
+      <div class="contact-modal-backdrop" data-close-image></div>
+      <section class="image-modal-card" role="dialog" aria-modal="true" aria-labelledby="accountImageTitle">
+        <button class="contact-modal-close" type="button" data-close-image aria-label="ปิด">×</button>
+        <div class="image-modal-head">
+          <div>
+            <p class="eyebrow">Account Gallery</p>
+            <h2 id="accountImageTitle">รูปประกาศ Account</h2>
+          </div>
+          <span id="accountImageCounter">1/1</span>
+        </div>
+        <div class="image-modal-view">
+          <button class="image-nav image-prev" id="accountImagePrev" type="button" aria-label="รูปก่อนหน้า">‹</button>
+          <img id="accountImageLarge" src="" alt="" />
+          <button class="image-nav image-next" id="accountImageNext" type="button" aria-label="รูปถัดไป">›</button>
+        </div>
+        <div class="image-thumbs" id="accountImageThumbs"></div>
+      </section>
+    </div>
+
     <footer class="footer">
       <div class="shell footer-grid">
         <div>
@@ -457,6 +477,11 @@
             const profileUrl = getListingProfileUrl(listing);
             const discordId = getListingDiscordId(listing);
             const sellerName = listing.seller_name || "ผู้ขาย ROOC";
+            const galleryData = listing.category === "account"
+              ? ` data-account-gallery="${escapeHtml(encodeURIComponent(JSON.stringify(listingImages)))}" data-account-title="${escapeHtml(title)}"`
+              : "";
+            const rawPrice = Number(String(listing.price_text || "").replace(/[^\d]/g, ""));
+            const formattedPrice = Number.isFinite(rawPrice) && rawPrice > 0 ? rawPrice.toLocaleString("th-TH") : "0";
             const badges = [
               `<span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
               listing.ready_today ? '<span class="fast">Fast Deal</span>' : "",
@@ -468,7 +493,7 @@
 
             return `
               <article class="listing-card">
-                <div class="${mediaClass}">
+                <div class="${mediaClass}"${galleryData}>
                   <img src="${escapeHtml(listingImages[0])}" alt="" />
                   ${listing.category === "account" && listingImages.length > 1 ? `
                     <div class="account-gallery-count">${listingImages.length} รูป</div>
@@ -481,7 +506,7 @@
                 <h3>${escapeHtml(title)}</h3>
                 <p>${escapeHtml(description)}</p>
                 <div class="price-row">
-                  <strong>฿ ${escapeHtml(listing.price_text || "0")}</strong>
+                  <strong>฿ ${formattedPrice}</strong>
                   <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">ติดต่อผู้ขาย</button>
                 </div>
               </article>
@@ -506,6 +531,15 @@
       const sellerContactLink = document.querySelector("#sellerContactLink");
       const sellerContactCopy = document.querySelector("#sellerContactCopy");
       let activeSellerName = "";
+      const accountImageModal = document.querySelector("#accountImageModal");
+      const accountImageLarge = document.querySelector("#accountImageLarge");
+      const accountImageThumbs = document.querySelector("#accountImageThumbs");
+      const accountImageTitle = document.querySelector("#accountImageTitle");
+      const accountImageCounter = document.querySelector("#accountImageCounter");
+      const accountImagePrev = document.querySelector("#accountImagePrev");
+      const accountImageNext = document.querySelector("#accountImageNext");
+      let activeAccountImages = [];
+      let activeAccountImageIndex = 0;
 
       function getContactProfileUrl(contact) {
         const value = String(contact || "").trim();
@@ -560,13 +594,63 @@
         document.body.classList.add("modal-open");
       }
 
+      function updateModalOpenState() {
+        const hasContact = sellerContactModal && !sellerContactModal.hidden;
+        const hasImage = accountImageModal && !accountImageModal.hidden;
+        document.body.classList.toggle("modal-open", Boolean(hasContact || hasImage));
+      }
+
       function closeSellerContact() {
         if (!sellerContactModal) return;
         sellerContactModal.hidden = true;
-        document.body.classList.remove("modal-open");
+        updateModalOpenState();
+      }
+
+      function renderAccountImageModal() {
+        const total = activeAccountImages.length;
+        if (!total || !accountImageLarge || !accountImageThumbs || !accountImageCounter) return;
+        activeAccountImageIndex = (activeAccountImageIndex + total) % total;
+        accountImageLarge.src = activeAccountImages[activeAccountImageIndex];
+        accountImageCounter.textContent = `${activeAccountImageIndex + 1}/${total}`;
+        accountImagePrev.hidden = total <= 1;
+        accountImageNext.hidden = total <= 1;
+        accountImageThumbs.hidden = total <= 1;
+        accountImageThumbs.innerHTML = activeAccountImages.map((src, index) => `
+          <button class="${index === activeAccountImageIndex ? "is-active" : ""}" type="button" data-image-index="${index}" aria-label="ดูรูปที่ ${index + 1}">
+            <img src="${escapeHtml(src)}" alt="" />
+          </button>
+        `).join("");
+      }
+
+      function openAccountImageModal(images, title = "รูปประกาศ Account", startIndex = 0) {
+        if (!accountImageModal || !Array.isArray(images) || !images.length) return;
+        activeAccountImages = images.filter(Boolean);
+        activeAccountImageIndex = Math.max(0, Number(startIndex) || 0);
+        accountImageTitle.textContent = title || "รูปประกาศ Account";
+        accountImageModal.hidden = false;
+        renderAccountImageModal();
+        updateModalOpenState();
+      }
+
+      function closeAccountImageModal() {
+        if (!accountImageModal) return;
+        accountImageModal.hidden = true;
+        if (accountImageLarge) accountImageLarge.src = "";
+        updateModalOpenState();
       }
 
       document.addEventListener("click", (event) => {
+        const accountMedia = event.target.closest("[data-account-gallery]");
+        if (accountMedia) {
+          try {
+            const images = JSON.parse(decodeURIComponent(accountMedia.dataset.accountGallery || "%5B%5D"));
+            openAccountImageModal(images, accountMedia.dataset.accountTitle || "รูปประกาศ Account");
+          } catch (_error) {
+            openAccountImageModal([], "รูปประกาศ Account");
+          }
+          return;
+        }
+
         const contactButton = event.target.closest(".contact-seller-button");
         if (contactButton) {
           openSellerContact(
@@ -588,10 +672,47 @@
         if (event.target.closest("[data-close-contact]")) {
           closeSellerContact();
         }
+
+        if (event.target.closest("[data-close-image]")) {
+          closeAccountImageModal();
+          return;
+        }
+
+        if (event.target.closest("#accountImagePrev")) {
+          activeAccountImageIndex -= 1;
+          renderAccountImageModal();
+          return;
+        }
+
+        if (event.target.closest("#accountImageNext")) {
+          activeAccountImageIndex += 1;
+          renderAccountImageModal();
+          return;
+        }
+
+        const thumbButton = event.target.closest("[data-image-index]");
+        if (thumbButton) {
+          activeAccountImageIndex = Number(thumbButton.dataset.imageIndex) || 0;
+          renderAccountImageModal();
+        }
       });
 
       document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && sellerContactModal && !sellerContactModal.hidden) closeSellerContact();
+        if (event.key === "Escape") {
+          if (accountImageModal && !accountImageModal.hidden) {
+            closeAccountImageModal();
+            return;
+          }
+          if (sellerContactModal && !sellerContactModal.hidden) closeSellerContact();
+        }
+        if (accountImageModal && !accountImageModal.hidden && event.key === "ArrowLeft") {
+          activeAccountImageIndex -= 1;
+          renderAccountImageModal();
+        }
+        if (accountImageModal && !accountImageModal.hidden && event.key === "ArrowRight") {
+          activeAccountImageIndex += 1;
+          renderAccountImageModal();
+        }
       });
 
       async function syncAuthLink() {

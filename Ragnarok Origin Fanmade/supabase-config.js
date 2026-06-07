@@ -308,6 +308,9 @@ window.ROOC_SUPABASE = {
       const discordId = getListingDiscordId(listing);
       const sellerName = listing.seller_name || "ผู้ขาย ROOC";
       const sellerAvatar = listing.seller_avatar_url || "assets/category-icons/account-b.png";
+      const galleryData = listing.category === "account"
+        ? ` data-account-gallery="${escapeHtml(encodeURIComponent(JSON.stringify(listingImages)))}" data-account-title="${escapeHtml(title)}"`
+        : "";
       const badges = [
         `<span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
         listing.ready_today ? '<span class="fast">Fast Deal</span>' : "",
@@ -319,7 +322,7 @@ window.ROOC_SUPABASE = {
 
       return `
         <article class="listing-card">
-          <div class="${mediaClass}">
+          <div class="${mediaClass}"${galleryData}>
             <img src="${escapeHtml(listingImages[0])}" alt="" />
             ${listing.category === "account" && listingImages.length > 1 ? `
               <div class="account-gallery-count">${listingImages.length} รูป</div>
