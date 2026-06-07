@@ -1290,8 +1290,8 @@ h1 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 42px;
-  width: fit-content;
+  min-height: 44px;
+  width: 100%;
   max-width: 100%;
   border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--line));
   border-radius: 12px;
@@ -1314,14 +1314,57 @@ h1 {
   display: none;
 }
 
-.seller-copy-button {
-  min-height: 38px;
-  border: 1px solid var(--line);
+.seller-name-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 38px;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--blue) 22%, var(--line));
   border-radius: 12px;
-  background: var(--paper-soft);
+  background: color-mix(in srgb, var(--paper) 78%, transparent);
+  padding: 8px 8px 8px 12px;
+}
+
+.seller-name-row strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.seller-copy-button {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid color-mix(in srgb, var(--blue) 30%, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--blue) 10%, var(--paper-soft));
   color: var(--blue);
-  font-weight: 900;
   cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.seller-copy-button svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.1;
+}
+
+.seller-copy-button:hover {
+  border-color: color-mix(in srgb, var(--blue) 58%, var(--line));
+  background: color-mix(in srgb, var(--blue) 18%, var(--paper-soft));
+  transform: translateY(-1px);
+}
+
+.seller-copy-button.is-copied {
+  border-color: color-mix(in srgb, var(--green) 58%, var(--line));
+  background: rgba(24, 166, 106, 0.14);
+  color: var(--green);
 }
 
 .seller-copy-button[hidden] {

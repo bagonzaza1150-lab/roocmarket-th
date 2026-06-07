@@ -282,9 +282,16 @@
         </div>
         <div class="contact-modal-item">
           <span>Discord / ช่องทางติดต่อ</span>
-          <button class="seller-profile-button" id="sellerContactCopy" type="button" hidden>คัดลอกชื่อ Discord</button>
-          <a class="seller-copy-button" id="sellerContactLink" href="#" target="_blank" rel="noopener" hidden>เปิดโปรไฟล์ผู้ขาย</a>
-          <strong id="sellerContactValue">-</strong>
+          <div class="seller-name-row">
+            <strong id="sellerContactValue">-</strong>
+            <button class="seller-copy-button" id="sellerContactCopy" type="button" hidden aria-label="คัดลอกชื่อ Discord" title="คัดลอกชื่อ Discord">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 8V6.2C8 5 9 4 10.2 4h7.6C19 4 20 5 20 6.2v7.6C20 15 19 16 17.8 16H16" />
+                <path d="M4 10.2C4 9 5 8 6.2 8h7.6C15 8 16 9 16 10.2v7.6C16 19 15 20 13.8 20H6.2C5 20 4 19 4 17.8v-7.6Z" />
+              </svg>
+            </button>
+          </div>
+          <a class="seller-profile-button" id="sellerContactLink" href="#" target="_blank" rel="noopener" hidden>เปิดโปรไฟล์ผู้ขาย</a>
         </div>
         <p id="sellerContactNote">กดเปิดโปรไฟล์เพื่อแอดเพื่อน หรือคัดลอกชื่อ Discord ไปค้นหาใน DM</p>
       </section>
@@ -544,7 +551,7 @@
         sellerContactLink.href = profileUrl || "#";
         sellerContactLink.textContent = "เปิดโปรไฟล์ผู้ขาย";
         sellerContactCopy.hidden = !sellerName;
-        sellerContactCopy.textContent = "คัดลอกชื่อ Discord";
+        sellerContactCopy.classList.remove("is-copied");
         sellerContactModal.hidden = false;
         document.body.classList.add("modal-open");
       }
@@ -570,7 +577,7 @@
 
         if (event.target.closest("#sellerContactCopy") && activeSellerName) {
           navigator.clipboard?.writeText(activeSellerName);
-          sellerContactCopy.textContent = "คัดลอกแล้ว";
+          sellerContactCopy.classList.add("is-copied");
           return;
         }
 
