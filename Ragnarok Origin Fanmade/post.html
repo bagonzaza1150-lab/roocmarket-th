@@ -775,7 +775,7 @@
             imagePaths = uploaded.imagePaths;
           }
 
-          const { error } = await supabaseClient.from("marketplace_listings").insert({
+          const listingPayload = {
             listing_type: activeListingType,
             category: activeCategory,
             user_id: currentSession.user.id,
@@ -799,7 +799,17 @@
             active: true,
             sale_status: "active",
             expires_at: getExpiryIso(isPremiumSeller)
-          });
+          };
+
+          let { error } = await supabaseClient.from("marketplace_listings").insert(listingPayload);
+          if (error && /listing_type|schema cache|column/i.test(error.message || "")) {
+            if (activeListingType === "buy") {
+              throw new Error("ฐานข้อมูลยังไม่ได้อัปเดตสำหรับประกาศรับซื้อ กรุณารัน supabase-schema.sql ใน Supabase SQL Editor ก่อน");
+            }
+            delete listingPayload.listing_type;
+            const fallbackResult = await supabaseClient.from("marketplace_listings").insert(listingPayload);
+            error = fallbackResult.error;
+          }
 
           if (error) throw error;
 

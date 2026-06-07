@@ -42,6 +42,10 @@ window.ROOC_SUPABASE = {
     "created_at",
     "updated_at"
   ].join(",");
+  const legacyListingSelectColumns = listingSelectColumns
+    .split(",")
+    .filter((column) => column !== "listing_type")
+    .join(",");
   let currentListingPage = 1;
   let activeListingType = "sell";
   const fallbackServers = [
@@ -89,21 +93,41 @@ window.ROOC_SUPABASE = {
 
   async function fetchPublicListings(force = false) {
     const now = encodeURIComponent(new Date().toISOString());
-    return fetchCachedJson(
-      "rooc-public-listings-v3",
-      `${config.url}/rest/v1/marketplace_listings?select=${listingSelectColumns}&active=eq.true&or=(expires_at.is.null,expires_at.gte.${now})&order=created_at.desc&limit=200`,
-      listingCacheMs,
-      force
-    );
+    try {
+      return await fetchCachedJson(
+        "rooc-public-listings-v3",
+        `${config.url}/rest/v1/marketplace_listings?select=${listingSelectColumns}&active=eq.true&or=(expires_at.is.null,expires_at.gte.${now})&order=created_at.desc&limit=200`,
+        listingCacheMs,
+        force
+      );
+    } catch (error) {
+      console.warn("ROOC listing_type column not ready, using legacy listing query:", error);
+      return fetchCachedJson(
+        "rooc-public-listings-legacy-v1",
+        `${config.url}/rest/v1/marketplace_listings?select=${legacyListingSelectColumns}&active=eq.true&or=(expires_at.is.null,expires_at.gte.${now})&order=created_at.desc&limit=200`,
+        listingCacheMs,
+        force
+      );
+    }
   }
 
   async function fetchSoldListings(force = false) {
-    return fetchCachedJson(
-      "rooc-sold-listings-v2",
-      `${config.url}/rest/v1/marketplace_listings?select=${listingSelectColumns}&active=eq.false&sale_status=eq.sold&order=updated_at.desc&limit=12`,
-      soldListingCacheMs,
-      force
-    );
+    try {
+      return await fetchCachedJson(
+        "rooc-sold-listings-v2",
+        `${config.url}/rest/v1/marketplace_listings?select=${listingSelectColumns}&active=eq.false&sale_status=eq.sold&order=updated_at.desc&limit=12`,
+        soldListingCacheMs,
+        force
+      );
+    } catch (error) {
+      console.warn("ROOC sold listing_type column not ready, using legacy sold query:", error);
+      return fetchCachedJson(
+        "rooc-sold-listings-legacy-v1",
+        `${config.url}/rest/v1/marketplace_listings?select=${legacyListingSelectColumns}&active=eq.false&sale_status=eq.sold&order=updated_at.desc&limit=12`,
+        soldListingCacheMs,
+        force
+      );
+    }
   }
 
   async function fetchSiteSettings() {
