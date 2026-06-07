@@ -48,6 +48,8 @@ window.ROOC_SUPABASE = {
     .join(",");
   let currentListingPage = 1;
   let activeListingType = "sell";
+  let refreshCooldownTimer = null;
+  let refreshCooldownEndsAt = 0;
   const fallbackServers = [
     "Prontera 1", "Prontera 2", "Prontera 3", "Prontera 4", "Prontera 5",
     "Prontera 6", "Prontera 7", "Prontera 8", "Prontera 9", "Prontera 10",
@@ -66,11 +68,14 @@ window.ROOC_SUPABASE = {
 
   function getDescriptionParts(value, maxLength = 120) {
     const text = String(value || "").trim();
-    if (text.length <= maxLength) {
+    const hasLongToken = text.split(/\s+/).some((part) => part.length > 34);
+    const shouldTruncate = text.length > maxLength || hasLongToken;
+    if (!shouldTruncate) {
       return { shortText: text, fullText: text, truncated: false };
     }
+    const limit = hasLongToken && text.length <= maxLength ? 72 : maxLength;
     return {
-      shortText: `${text.slice(0, maxLength).trim()}...`,
+      shortText: `${text.slice(0, limit).trim()}...`,
       fullText: text,
       truncated: true
     };
@@ -252,6 +257,36 @@ window.ROOC_SUPABASE = {
       middleman: Boolean(controls.middleman?.checked),
       ready: Boolean(controls.ready?.checked)
     };
+  }
+
+  function setRefreshCooldown(seconds = 10) {
+    const controls = getFilterControls();
+    const button = controls.refresh;
+    if (!button) return;
+
+    refreshCooldownEndsAt = Date.now() + (seconds * 1000);
+    window.clearInterval(refreshCooldownTimer);
+
+    const updateCooldown = () => {
+      const remaining = Math.ceil((refreshCooldownEndsAt - Date.now()) / 1000);
+      if (remaining <= 0) {
+        window.clearInterval(refreshCooldownTimer);
+        refreshCooldownTimer = null;
+        button.disabled = false;
+        button.classList.remove("is-cooling-down");
+        button.setAttribute("aria-label", "รีเฟรชสินค้า");
+        button.title = "รีเฟรชสินค้า";
+        return;
+      }
+
+      button.disabled = true;
+      button.classList.add("is-cooling-down");
+      button.setAttribute("aria-label", `รีเฟรชได้อีกครั้งใน ${remaining} วินาที`);
+      button.title = `รีเฟรชได้อีกครั้งใน ${remaining} วินาที`;
+    };
+
+    updateCooldown();
+    refreshCooldownTimer = window.setInterval(updateCooldown, 1000);
   }
 
   function listingMatchesSearch(listing, search) {
@@ -489,8 +524,11 @@ window.ROOC_SUPABASE = {
       return;
     }
 
-    const pageButtons = Array.from({ length: totalPages }, (_item, index) => {
-      const page = index + 1;
+    const maxVisiblePages = 10;
+    const pageGroupStart = Math.floor((currentListingPage - 1) / maxVisiblePages) * maxVisiblePages + 1;
+    const pageGroupEnd = Math.min(totalPages, pageGroupStart + maxVisiblePages - 1);
+    const pageButtons = Array.from({ length: pageGroupEnd - pageGroupStart + 1 }, (_item, index) => {
+      const page = pageGroupStart + index;
       return `<button class="${page === currentListingPage ? "is-active" : ""}" type="button" data-page="${page}" aria-current="${page === currentListingPage ? "page" : "false"}">${page}</button>`;
     }).join("");
 
@@ -617,10 +655,14 @@ window.ROOC_SUPABASE = {
       console.error("ROOC listings refresh failed:", error);
     } finally {
       if (controls.refresh) {
-        controls.refresh.disabled = false;
         controls.refresh.classList.remove("is-loading");
-        controls.refresh.setAttribute("aria-label", "รีเฟรชสินค้า");
-        controls.refresh.title = "รีเฟรชสินค้า";
+        if (force) {
+          setRefreshCooldown(10);
+        } else {
+          controls.refresh.disabled = false;
+          controls.refresh.setAttribute("aria-label", "รีเฟรชสินค้า");
+          controls.refresh.title = "รีเฟรชสินค้า";
+        }
       }
     }
   }
@@ -638,7 +680,10 @@ window.ROOC_SUPABASE = {
     controls.search?.addEventListener("search", rerender);
     controls.search?.addEventListener("change", rerender);
     controls.sort?.addEventListener("change", rerender);
-    controls.refresh?.addEventListener("click", () => refreshListings(true));
+    controls.refresh?.addEventListener("click", () => {
+      if (refreshCooldownEndsAt > Date.now()) return;
+      refreshListings(true);
+    });
     controls.price?.addEventListener("change", rerender);
     controls.middleman?.addEventListener("change", rerender);
     controls.ready?.addEventListener("change", rerender);
