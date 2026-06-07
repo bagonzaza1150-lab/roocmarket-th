@@ -282,11 +282,11 @@
         </div>
         <div class="contact-modal-item">
           <span>Discord / ช่องทางติดต่อ</span>
-          <a class="seller-profile-button" id="sellerContactLink" href="#" target="_blank" rel="noopener">เปิดโปรไฟล์ผู้ขาย</a>
-          <button class="seller-copy-button" id="sellerContactCopy" type="button" hidden>คัดลอกชื่อ Discord</button>
+          <button class="seller-profile-button" id="sellerContactCopy" type="button" hidden>คัดลอกชื่อ Discord</button>
+          <a class="seller-copy-button" id="sellerContactLink" href="#" target="_blank" rel="noopener" hidden>เปิดโปรไฟล์ผู้ขาย</a>
           <strong id="sellerContactValue">-</strong>
         </div>
-        <p id="sellerContactNote">ติดต่อผู้ขายโดยตรง และใช้ Middleman สำหรับดีลราคาสูง</p>
+        <p id="sellerContactNote">กดเปิดโปรไฟล์เพื่อแอดเพื่อน หรือคัดลอกชื่อ Discord ไปค้นหาใน DM</p>
       </section>
     </div>
 
@@ -532,7 +532,7 @@
       function openSellerContact(title, contact, profileUrlOverride = "", sellerName = "", discordIdOverride = "") {
         if (!sellerContactModal || !sellerContactItem || !sellerContactValue || !sellerContactLink || !sellerContactCopy) return;
         const discordId = String(discordIdOverride || getDiscordIdFromContact(profileUrlOverride) || getDiscordIdFromContact(contact)).trim();
-        const profileUrl = profileUrlOverride || getContactProfileUrl(contact);
+        const profileUrl = profileUrlOverride || (discordId ? `https://discord.com/users/${discordId}` : "") || getContactProfileUrl(contact);
         activeSellerName = sellerName || "";
         sellerContactItem.textContent = title || "ประกาศขาย";
         sellerContactValue.textContent = sellerName
