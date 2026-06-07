@@ -195,6 +195,44 @@
           <div class="admin-pagination" id="adminServersPagination"></div>
         </section>
 
+        <section class="admin-list-panel dungeon-admin-panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Dungeons</p>
+              <h2>จัดการลิสต์ดัน</h2>
+            </div>
+          </div>
+
+          <form class="server-admin-form" id="dungeonForm">
+            <input id="dungeonId" type="hidden" />
+            <div class="post-grid">
+              <label class="post-field">
+                <span>ชื่อดัน</span>
+                <input id="dungeonName" type="text" placeholder="เช่น Helheim Hard" required />
+              </label>
+              <label class="post-field">
+                <span>ลำดับแสดงผล</span>
+                <input id="dungeonSortOrder" type="number" value="0" />
+              </label>
+            </div>
+            <label class="post-field">
+              <span>รายละเอียด</span>
+              <textarea id="dungeonDescription" rows="3" placeholder="เช่น รับลงดันรายวัน / บอส / ปาร์ตี้"></textarea>
+            </label>
+            <div class="post-checks">
+              <label><input id="dungeonActive" type="checkbox" checked /> เปิดใช้งาน</label>
+            </div>
+            <div class="post-actions">
+              <button class="btn btn-light" id="dungeonResetButton" type="button">ล้างฟอร์ม</button>
+              <button class="btn btn-primary" type="submit">บันทึกลิสต์ดัน</button>
+            </div>
+            <p class="admin-message" id="dungeonMessage"></p>
+          </form>
+
+          <div class="admin-items server-list" id="adminDungeons"></div>
+          <div class="admin-pagination" id="adminDungeonsPagination"></div>
+        </section>
+
         <section class="admin-list-panel listing-admin-panel">
           <div class="section-head">
             <div>
@@ -393,6 +431,11 @@
       const adminServersPagination = document.querySelector("#adminServersPagination");
       const serverResetButton = document.querySelector("#serverResetButton");
       const serverMessage = document.querySelector("#serverMessage");
+      const dungeonForm = document.querySelector("#dungeonForm");
+      const adminDungeons = document.querySelector("#adminDungeons");
+      const adminDungeonsPagination = document.querySelector("#adminDungeonsPagination");
+      const dungeonResetButton = document.querySelector("#dungeonResetButton");
+      const dungeonMessage = document.querySelector("#dungeonMessage");
       const adminListings = document.querySelector("#adminListings");
       const adminListingsPagination = document.querySelector("#adminListingsPagination");
       const refreshAdminListings = document.querySelector("#refreshAdminListings");
@@ -450,8 +493,17 @@
         active: document.querySelector("#serverActive")
       };
 
+      const dungeonFields = {
+        id: document.querySelector("#dungeonId"),
+        name: document.querySelector("#dungeonName"),
+        description: document.querySelector("#dungeonDescription"),
+        sortOrder: document.querySelector("#dungeonSortOrder"),
+        active: document.querySelector("#dungeonActive")
+      };
+
       let itemCache = [];
       let serverCache = [];
+      let dungeonCache = [];
       let premiumCache = [];
       let premiumProfileResults = [];
       let listingCache = [];
@@ -459,9 +511,11 @@
       let currentSession = null;
       let adminItemPage = 1;
       let adminServerPage = 1;
+      let adminDungeonPage = 1;
       let adminListingPage = 1;
       const adminPageSize = 6;
       const adminServerPageSize = 5;
+      const adminDungeonPageSize = 5;
 
       const premiumFields = {
         id: document.querySelector("#premiumUserId"),
@@ -482,11 +536,12 @@
 
         const itemPanel = document.querySelector(".item-admin-panel");
         const serverPanel = document.querySelector(".server-admin-panel");
+        const dungeonPanel = document.querySelector(".dungeon-admin-panel");
         const listingPanel = document.querySelector(".listing-admin-panel");
         const premiumPanel = document.querySelector(".premium-admin-panel");
         const supportPanel = document.querySelector(".support-admin-panel");
 
-        [itemForm, serverPanel, premiumPanel].filter(Boolean).forEach((panel) => leftColumn.append(panel));
+        [itemForm, serverPanel, dungeonPanel, premiumPanel].filter(Boolean).forEach((panel) => leftColumn.append(panel));
         [itemPanel, listingPanel, supportPanel].filter(Boolean).forEach((panel) => rightColumn.append(panel));
 
         adminWorkspace.append(leftColumn, rightColumn);
@@ -713,6 +768,127 @@
         resetServerForm();
         adminServerPage = 1;
         await loadServers();
+      }
+
+      function resetDungeonForm() {
+        dungeonForm.reset();
+        dungeonFields.id.value = "";
+        dungeonFields.sortOrder.value = "0";
+        dungeonFields.active.checked = true;
+        setMessage(dungeonMessage, "");
+      }
+
+      function renderDungeons() {
+        adminDungeons.innerHTML = "";
+        adminDungeonsPagination.innerHTML = "";
+        if (!dungeonCache.length) {
+          adminDungeons.innerHTML = '<p class="admin-empty">ยังไม่มีลิสต์ดัน</p>';
+          return;
+        }
+
+        const totalPages = Math.max(1, Math.ceil(dungeonCache.length / adminDungeonPageSize));
+        adminDungeonPage = Math.min(adminDungeonPage, totalPages);
+        const pageDungeons = dungeonCache.slice((adminDungeonPage - 1) * adminDungeonPageSize, adminDungeonPage * adminDungeonPageSize);
+
+        pageDungeons.forEach((dungeon) => {
+          const card = document.createElement("article");
+          card.className = "admin-item-card server-item-card";
+          card.innerHTML = `
+            <div class="server-icon" aria-hidden="true">DU</div>
+            <div>
+              <strong>${escapeHtml(dungeon.name)}</strong>
+              <span>${dungeon.active ? "เปิดใช้งาน" : "ปิดใช้งาน"} · ลำดับ ${Number(dungeon.sort_order || 0)}</span>
+              <small>${escapeHtml(dungeon.description || "ยังไม่มีรายละเอียด")}</small>
+            </div>
+            <div class="admin-item-actions">
+              <button class="btn btn-small" type="button" data-dungeon-edit="${escapeHtml(dungeon.id)}">แก้ไข</button>
+              <button class="btn btn-small admin-delete" type="button" data-dungeon-delete="${escapeHtml(dungeon.id)}">ลบ</button>
+            </div>
+          `;
+          adminDungeons.append(card);
+        });
+        renderAdminPagination(adminDungeonsPagination, adminDungeonPage, totalPages, "dungeon");
+      }
+
+      async function loadDungeons() {
+        const { data, error } = await supabaseClient
+          .from("marketplace_dungeons")
+          .select("*")
+          .order("sort_order", { ascending: true })
+          .order("name", { ascending: true });
+
+        if (error) {
+          setMessage(dungeonMessage, error.message, true);
+          return;
+        }
+
+        dungeonCache = data || [];
+        renderDungeons();
+      }
+
+      function editDungeon(dungeonId) {
+        const dungeon = dungeonCache.find((entry) => entry.id === dungeonId);
+        if (!dungeon) return;
+        dungeonFields.id.value = dungeon.id;
+        dungeonFields.name.value = dungeon.name || "";
+        dungeonFields.description.value = dungeon.description || "";
+        dungeonFields.sortOrder.value = dungeon.sort_order || 0;
+        dungeonFields.active.checked = Boolean(dungeon.active);
+        setMessage(dungeonMessage, "");
+        dungeonForm.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+
+      async function deleteDungeon(dungeonId) {
+        const dungeon = dungeonCache.find((entry) => entry.id === dungeonId);
+        if (!dungeon) return;
+        if (!confirm(`ลบดัน "${dungeon.name}" ออกจากตัวเลือก?`)) return;
+
+        const { error } = await supabaseClient
+          .from("marketplace_dungeons")
+          .delete()
+          .eq("id", dungeonId);
+
+        if (error) {
+          setMessage(dungeonMessage, error.message, true);
+          return;
+        }
+
+        setMessage(dungeonMessage, "ลบลิสต์ดันเรียบร้อย");
+        resetDungeonForm();
+        adminDungeonPage = 1;
+        await loadDungeons();
+      }
+
+      async function saveDungeon(event) {
+        event.preventDefault();
+        const payload = {
+          name: dungeonFields.name.value.trim(),
+          description: dungeonFields.description.value.trim(),
+          sort_order: Number(dungeonFields.sortOrder.value || 0),
+          active: dungeonFields.active.checked
+        };
+
+        if (!payload.name) {
+          setMessage(dungeonMessage, "กรุณาใส่ชื่อดัน", true);
+          dungeonFields.name.focus();
+          return;
+        }
+
+        setMessage(dungeonMessage, "กำลังบันทึกลิสต์ดัน...");
+        const request = dungeonFields.id.value
+          ? supabaseClient.from("marketplace_dungeons").update(payload).eq("id", dungeonFields.id.value)
+          : supabaseClient.from("marketplace_dungeons").insert(payload);
+        const { error } = await request;
+
+        if (error) {
+          setMessage(dungeonMessage, error.message, true);
+          return;
+        }
+
+        setMessage(dungeonMessage, "บันทึกลิสต์ดันเรียบร้อย");
+        resetDungeonForm();
+        adminDungeonPage = 1;
+        await loadDungeons();
       }
 
       function resetPremiumForm() {
@@ -1279,6 +1455,7 @@
           arrangeAdminPanels();
           loadItems();
           loadServers();
+          loadDungeons();
           loadPremiumUsers();
           loadSupportSettings();
           loadAdminListings();
@@ -1312,9 +1489,11 @@
       logoutButton.addEventListener("click", () => supabaseClient.auth.signOut());
       itemForm.addEventListener("submit", saveItem);
       serverForm.addEventListener("submit", saveServer);
+      dungeonForm.addEventListener("submit", saveDungeon);
       premiumForm.addEventListener("submit", savePremiumUser);
       supportSettingsForm.addEventListener("submit", saveSupportSettings);
       serverResetButton.addEventListener("click", resetServerForm);
+      dungeonResetButton.addEventListener("click", resetDungeonForm);
       premiumResetButton.addEventListener("click", resetPremiumForm);
       premiumSearchButton.addEventListener("click", searchPremiumProfiles);
       premiumSearchInput.addEventListener("keydown", (event) => {
@@ -1363,6 +1542,18 @@
         if (!button || button.disabled) return;
         adminServerPage += button.dataset.pageDir === "next" ? 1 : -1;
         renderServers();
+      });
+      adminDungeons.addEventListener("click", (event) => {
+        const editId = event.target.dataset.dungeonEdit;
+        const deleteId = event.target.dataset.dungeonDelete;
+        if (editId) editDungeon(editId);
+        if (deleteId) deleteDungeon(deleteId);
+      });
+      adminDungeonsPagination.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-page-type]");
+        if (!button || button.disabled) return;
+        adminDungeonPage += button.dataset.pageDir === "next" ? 1 : -1;
+        renderDungeons();
       });
       refreshAdminListings.addEventListener("click", () => {
         adminListingPage = 1;

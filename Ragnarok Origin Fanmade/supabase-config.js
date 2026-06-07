@@ -233,7 +233,7 @@ window.ROOC_SUPABASE = {
     return {
       search: normalizeSearch(controls.search?.value || ""),
       server: controls.sidebarServer?.value || controls.heroServer?.value || "ทั้งหมด",
-      category: activeListingType === "buy" && rawCategory === "account" ? "all" : rawCategory,
+      category: activeListingType === "service" || (activeListingType === "buy" && rawCategory === "account") ? "all" : rawCategory,
       listingType: activeListingType,
       price: controls.price?.value || "all",
       sort: controls.sort?.value || "newest",
@@ -248,9 +248,10 @@ window.ROOC_SUPABASE = {
       mvp: "mvp cards card การ์ด",
       accessories: "accessories accessory ประดับ",
       fashion: "fashion แฟชั่น",
-      account: "account บัญชี"
+      account: "account บัญชี",
+      dungeon: "dungeon ดัน รับจ้างลงดัน"
     };
-    const typeText = listing.listing_type === "buy" ? "รับซื้อ buy" : "ขาย sell";
+    const typeText = listing.listing_type === "buy" ? "รับซื้อ buy" : listing.listing_type === "service" ? "รับจ้างลงดัน service dungeon" : "ขาย sell";
     return [
       typeText,
       listing.title,
@@ -271,7 +272,7 @@ window.ROOC_SUPABASE = {
 
   function getListingImages(listing) {
     const gallery = Array.isArray(listing.image_urls) ? listing.image_urls.filter(Boolean) : [];
-    return gallery.length ? gallery : [listing.image_url || "assets/category-icons/mvp-c.png"];
+    return gallery.length ? gallery : [listing.image_url || (listing.category === "dungeon" ? "assets/site-icons/rooc-icon-192.png" : "assets/category-icons/mvp-c.png")];
   }
 
   function listingMatchesPrice(listing, priceFilter) {
@@ -309,27 +310,27 @@ window.ROOC_SUPABASE = {
   function syncCategoryUi(category) {
     const controls = getFilterControls();
     if (controls.category) controls.category.value = category;
-    if (activeListingType === "buy" && category === "account" && controls.category) {
+    if ((activeListingType === "service" || (activeListingType === "buy" && category === "account")) && controls.category) {
       controls.category.value = "all";
     }
     if (controls.category) {
       Array.from(controls.category.options).forEach((option) => {
-        option.disabled = activeListingType === "buy" && option.value === "account";
+        option.disabled = activeListingType === "service" || (activeListingType === "buy" && option.value === "account");
       });
     }
     controls.tabs.forEach((button) => {
       button.classList.toggle("is-active", button.dataset.category === category);
-      button.disabled = activeListingType === "buy" && button.dataset.category === "account";
+      button.disabled = activeListingType === "service" || (activeListingType === "buy" && button.dataset.category === "account");
     });
   }
 
   function syncListingTypeUi(type) {
-    activeListingType = type === "buy" ? "buy" : "sell";
+    activeListingType = type === "buy" ? "buy" : type === "service" ? "service" : "sell";
     const controls = getFilterControls();
     controls.typeTabs.forEach((button) => {
       button.classList.toggle("is-active", button.dataset.listingType === activeListingType);
     });
-    if (activeListingType === "buy" && controls.category?.value === "account") {
+    if (activeListingType === "service" || (activeListingType === "buy" && controls.category?.value === "account")) {
       syncCategoryUi("all");
     } else {
       syncCategoryUi(controls.category?.value || "all");
@@ -375,10 +376,13 @@ window.ROOC_SUPABASE = {
 
     const sellTotal = listings.filter((listing) => (listing.listing_type || "sell") === "sell").length;
     const buyTotal = listings.filter((listing) => (listing.listing_type || "sell") === "buy").length;
+    const serviceTotal = listings.filter((listing) => (listing.listing_type || "sell") === "service").length;
     const sellTarget = document.querySelector("#totalSellListingCount");
     const buyTarget = document.querySelector("#totalBuyListingCount");
+    const serviceTarget = document.querySelector("#totalServiceListingCount");
     if (sellTarget) sellTarget.textContent = sellTotal.toLocaleString("th-TH");
     if (buyTarget) buyTarget.textContent = buyTotal.toLocaleString("th-TH");
+    if (serviceTarget) serviceTarget.textContent = serviceTotal.toLocaleString("th-TH");
   }
 
   function renderListingCards(listings, isFiltered = false) {
@@ -394,7 +398,7 @@ window.ROOC_SUPABASE = {
         pagination.innerHTML = "";
       }
       emptyState.hidden = false;
-      const typeLabel = activeListingType === "buy" ? "ประกาศรับซื้อ" : "ประกาศขาย";
+      const typeLabel = activeListingType === "buy" ? "ประกาศรับซื้อ" : activeListingType === "service" ? "ประกาศรับจ้างลงดัน" : "ประกาศขาย";
       emptyState.querySelector("h3").textContent = isFiltered ? `ไม่พบ${typeLabel}ที่ตรงกับตัวกรอง` : `ยังไม่มี${typeLabel}`;
       emptyState.querySelector("p").textContent = isFiltered ? "ลองล้างตัวกรองหรือเปลี่ยนคำค้นหา" : `เมื่อมีผู้ใช้ลง${typeLabel} รายการล่าสุดจะแสดงในส่วนนี้`;
       return;
@@ -419,10 +423,11 @@ window.ROOC_SUPABASE = {
         ? ` data-account-gallery="${escapeHtml(encodeURIComponent(JSON.stringify(listingImages)))}" data-account-title="${escapeHtml(title)}"`
         : "";
       const badges = [
-        `<span class="${listingType === "buy" ? "buy" : "fast"}">${listingType === "buy" ? "รับซื้อ" : "ขาย"}</span>`,
+        `<span class="${listingType === "buy" ? "buy" : listingType === "service" ? "verified" : "fast"}">${listingType === "buy" ? "รับซื้อ" : listingType === "service" ? "รับจ้าง" : "ขาย"}</span>`,
         `<span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
         listing.ready_today ? '<span class="fast">Fast Deal</span>' : "",
-        listing.category === "mvp" ? '<span class="mvp">MVP</span>' : ""
+        listing.category === "mvp" ? '<span class="mvp">MVP</span>' : "",
+        listing.category === "dungeon" ? '<span class="mvp">Dungeon</span>' : ""
       ].filter(Boolean).join("");
       const description = listing.middleman
         ? `${listing.character_name ? `ตัวละคร: ${listing.character_name} · ` : ""}${listing.description || ""} · รองรับ Middleman`
@@ -449,7 +454,7 @@ window.ROOC_SUPABASE = {
           <p>${escapeHtml(description)}</p>
           <div class="price-row">
             <strong>฿ ${formatListingPrice(listing.price_text)}</strong>
-            <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">${listingType === "buy" ? "ติดต่อผู้รับซื้อ" : "ติดต่อผู้ขาย"}</button>
+            <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">${listingType === "buy" ? "ติดต่อผู้รับซื้อ" : listingType === "service" ? "ติดต่อผู้รับจ้าง" : "ติดต่อผู้ขาย"}</button>
           </div>
         </article>
       `;

@@ -84,6 +84,7 @@
               <div class="category-picker listing-type-picker" role="tablist" aria-label="ประเภทประกาศ">
                 <button class="is-active" type="button" data-listing-type="sell">ประกาศขาย</button>
                 <button type="button" data-listing-type="buy">ประกาศรับซื้อ</button>
+                <button type="button" data-listing-type="service">รับจ้างลงดัน</button>
               </div>
             </div>
 
@@ -125,6 +126,35 @@
               </div>
             </div>
 
+            <div class="form-block is-hidden" id="dungeonServiceBlock">
+              <div class="form-block-head">
+                <span>3</span>
+                <div>
+                  <h3>เลือกลิสต์ดัน</h3>
+                  <p>เลือกดันจากรายการที่แอดมินเพิ่มไว้ และใส่ราคาแยกตามระดับ</p>
+                </div>
+              </div>
+
+              <label class="post-field">
+                <span>ดันเจี้ยน</span>
+                <select id="dungeonSelect"></select>
+              </label>
+              <div class="post-grid">
+                <label class="post-field">
+                  <span>ราคา Normal</span>
+                  <input id="dungeonPriceNormal" type="text" inputmode="numeric" placeholder="50,000" />
+                </label>
+                <label class="post-field">
+                  <span>ราคา Hard</span>
+                  <input id="dungeonPriceHard" type="text" inputmode="numeric" placeholder="120,000" />
+                </label>
+                <label class="post-field">
+                  <span>ราคา Nightmare / อื่น ๆ</span>
+                  <input id="dungeonPriceExtra" type="text" inputmode="numeric" placeholder="200,000" />
+                </label>
+              </div>
+            </div>
+
             <div class="form-block is-hidden" id="accountUploadBlock">
               <div class="form-block-head">
                 <span>3</span>
@@ -160,7 +190,7 @@
                   <span>ชื่อตัวละคร</span>
                   <input id="characterName" type="text" placeholder="ชื่อตัวละครในเกม" required />
                 </label>
-                <label class="post-field">
+                <label class="post-field" id="listingPriceField">
                   <span>ราคา</span>
                   <input id="listingPrice" type="text" inputmode="numeric" placeholder="3,800" required />
                 </label>
@@ -363,6 +393,21 @@
               description: "บัญชีพร้อมเล่น กรุณาอัปโหลดรูปบัญชีจริง"
             }
           ]
+        },
+        dungeon: {
+          label: "Dungeon Service",
+          title: "เลือกลิสต์ดัน",
+          field: "ดันเจี้ยน",
+          helper: "เลือกลิสต์ดันจากหน้า Admin",
+          mediaClass: "item-media",
+          items: [
+            {
+              name: "Helheim Hard",
+              image: "assets/site-icons/rooc-icon-192.png",
+              price: "50,000",
+              description: "รับจ้างลงดัน เลือกระดับและราคาได้"
+            }
+          ]
         }
       };
 
@@ -374,12 +419,18 @@
       const selectedItemImage = document.querySelector("#selectedItemImage");
       const loginRequiredPanel = document.querySelector("#loginRequiredPanel");
       const gameItemBlock = document.querySelector("#gameItemBlock");
+      const dungeonServiceBlock = document.querySelector("#dungeonServiceBlock");
+      const dungeonSelect = document.querySelector("#dungeonSelect");
+      const dungeonPriceNormal = document.querySelector("#dungeonPriceNormal");
+      const dungeonPriceHard = document.querySelector("#dungeonPriceHard");
+      const dungeonPriceExtra = document.querySelector("#dungeonPriceExtra");
       const accountUploadBlock = document.querySelector("#accountUploadBlock");
       const accountImageInput = document.querySelector("#accountImageInput");
       const accountUploadPreview = document.querySelector("#accountUploadPreview");
       const postMessage = document.querySelector("#postMessage");
       const listingTitle = document.querySelector("#listingTitle");
       const characterName = document.querySelector("#characterName");
+      const listingPriceField = document.querySelector("#listingPriceField");
       const listingPrice = document.querySelector("#listingPrice");
       const listingServer = document.querySelector("#listingServer");
       const listingContact = document.querySelector("#listingContact");
@@ -467,6 +518,9 @@
 
       function getActiveItem() {
         const group = listingAssets[activeCategory];
+        if (activeCategory === "dungeon") {
+          return group.items[dungeonSelect.selectedIndex] || group.items[0];
+        }
         return group.items[itemSelect.selectedIndex] || group.items[0];
       }
 
@@ -484,6 +538,24 @@
 
       function plainPrice(value) {
         return value.replace(/[^\d,]/g, "").trim();
+      }
+
+      function getDungeonPriceRows() {
+        return [
+          ["Normal", plainPrice(dungeonPriceNormal.value)],
+          ["Hard", plainPrice(dungeonPriceHard.value)],
+          ["Nightmare / อื่น ๆ", plainPrice(dungeonPriceExtra.value)]
+        ].filter((row) => row[1]);
+      }
+
+      function getPrimaryDungeonPrice() {
+        return getDungeonPriceRows()[0]?.[1] || plainPrice(listingPrice.value);
+      }
+
+      function formatDungeonPriceDetails() {
+        return getDungeonPriceRows()
+          .map(([label, price]) => `${label}: ฿ ${Number(price.replace(/[^\d]/g, "") || 0).toLocaleString("th-TH")}`)
+          .join(" · ");
       }
 
       function formatFileSize(bytes) {
@@ -549,9 +621,12 @@
       function syncPreview() {
         const group = listingAssets[activeCategory];
         const item = getActiveItem();
-        const typePrefix = activeListingType === "buy" ? "รับซื้อ" : "ขาย";
+        const typePrefix = activeListingType === "buy" ? "รับซื้อ" : activeListingType === "service" ? "รับจ้างลงดัน" : "ขาย";
         const title = listingTitle.value.trim() || `${typePrefix} ${item.name}`;
-        const detail = listingDescription.value.trim() || item.description;
+        const servicePrices = activeListingType === "service" ? formatDungeonPriceDetails() : "";
+        const detail = activeListingType === "service"
+          ? [listingDescription.value.trim() || item.description, servicePrices].filter(Boolean).join(" · ")
+          : listingDescription.value.trim() || item.description;
         const image = activeCategory === "account" && uploadedAccountImages.length ? uploadedAccountImages[0] : item.image;
         const tags = [];
 
@@ -560,7 +635,7 @@
 
         previewTitle.textContent = title;
         previewDescription.textContent = tags.length ? `${detail} · ${tags.join(" · ")}` : detail;
-        previewPrice.textContent = formatPrice(listingPrice.value);
+        previewPrice.textContent = formatPrice(activeListingType === "service" ? getPrimaryDungeonPrice() : listingPrice.value);
         previewServer.textContent = listingServer.value || "เลือก Server";
         previewCategory.textContent = group.label;
         previewCategory.className = activeCategory === "mvp" ? "mvp" : "";
@@ -570,34 +645,51 @@
       function populateItems(category) {
         const group = listingAssets[category];
         itemSelect.innerHTML = "";
+        dungeonSelect.innerHTML = "";
         group.items.forEach((item) => {
           const option = document.createElement("option");
           option.textContent = item.name;
-          itemSelect.append(option);
+          if (category === "dungeon") {
+            dungeonSelect.append(option);
+          } else {
+            itemSelect.append(option);
+          }
         });
 
         itemSelectTitle.textContent = group.title;
         itemSelectLabel.textContent = group.field;
-        gameItemBlock.classList.toggle("is-hidden", category === "account");
+        gameItemBlock.classList.toggle("is-hidden", category === "account" || category === "dungeon");
+        dungeonServiceBlock.classList.toggle("is-hidden", category !== "dungeon");
         accountUploadBlock.classList.toggle("is-hidden", category !== "account");
         selectedItemImage.src = group.items[0].image;
         selectedItemImage.nextElementSibling.textContent = group.helper;
-        listingTitle.value = group.items[0].name;
+        listingTitle.value = activeListingType === "service" ? `รับจ้างลงดัน ${group.items[0].name}` : group.items[0].name;
         listingPrice.value = "";
         listingDescription.value = group.items[0].description;
         syncPreview();
       }
 
       function syncListingTypeUi(type) {
-        activeListingType = type === "buy" ? "buy" : "sell";
+        activeListingType = type === "buy" ? "buy" : type === "service" ? "service" : "sell";
         listingTypeButtons.forEach((button) => {
           button.classList.toggle("is-active", button.dataset.listingType === activeListingType);
         });
+        listingPriceField.classList.toggle("is-hidden", activeListingType === "service");
+        listingPrice.required = activeListingType !== "service";
+        dungeonPriceNormal.required = activeListingType === "service";
         categoryButtons.forEach((button) => {
           const isAccount = button.dataset.category === "account";
-          button.disabled = activeListingType === "buy" && isAccount;
+          button.disabled = activeListingType === "service" || (activeListingType === "buy" && isAccount);
         });
-        if (activeListingType === "buy" && activeCategory === "account") {
+        if (activeListingType === "service") {
+          activeCategory = "dungeon";
+          categoryButtons.forEach((item) => item.classList.toggle("is-active", false));
+          populateItems(activeCategory);
+        } else if (activeListingType === "buy" && activeCategory === "account") {
+          activeCategory = "mvp";
+          categoryButtons.forEach((item) => item.classList.toggle("is-active", item.dataset.category === activeCategory));
+          populateItems(activeCategory);
+        } else if (activeCategory === "dungeon") {
           activeCategory = "mvp";
           categoryButtons.forEach((item) => item.classList.toggle("is-active", item.dataset.category === activeCategory));
           populateItems(activeCategory);
@@ -640,6 +732,37 @@
           });
         } catch (_error) {
           // Keep the local fallback data when Supabase is not reachable.
+        }
+      }
+
+      async function loadRemoteDungeons() {
+        if (!canUseSupabase) return;
+
+        try {
+          const { data, error } = await supabaseClient
+            .from("marketplace_dungeons")
+            .select("name,description,sort_order")
+            .eq("active", true)
+            .order("sort_order", { ascending: true })
+            .order("name", { ascending: true });
+
+          if (error) throw error;
+
+          const items = (data || []).map((dungeon) => ({
+            name: dungeon.name,
+            image: "assets/site-icons/rooc-icon-192.png",
+            price: "0",
+            description: dungeon.description || "รับจ้างลงดัน เลือกระดับและราคาได้"
+          }));
+
+          if (items.length) {
+            listingAssets.dungeon = {
+              ...listingAssets.dungeon,
+              items
+            };
+          }
+        } catch (error) {
+          console.warn("ROOC dungeon options failed:", error);
         }
       }
 
@@ -702,11 +825,14 @@
         }
 
         const item = getActiveItem();
-        const typePrefix = activeListingType === "buy" ? "รับซื้อ" : "ขาย";
+        const typePrefix = activeListingType === "buy" ? "รับซื้อ" : activeListingType === "service" ? "รับจ้างลงดัน" : "ขาย";
         const title = listingTitle.value.trim() || `${typePrefix} ${item.name}`;
         const characterText = characterName.value.trim();
-        const priceText = plainPrice(listingPrice.value);
-        const description = listingDescription.value.trim() || item.description;
+        const priceText = activeListingType === "service" ? getPrimaryDungeonPrice() : plainPrice(listingPrice.value);
+        const servicePriceDetails = activeListingType === "service" ? formatDungeonPriceDetails() : "";
+        const description = activeListingType === "service"
+          ? [listingDescription.value.trim() || item.description, servicePriceDetails].filter(Boolean).join(" · ")
+          : listingDescription.value.trim() || item.description;
         let imageUrl = item.image;
         let imagePath = null;
         let imageUrls = [item.image];
@@ -719,8 +845,8 @@
         }
 
         if (!priceText) {
-          setPostMessage("กรุณาใส่ราคาก่อนเผยแพร่ประกาศ", true);
-          listingPrice.focus();
+          setPostMessage(activeListingType === "service" ? "กรุณาใส่ราคาอย่างน้อย 1 ระดับก่อนเผยแพร่ประกาศ" : "กรุณาใส่ราคาก่อนเผยแพร่ประกาศ", true);
+          (activeListingType === "service" ? dungeonPriceNormal : listingPrice).focus();
           return;
         }
 
@@ -740,7 +866,7 @@
         try {
           const isPremiumSeller = await getPremiumStatus(currentSession);
           const listingLimit = isPremiumSeller ? 5 : 2;
-          const listingTypeLabel = activeListingType === "buy" ? "ประกาศรับซื้อ" : "ประกาศขาย";
+          const listingTypeLabel = activeListingType === "buy" ? "ประกาศรับซื้อ" : activeListingType === "service" ? "ประกาศรับจ้างลงดัน" : "ประกาศขาย";
           const quota = await getListingQuota(currentSession, activeListingType);
 
           if (quota.hourlyCount >= listingLimit) {
@@ -803,8 +929,8 @@
 
           let { error } = await supabaseClient.from("marketplace_listings").insert(listingPayload);
           if (error && /listing_type|schema cache|column/i.test(error.message || "")) {
-            if (activeListingType === "buy") {
-              throw new Error("ฐานข้อมูลยังไม่ได้อัปเดตสำหรับประกาศรับซื้อ กรุณารัน supabase-schema.sql ใน Supabase SQL Editor ก่อน");
+            if (activeListingType === "buy" || activeListingType === "service") {
+              throw new Error("ฐานข้อมูลยังไม่ได้อัปเดตสำหรับประกาศรับซื้อ/รับจ้างลงดัน กรุณารันไฟล์ supabase-dungeon-services-migration.sql ใน Supabase SQL Editor ก่อน");
             }
             delete listingPayload.listing_type;
             const fallbackResult = await supabaseClient.from("marketplace_listings").insert(listingPayload);
@@ -834,6 +960,13 @@
         selectedItemImage.src = item.image;
         listingTitle.value = item.name;
         listingPrice.value = "";
+        listingDescription.value = item.description;
+        syncPreview();
+      });
+
+      dungeonSelect.addEventListener("change", () => {
+        const item = getActiveItem();
+        listingTitle.value = `รับจ้างลงดัน ${item.name}`;
         listingDescription.value = item.description;
         syncPreview();
       });
@@ -873,7 +1006,7 @@
         }
       });
 
-      [listingTitle, characterName, listingPrice, listingServer, listingDescription, middlemanCheck, readyCheck].forEach((field) => {
+      [listingTitle, characterName, listingPrice, listingServer, listingDescription, middlemanCheck, readyCheck, dungeonPriceNormal, dungeonPriceHard, dungeonPriceExtra].forEach((field) => {
         field.addEventListener("input", syncPreview);
         field.addEventListener("change", syncPreview);
       });
@@ -881,7 +1014,7 @@
       postForm.addEventListener("submit", publishListing);
 
       loadServerOptions();
-      loadRemoteListingAssets().finally(() => populateItems(activeCategory));
+      Promise.all([loadRemoteListingAssets(), loadRemoteDungeons()]).finally(() => populateItems(activeCategory));
 
       if (canUseSupabase) {
         supabaseClient.auth.getSession().then(({ data }) => setPostAccess(data.session));
@@ -982,8 +1115,13 @@
             .eq("sale_status", "active")
             .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
         ]);
-        if (hourlyError) throw hourlyError;
-        if (activeError) throw activeError;
+        if (hourlyError || activeError) {
+          const error = hourlyError || activeError;
+          if (/listing_type|schema cache|column/i.test(error.message || "")) {
+            throw new Error("ฐานข้อมูลยังไม่รองรับประกาศรับซื้อ/รับจ้างลงดัน กรุณารันไฟล์ supabase-dungeon-services-migration.sql ใน Supabase SQL Editor ก่อน");
+          }
+          throw error;
+        }
         return {
           hourlyCount: hourlyCount || 0,
           activeCount: activeCount || 0

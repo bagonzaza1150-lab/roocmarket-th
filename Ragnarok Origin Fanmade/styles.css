@@ -514,7 +514,7 @@ h1 {
 
 .trust-row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(150px, 180px));
+  grid-template-columns: repeat(3, minmax(130px, 1fr));
   gap: 12px;
   max-width: 560px;
   margin-top: 18px;

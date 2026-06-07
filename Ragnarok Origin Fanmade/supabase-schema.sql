@@ -29,11 +29,24 @@ create table if not exists public.marketplace_servers (
 create index if not exists marketplace_servers_public_idx
   on public.marketplace_servers (active, sort_order, name);
 
+create table if not exists public.marketplace_dungeons (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  description text not null default '',
+  sort_order integer not null default 0,
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists marketplace_dungeons_public_idx
+  on public.marketplace_dungeons (active, sort_order, name);
+
 create table if not exists public.marketplace_listings (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete set null,
-  listing_type text not null default 'sell' check (listing_type in ('sell', 'buy')),
-  category text not null check (category in ('mvp', 'accessories', 'fashion', 'account')),
+  listing_type text not null default 'sell' check (listing_type in ('sell', 'buy', 'service')),
+  category text not null check (category in ('mvp', 'accessories', 'fashion', 'account', 'dungeon')),
   item_name text not null,
   title text not null,
   character_name text not null default '',
@@ -223,7 +236,23 @@ begin
 
   alter table public.marketplace_listings
   add constraint marketplace_listings_listing_type_check
-  check (listing_type in ('sell', 'buy'));
+  check (listing_type in ('sell', 'buy', 'service'));
+end $$;
+
+do $$
+begin
+  if exists (
+    select 1
+    from pg_constraint
+    where conname = 'marketplace_listings_category_check'
+  ) then
+    alter table public.marketplace_listings
+    drop constraint marketplace_listings_category_check;
+  end if;
+
+  alter table public.marketplace_listings
+  add constraint marketplace_listings_category_check
+  check (category in ('mvp', 'accessories', 'fashion', 'account', 'dungeon'));
 end $$;
 
 create or replace function public.set_updated_at()
@@ -244,6 +273,11 @@ for each row execute function public.set_updated_at();
 drop trigger if exists marketplace_servers_set_updated_at on public.marketplace_servers;
 create trigger marketplace_servers_set_updated_at
 before update on public.marketplace_servers
+for each row execute function public.set_updated_at();
+
+drop trigger if exists marketplace_dungeons_set_updated_at on public.marketplace_dungeons;
+create trigger marketplace_dungeons_set_updated_at
+before update on public.marketplace_dungeons
 for each row execute function public.set_updated_at();
 
 drop trigger if exists marketplace_listings_set_updated_at on public.marketplace_listings;
@@ -273,6 +307,7 @@ for each row execute function public.set_updated_at();
 
 alter table public.marketplace_items enable row level security;
 alter table public.marketplace_servers enable row level security;
+alter table public.marketplace_dungeons enable row level security;
 alter table public.marketplace_listings enable row level security;
 alter table public.marketplace_admins enable row level security;
 alter table public.marketplace_profiles enable row level security;
@@ -357,6 +392,8 @@ grant select on table public.marketplace_items to anon;
 grant all privileges on table public.marketplace_items to authenticated;
 grant select on table public.marketplace_servers to anon;
 grant all privileges on table public.marketplace_servers to authenticated;
+grant select on table public.marketplace_dungeons to anon;
+grant all privileges on table public.marketplace_dungeons to authenticated;
 grant select on table public.marketplace_listings to anon;
 grant all privileges on table public.marketplace_listings to authenticated;
 grant select on table public.marketplace_admins to authenticated;
@@ -442,6 +479,42 @@ with check (public.is_market_admin());
 drop policy if exists "Authenticated admins can delete marketplace servers" on public.marketplace_servers;
 create policy "Authenticated admins can delete marketplace servers"
 on public.marketplace_servers
+for delete
+to authenticated
+using (public.is_market_admin());
+
+drop policy if exists "Public can read active marketplace dungeons" on public.marketplace_dungeons;
+create policy "Public can read active marketplace dungeons"
+on public.marketplace_dungeons
+for select
+to anon, authenticated
+using (active = true);
+
+drop policy if exists "Authenticated admins can read all marketplace dungeons" on public.marketplace_dungeons;
+create policy "Authenticated admins can read all marketplace dungeons"
+on public.marketplace_dungeons
+for select
+to authenticated
+using (public.is_market_admin());
+
+drop policy if exists "Authenticated admins can insert marketplace dungeons" on public.marketplace_dungeons;
+create policy "Authenticated admins can insert marketplace dungeons"
+on public.marketplace_dungeons
+for insert
+to authenticated
+with check (public.is_market_admin());
+
+drop policy if exists "Authenticated admins can update marketplace dungeons" on public.marketplace_dungeons;
+create policy "Authenticated admins can update marketplace dungeons"
+on public.marketplace_dungeons
+for update
+to authenticated
+using (public.is_market_admin())
+with check (public.is_market_admin());
+
+drop policy if exists "Authenticated admins can delete marketplace dungeons" on public.marketplace_dungeons;
+create policy "Authenticated admins can delete marketplace dungeons"
+on public.marketplace_dungeons
 for delete
 to authenticated
 using (public.is_market_admin());
@@ -579,8 +652,9 @@ to authenticated
 with check (
   active = true
   and sale_status = 'active'
-  and listing_type in ('sell', 'buy')
+  and listing_type in ('sell', 'buy', 'service')
   and (listing_type = 'sell' or category <> 'account')
+  and (listing_type <> 'service' or category = 'dungeon')
   and expires_at is not null
   and auth.uid() = user_id
   and public.market_hourly_listing_count(auth.uid(), listing_type) < public.market_listing_limit(auth.uid())

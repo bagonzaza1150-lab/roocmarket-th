@@ -124,7 +124,8 @@
           mvp: "MVP Cards",
           accessories: "Accessories",
           fashion: "Fashion",
-          account: "Account"
+          account: "Account",
+          dungeon: "รับจ้างลงดัน"
         }[category] || category;
       }
 
@@ -164,6 +165,7 @@
       }
 
       function getListingType(listing) {
+        if (listing.listing_type === "service") return "service";
         return listing.listing_type === "buy" ? "buy" : "sell";
       }
 
@@ -186,7 +188,7 @@
               <img src="${escapeHtml(listing.image_url || "assets/category-icons/mvp-c.png")}" alt="" />
               <div>
                 <div class="listing-meta">
-                  <span class="${getListingType(listing) === "buy" ? "buy" : "fast"}">${getListingType(listing) === "buy" ? "รับซื้อ" : "ขาย"}</span>
+                  <span class="${getListingType(listing) === "buy" ? "buy" : getListingType(listing) === "service" ? "verified" : "fast"}">${getListingType(listing) === "buy" ? "รับซื้อ" : getListingType(listing) === "service" ? "รับจ้าง" : "ขาย"}</span>
                   <span>${escapeHtml(categoryLabel(listing.category))}</span>
                   <span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>
                   <span class="${status.className}">${status.label}</span>
