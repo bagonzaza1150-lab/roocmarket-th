@@ -732,12 +732,20 @@
 
       accountImageInput.addEventListener("change", () => {
         const { selectedFiles, oversized } = validateAccountImages(accountImageInput.files);
+        if (oversized.length) {
+          uploadedAccountImages.forEach((src) => URL.revokeObjectURL(src));
+          uploadedAccountImages = [];
+          accountUploadPreview.innerHTML = "";
+          accountImageInput.value = "";
+          setPostMessage(`รูป Account ต้องไม่เกิน 2 MB ต่อรูป: ${oversized.map((file) => `${file.name} (${formatFileSize(file.size)})`).join(", ")}`, true);
+          syncPreview();
+          return;
+        }
+
         const files = selectedFiles;
         uploadedAccountImages = files.map((file) => URL.createObjectURL(file));
         accountUploadPreview.innerHTML = uploadedAccountImages.map((src) => `<img src="${src}" alt="" />`).join("");
-        if (oversized.length) {
-          setPostMessage(`รูป Account ต้องไม่เกิน 2 MB ต่อรูป: ${oversized.map((file) => `${file.name} (${formatFileSize(file.size)})`).join(", ")}`, true);
-        } else if ((accountImageInput.files?.length || 0) > 5) {
+        if ((accountImageInput.files?.length || 0) > 5) {
           setPostMessage("เลือกได้สูงสุด 5 ภาพ ระบบจะใช้ 5 ภาพแรก", true);
         } else {
           setPostMessage("");
