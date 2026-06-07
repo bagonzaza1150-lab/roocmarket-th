@@ -560,7 +560,7 @@
         const uploadedImages = [];
         for (const [index, file] of selectedFiles.entries()) {
           const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
-          const path = `account/${Date.now()}-${index}-${safeName}`;
+          const path = `${currentSession.user.id}/account/${Date.now()}-${index}-${safeName}`;
           const { error } = await supabaseClient.storage.from(listingBucket).upload(path, file, {
             cacheControl: "3600",
             upsert: false

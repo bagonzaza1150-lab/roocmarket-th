@@ -552,11 +552,38 @@ using (bucket_id in ('item-images', 'listing-images'));
 
 drop policy if exists "Public can upload listing images" on storage.objects;
 drop policy if exists "Authenticated users can upload listing images" on storage.objects;
+drop policy if exists "Authenticated users can update own listing images" on storage.objects;
+drop policy if exists "Authenticated users can delete own listing images" on storage.objects;
 create policy "Authenticated users can upload listing images"
 on storage.objects
 for insert
 to authenticated
-with check (bucket_id = 'listing-images');
+with check (
+  bucket_id = 'listing-images'
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+create policy "Authenticated users can update own listing images"
+on storage.objects
+for update
+to authenticated
+using (
+  bucket_id = 'listing-images'
+  and (storage.foldername(name))[1] = auth.uid()::text
+)
+with check (
+  bucket_id = 'listing-images'
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+create policy "Authenticated users can delete own listing images"
+on storage.objects
+for delete
+to authenticated
+using (
+  bucket_id = 'listing-images'
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
 
 drop policy if exists "Authenticated admins can upload item images" on storage.objects;
 create policy "Authenticated admins can upload item images"
@@ -564,8 +591,8 @@ on storage.objects
 for insert
 to authenticated
 with check (
-  bucket_id = 'listing-images'
-  or (bucket_id = 'item-images' and public.is_market_admin())
+  public.is_market_admin()
+  and bucket_id in ('item-images', 'listing-images')
 );
 
 drop policy if exists "Authenticated admins can update item images" on storage.objects;
@@ -574,12 +601,12 @@ on storage.objects
 for update
 to authenticated
 using (
-  bucket_id = 'listing-images'
-  or (bucket_id = 'item-images' and public.is_market_admin())
+  public.is_market_admin()
+  and bucket_id in ('item-images', 'listing-images')
 )
 with check (
-  bucket_id = 'listing-images'
-  or (bucket_id = 'item-images' and public.is_market_admin())
+  public.is_market_admin()
+  and bucket_id in ('item-images', 'listing-images')
 );
 
 drop policy if exists "Authenticated admins can delete item images" on storage.objects;
@@ -588,6 +615,6 @@ on storage.objects
 for delete
 to authenticated
 using (
-  bucket_id = 'listing-images'
-  or (bucket_id = 'item-images' and public.is_market_admin())
+  public.is_market_admin()
+  and bucket_id in ('item-images', 'listing-images')
 );
