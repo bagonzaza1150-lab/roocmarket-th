@@ -95,6 +95,12 @@ window.ROOC_SUPABASE = {
     return "";
   }
 
+  function getListingProfileUrl(listing) {
+    const discordId = String(listing.seller_discord_id || "").trim();
+    if (/^\d{16,22}$/.test(discordId)) return `https://discord.com/users/${discordId}`;
+    return getContactProfileUrl(listing.contact);
+  }
+
   function getFilterControls() {
     return {
       search: document.querySelector("#marketSearch"),
@@ -228,7 +234,7 @@ window.ROOC_SUPABASE = {
       const title = listing.title || listing.item_name || "ประกาศขาย";
       const mediaClass = listing.category === "mvp" ? "item-media card-media" : "item-media";
       const contact = listing.contact || "";
-      const profileUrl = getContactProfileUrl(contact);
+      const profileUrl = getListingProfileUrl(listing);
       const sellerName = listing.seller_name || "ผู้ขาย ROOC";
       const sellerAvatar = listing.seller_avatar_url || "assets/category-icons/account-b.png";
       const badges = [

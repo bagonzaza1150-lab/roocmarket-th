@@ -26,6 +26,7 @@ create table if not exists public.marketplace_listings (
   character_name text not null default '',
   seller_name text not null default '',
   seller_avatar_url text not null default '',
+  seller_discord_id text not null default '',
   seller_is_premium boolean not null default false,
   image_url text not null,
   image_path text,
@@ -115,7 +116,17 @@ alter table public.marketplace_listings
 add column if not exists seller_avatar_url text not null default '';
 
 alter table public.marketplace_listings
+add column if not exists seller_discord_id text not null default '';
+
+alter table public.marketplace_listings
 add column if not exists seller_is_premium boolean not null default false;
+
+update public.marketplace_listings as listings
+set seller_discord_id = profiles.discord_id
+from public.marketplace_profiles as profiles
+where listings.user_id = profiles.user_id
+  and listings.seller_discord_id = ''
+  and profiles.discord_id <> '';
 
 alter table public.marketplace_listings
 add column if not exists sale_status text not null default 'active';

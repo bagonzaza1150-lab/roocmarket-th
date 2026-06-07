@@ -584,6 +584,7 @@
             character_name: characterText,
             seller_name: getDiscordDisplayName(currentSession),
             seller_avatar_url: getDiscordAvatarUrl(currentSession),
+            seller_discord_id: getDiscordId(currentSession),
             seller_is_premium: isPremiumSeller,
             price_text: priceText,
             server_name: listingServer.value,
@@ -686,9 +687,13 @@
       }
 
       function getDiscordProfileUrl(session) {
-        const identity = session?.user?.identities?.find((entry) => entry.provider === "discord");
-        const discordId = identity?.identity_data?.sub || identity?.id;
+        const discordId = getDiscordId(session);
         return discordId ? `https://discord.com/users/${discordId}` : "";
+      }
+
+      function getDiscordId(session) {
+        const identity = session?.user?.identities?.find((entry) => entry.provider === "discord");
+        return identity?.identity_data?.sub || identity?.id || "";
       }
 
       async function getPremiumStatus(session) {
