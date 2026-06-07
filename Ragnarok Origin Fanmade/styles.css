@@ -2749,7 +2749,7 @@ h1 {
 
 .listing-quota {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin: 14px 0;
 }
@@ -2797,6 +2797,10 @@ h1 {
   border-radius: 18px;
   background: var(--paper);
   padding: 12px;
+}
+
+.service-my-listing-card {
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .my-listing-card > img {
@@ -3152,6 +3156,10 @@ h1 {
 
   .my-listing-card {
     grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .service-my-listing-card {
+    grid-template-columns: 1fr;
   }
 
   .my-listing-card > img {

@@ -131,7 +131,7 @@
                 <span>3</span>
                 <div>
                   <h3>เลือกลิสต์ดัน</h3>
-                  <p>เลือกดันจากรายการที่แอดมินเพิ่มไว้ และใส่ราคาแยกตามระดับ</p>
+                  <p>เลือกดันจากรายการที่แอดมินเพิ่มไว้ แล้วใส่ราคาและรายละเอียดในส่วนข้อมูลประกาศ</p>
                 </div>
               </div>
 
@@ -602,6 +602,7 @@
         previewCategory.textContent = group.label;
         previewCategory.className = activeCategory === "mvp" ? "mvp" : "";
         setPreviewImage(image, group.mediaClass);
+        previewMedia.classList.toggle("is-hidden", activeListingType === "service");
       }
 
       function populateItems(category) {

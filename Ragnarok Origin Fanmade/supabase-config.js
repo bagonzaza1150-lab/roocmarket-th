@@ -424,6 +424,7 @@ window.ROOC_SUPABASE = {
     grid.innerHTML = pageListings.map((listing) => {
       const title = listing.title || listing.item_name || "ประกาศขาย";
       const listingType = listing.listing_type || "sell";
+      const isServiceListing = listingType === "service";
       const mediaClass = listing.category === "mvp" ? "item-media card-media" : listing.category === "account" ? "item-media account-listing-media" : "item-media";
       const listingImages = getListingImages(listing);
       const contact = listing.contact || "";
@@ -447,8 +448,8 @@ window.ROOC_SUPABASE = {
       const descriptionParts = getDescriptionParts(description);
 
       return `
-        <article class="listing-card">
-          <div class="${mediaClass}"${galleryData}>
+        <article class="listing-card${isServiceListing ? " service-listing-card" : ""}">
+          ${isServiceListing ? "" : `<div class="${mediaClass}"${galleryData}>
             <img src="${escapeHtml(listingImages[0])}" alt="" loading="lazy" decoding="async" />
             ${listing.category === "account" && listingImages.length > 1 ? `
               <div class="account-gallery-count">${listingImages.length} รูป</div>
@@ -456,7 +457,7 @@ window.ROOC_SUPABASE = {
                 ${listingImages.slice(0, 5).map((src) => `<span><img src="${escapeHtml(src)}" alt="" loading="lazy" decoding="async" /></span>`).join("")}
               </div>
             ` : ""}
-          </div>
+          </div>`}
           <div class="listing-seller">
             <img src="${escapeHtml(sellerAvatar)}" alt="" loading="lazy" decoding="async" />
             <span>${escapeHtml(sellerName)}</span>
