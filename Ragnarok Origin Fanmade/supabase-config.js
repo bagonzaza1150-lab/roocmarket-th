@@ -64,6 +64,18 @@ window.ROOC_SUPABASE = {
       .replace(/'/g, "&#039;");
   }
 
+  function getDescriptionParts(value, maxLength = 120) {
+    const text = String(value || "").trim();
+    if (text.length <= maxLength) {
+      return { shortText: text, fullText: text, truncated: false };
+    }
+    return {
+      shortText: `${text.slice(0, maxLength).trim()}...`,
+      fullText: text,
+      truncated: true
+    };
+  }
+
   async function fetchCachedJson(cacheKey, url, ttlMs, force = false) {
     if (!force) {
       try {
@@ -432,6 +444,7 @@ window.ROOC_SUPABASE = {
       const description = listing.middleman
         ? `${listing.character_name ? `ตัวละคร: ${listing.character_name} · ` : ""}${listing.description || ""} · รองรับ Middleman`
         : `${listing.character_name ? `ตัวละคร: ${listing.character_name} · ` : ""}${listing.description || ""}`;
+      const descriptionParts = getDescriptionParts(description);
 
       return `
         <article class="listing-card">
@@ -451,7 +464,8 @@ window.ROOC_SUPABASE = {
           </div>
           <div class="listing-meta">${badges}</div>
           <h3>${escapeHtml(title)}</h3>
-          <p>${escapeHtml(description)}</p>
+          <p class="listing-description" data-short="${escapeHtml(descriptionParts.shortText)}" data-full="${escapeHtml(descriptionParts.fullText)}">${escapeHtml(descriptionParts.shortText)}</p>
+          ${descriptionParts.truncated ? '<button class="description-toggle" type="button" data-description-toggle>ดูเพิ่มเติม</button>' : ""}
           <div class="price-row">
             <strong>฿ ${formatListingPrice(listing.price_text)}</strong>
             <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">${listingType === "buy" ? "ติดต่อผู้รับซื้อ" : listingType === "service" ? "ติดต่อผู้รับจ้าง" : "ติดต่อผู้ขาย"}</button>
@@ -847,8 +861,21 @@ window.ROOC_SUPABASE = {
   }
 
   document.addEventListener("click", async (event) => {
+    const descriptionToggle = event.target.closest("[data-description-toggle]");
     const trigger = event.target.closest(".user-menu-trigger");
     const logout = event.target.closest("[data-user-logout]");
+
+    if (descriptionToggle) {
+      const card = descriptionToggle.closest(".listing-card");
+      const description = card?.querySelector(".listing-description");
+      if (description) {
+        const expanded = descriptionToggle.dataset.expanded === "true";
+        description.textContent = expanded ? description.dataset.short || "" : description.dataset.full || "";
+        descriptionToggle.textContent = expanded ? "ดูเพิ่มเติม" : "ย่อข้อความ";
+        descriptionToggle.dataset.expanded = String(!expanded);
+      }
+    }
+
     document.querySelectorAll(".user-menu-panel").forEach((panel) => {
       if (!trigger || !panel.closest(".user-menu")?.contains(trigger)) panel.hidden = true;
     });

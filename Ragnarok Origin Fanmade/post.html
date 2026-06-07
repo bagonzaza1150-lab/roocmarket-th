@@ -139,20 +139,6 @@
                 <span>ดันเจี้ยน</span>
                 <select id="dungeonSelect"></select>
               </label>
-              <div class="post-grid">
-                <label class="post-field">
-                  <span>ราคา Normal</span>
-                  <input id="dungeonPriceNormal" type="text" inputmode="numeric" placeholder="50,000" />
-                </label>
-                <label class="post-field">
-                  <span>ราคา Hard</span>
-                  <input id="dungeonPriceHard" type="text" inputmode="numeric" placeholder="120,000" />
-                </label>
-                <label class="post-field">
-                  <span>ราคา Nightmare / อื่น ๆ</span>
-                  <input id="dungeonPriceExtra" type="text" inputmode="numeric" placeholder="200,000" />
-                </label>
-              </div>
             </div>
 
             <div class="form-block is-hidden" id="accountUploadBlock">
@@ -421,9 +407,6 @@
       const gameItemBlock = document.querySelector("#gameItemBlock");
       const dungeonServiceBlock = document.querySelector("#dungeonServiceBlock");
       const dungeonSelect = document.querySelector("#dungeonSelect");
-      const dungeonPriceNormal = document.querySelector("#dungeonPriceNormal");
-      const dungeonPriceHard = document.querySelector("#dungeonPriceHard");
-      const dungeonPriceExtra = document.querySelector("#dungeonPriceExtra");
       const accountUploadBlock = document.querySelector("#accountUploadBlock");
       const accountImageInput = document.querySelector("#accountImageInput");
       const accountUploadPreview = document.querySelector("#accountUploadPreview");
@@ -540,24 +523,6 @@
         return value.replace(/[^\d,]/g, "").trim();
       }
 
-      function getDungeonPriceRows() {
-        return [
-          ["Normal", plainPrice(dungeonPriceNormal.value)],
-          ["Hard", plainPrice(dungeonPriceHard.value)],
-          ["Nightmare / อื่น ๆ", plainPrice(dungeonPriceExtra.value)]
-        ].filter((row) => row[1]);
-      }
-
-      function getPrimaryDungeonPrice() {
-        return getDungeonPriceRows()[0]?.[1] || plainPrice(listingPrice.value);
-      }
-
-      function formatDungeonPriceDetails() {
-        return getDungeonPriceRows()
-          .map(([label, price]) => `${label}: ฿ ${Number(price.replace(/[^\d]/g, "") || 0).toLocaleString("th-TH")}`)
-          .join(" · ");
-      }
-
       function formatFileSize(bytes) {
         if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
         return `${Math.ceil(bytes / 1024)} KB`;
@@ -623,10 +588,7 @@
         const item = getActiveItem();
         const typePrefix = activeListingType === "buy" ? "รับซื้อ" : activeListingType === "service" ? "รับจ้างลงดัน" : "ขาย";
         const title = listingTitle.value.trim() || `${typePrefix} ${item.name}`;
-        const servicePrices = activeListingType === "service" ? formatDungeonPriceDetails() : "";
-        const detail = activeListingType === "service"
-          ? [listingDescription.value.trim() || item.description, servicePrices].filter(Boolean).join(" · ")
-          : listingDescription.value.trim() || item.description;
+        const detail = listingDescription.value.trim() || item.description;
         const image = activeCategory === "account" && uploadedAccountImages.length ? uploadedAccountImages[0] : item.image;
         const tags = [];
 
@@ -635,7 +597,7 @@
 
         previewTitle.textContent = title;
         previewDescription.textContent = tags.length ? `${detail} · ${tags.join(" · ")}` : detail;
-        previewPrice.textContent = formatPrice(activeListingType === "service" ? getPrimaryDungeonPrice() : listingPrice.value);
+        previewPrice.textContent = formatPrice(listingPrice.value);
         previewServer.textContent = listingServer.value || "เลือก Server";
         previewCategory.textContent = group.label;
         previewCategory.className = activeCategory === "mvp" ? "mvp" : "";
@@ -665,7 +627,7 @@
         selectedItemImage.nextElementSibling.textContent = group.helper;
         listingTitle.value = activeListingType === "service" ? `รับจ้างลงดัน ${group.items[0].name}` : group.items[0].name;
         listingPrice.value = "";
-        listingDescription.value = group.items[0].description;
+        listingDescription.value = activeListingType === "service" ? "" : group.items[0].description;
         syncPreview();
       }
 
@@ -674,9 +636,8 @@
         listingTypeButtons.forEach((button) => {
           button.classList.toggle("is-active", button.dataset.listingType === activeListingType);
         });
-        listingPriceField.classList.toggle("is-hidden", activeListingType === "service");
-        listingPrice.required = activeListingType !== "service";
-        dungeonPriceNormal.required = activeListingType === "service";
+        listingPriceField.classList.remove("is-hidden");
+        listingPrice.required = true;
         categoryButtons.forEach((button) => {
           const isAccount = button.dataset.category === "account";
           button.disabled = activeListingType === "service" || (activeListingType === "buy" && isAccount);
@@ -752,7 +713,7 @@
             name: dungeon.name,
             image: "assets/site-icons/rooc-icon-192.png",
             price: "0",
-            description: dungeon.description || "รับจ้างลงดัน เลือกระดับและราคาได้"
+            description: dungeon.description || ""
           }));
 
           if (items.length) {
@@ -828,11 +789,8 @@
         const typePrefix = activeListingType === "buy" ? "รับซื้อ" : activeListingType === "service" ? "รับจ้างลงดัน" : "ขาย";
         const title = listingTitle.value.trim() || `${typePrefix} ${item.name}`;
         const characterText = characterName.value.trim();
-        const priceText = activeListingType === "service" ? getPrimaryDungeonPrice() : plainPrice(listingPrice.value);
-        const servicePriceDetails = activeListingType === "service" ? formatDungeonPriceDetails() : "";
-        const description = activeListingType === "service"
-          ? [listingDescription.value.trim() || item.description, servicePriceDetails].filter(Boolean).join(" · ")
-          : listingDescription.value.trim() || item.description;
+        const priceText = plainPrice(listingPrice.value);
+        const description = listingDescription.value.trim() || item.description;
         let imageUrl = item.image;
         let imagePath = null;
         let imageUrls = [item.image];
@@ -845,8 +803,8 @@
         }
 
         if (!priceText) {
-          setPostMessage(activeListingType === "service" ? "กรุณาใส่ราคาอย่างน้อย 1 ระดับก่อนเผยแพร่ประกาศ" : "กรุณาใส่ราคาก่อนเผยแพร่ประกาศ", true);
-          (activeListingType === "service" ? dungeonPriceNormal : listingPrice).focus();
+          setPostMessage("กรุณาใส่ราคาก่อนเผยแพร่ประกาศ", true);
+          listingPrice.focus();
           return;
         }
 
@@ -960,7 +918,7 @@
         selectedItemImage.src = item.image;
         listingTitle.value = item.name;
         listingPrice.value = "";
-        listingDescription.value = item.description;
+        listingDescription.value = "";
         syncPreview();
       });
 
@@ -1006,7 +964,7 @@
         }
       });
 
-      [listingTitle, characterName, listingPrice, listingServer, listingDescription, middlemanCheck, readyCheck, dungeonPriceNormal, dungeonPriceHard, dungeonPriceExtra].forEach((field) => {
+      [listingTitle, characterName, listingPrice, listingServer, listingDescription, middlemanCheck, readyCheck].forEach((field) => {
         field.addEventListener("input", syncPreview);
         field.addEventListener("change", syncPreview);
       });

@@ -1294,6 +1294,23 @@ h1 {
   line-height: 1.45;
 }
 
+.description-toggle {
+  display: inline-flex;
+  width: fit-content;
+  margin: -4px 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--blue);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.description-toggle:hover {
+  text-decoration: underline;
+}
+
 .price-row {
   display: flex;
   justify-content: space-between;
