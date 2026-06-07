@@ -249,8 +249,6 @@ window.ROOC_SUPABASE = {
       select.value = activeServers.includes(selected) ? selected : "ทั้งหมด";
     });
 
-    const serverCount = document.querySelector(".trust-row > div:nth-child(3) strong");
-    if (serverCount) serverCount.textContent = String(activeServers.length);
   }
 
   function renderCounts(listings) {

@@ -192,6 +192,7 @@
           </form>
 
           <div class="admin-items server-list" id="adminServers"></div>
+          <div class="admin-pagination" id="adminServersPagination"></div>
         </section>
 
         <section class="admin-list-panel listing-admin-panel">
@@ -389,6 +390,7 @@
       const adminCategoryFilter = document.querySelector("#adminCategoryFilter");
       const serverForm = document.querySelector("#serverForm");
       const adminServers = document.querySelector("#adminServers");
+      const adminServersPagination = document.querySelector("#adminServersPagination");
       const serverResetButton = document.querySelector("#serverResetButton");
       const serverMessage = document.querySelector("#serverMessage");
       const adminListings = document.querySelector("#adminListings");
@@ -456,8 +458,10 @@
       let bannedCache = [];
       let currentSession = null;
       let adminItemPage = 1;
+      let adminServerPage = 1;
       let adminListingPage = 1;
       const adminPageSize = 6;
+      const adminServerPageSize = 5;
 
       const premiumFields = {
         id: document.querySelector("#premiumUserId"),
@@ -578,12 +582,17 @@
 
       function renderServers() {
         adminServers.innerHTML = "";
+        adminServersPagination.innerHTML = "";
         if (!serverCache.length) {
           adminServers.innerHTML = '<p class="admin-empty">ยังไม่มีรายชื่อ Server</p>';
           return;
         }
 
-        serverCache.forEach((server) => {
+        const totalPages = Math.max(1, Math.ceil(serverCache.length / adminServerPageSize));
+        adminServerPage = Math.min(adminServerPage, totalPages);
+        const pageServers = serverCache.slice((adminServerPage - 1) * adminServerPageSize, adminServerPage * adminServerPageSize);
+
+        pageServers.forEach((server) => {
           const card = document.createElement("article");
           card.className = "admin-item-card server-item-card";
           card.innerHTML = `
@@ -599,6 +608,7 @@
           `;
           adminServers.append(card);
         });
+        renderAdminPagination(adminServersPagination, adminServerPage, totalPages, "server");
       }
 
       async function loadServers() {
@@ -645,6 +655,7 @@
 
         setMessage(serverMessage, "ลบ Server เรียบร้อย");
         resetServerForm();
+        adminServerPage = 1;
         await loadServers();
       }
 
@@ -675,6 +686,7 @@
 
         setMessage(serverMessage, "บันทึก Server เรียบร้อย");
         resetServerForm();
+        adminServerPage = 1;
         await loadServers();
       }
 
@@ -1317,6 +1329,12 @@
         const deleteId = event.target.dataset.serverDelete;
         if (editId) editServer(editId);
         if (deleteId) deleteServer(deleteId);
+      });
+      adminServersPagination.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-page-type]");
+        if (!button || button.disabled) return;
+        adminServerPage += button.dataset.pageDir === "next" ? 1 : -1;
+        renderServers();
       });
       refreshAdminListings.addEventListener("click", () => {
         adminListingPage = 1;
