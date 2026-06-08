@@ -53,6 +53,9 @@
           <button class="btn btn-primary discord-login" id="authSubmit" type="submit">
             เข้าสู่ระบบด้วย Discord
           </button>
+          <div class="auth-notice">
+            หากเข้าสู่ระบบไม่ได้ กรุณายืนยันอีเมลใน Discord ก่อน แล้วลองเข้าสู่ระบบใหม่
+          </div>
           <p class="admin-message" id="authMessage"></p>
         </form>
 
@@ -75,6 +78,28 @@
         if (!session) return;
         const redirect = new URLSearchParams(location.search).get("redirect") || "index.html";
         location.href = new URL(redirect, location.href).href;
+      }
+
+      function getAuthErrorFromUrl() {
+        const params = new URLSearchParams(location.search);
+        const hashParams = new URLSearchParams(location.hash.replace(/^#/, ""));
+        const code = params.get("error_code") || hashParams.get("error_code") || "";
+        const error = params.get("error") || hashParams.get("error") || "";
+        const description = params.get("error_description") || hashParams.get("error_description") || "";
+        return { code, error, description };
+      }
+
+      function showAuthErrorHint() {
+        const { code, error, description } = getAuthErrorFromUrl();
+        const combined = `${code} ${error} ${description}`.toLowerCase();
+        if (!combined.trim()) return;
+
+        if (combined.includes("provider_email_needs_verification") || combined.includes("email") && combined.includes("verif")) {
+          setAuthMessage("เข้าสู่ระบบไม่สำเร็จ: กรุณายืนยันอีเมลใน Discord ก่อน แล้วลอง Login ใหม่", true);
+          return;
+        }
+
+        setAuthMessage(description || error || "เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง", true);
       }
 
       authForm.addEventListener("submit", async (event) => {
@@ -102,6 +127,7 @@
       });
 
       if (canUseSupabase) {
+        showAuthErrorHint();
         supabaseClient.auth.getSession().then(({ data }) => showSession(data.session));
         supabaseClient.auth.onAuthStateChange((_event, session) => showSession(session));
       } else {

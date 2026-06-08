@@ -2769,6 +2769,17 @@ h1 {
   width: 100%;
 }
 
+.auth-notice {
+  border: 1px solid color-mix(in srgb, #d89000 35%, var(--line));
+  border-radius: 14px;
+  background: color-mix(in srgb, #d89000 11%, var(--paper));
+  color: color-mix(in srgb, #d89000 86%, var(--ink));
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.55;
+  padding: 12px 14px;
+}
+
 .discord-login {
   background: linear-gradient(135deg, #5865f2, #2f7cff);
 }
