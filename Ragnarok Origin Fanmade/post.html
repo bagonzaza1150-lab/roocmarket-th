@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/site-icons/rooc-icon-180.png" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20260609-mailbox"></script>
+    <script src="supabase-config.js?v=20260609-price-decimal"></script>
   </head>
   <body>
     <header class="site-header">
@@ -549,13 +549,18 @@
       }
 
       function formatPrice(value) {
-        const cleaned = value.replace(/[^\d]/g, "");
+        const cleaned = plainPrice(value);
         if (!cleaned) return "฿ 0";
-        return `฿ ${Number(cleaned).toLocaleString("th-TH")}`;
+        return `฿ ${Number(cleaned).toLocaleString("th-TH", { maximumFractionDigits: 2 })}`;
       }
 
       function plainPrice(value) {
-        return value.replace(/[^\d,]/g, "").trim();
+        const cleaned = String(value || "")
+          .replace(/,/g, "")
+          .replace(/[^\d.]/g, "");
+        const [whole = "", ...fractionParts] = cleaned.split(".");
+        const normalized = fractionParts.length ? `${whole || "0"}.${fractionParts.join("")}` : whole;
+        return normalized.replace(/^0+(?=\d)/, "") || "";
       }
 
       function formatFileSize(bytes) {

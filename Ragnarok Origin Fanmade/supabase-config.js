@@ -214,13 +214,22 @@ window.ROOC_SUPABASE = {
   }
 
   function parsePrice(value) {
-    const number = Number(String(value || "").replace(/[^\d]/g, ""));
+    const number = Number(normalizePriceText(value));
     return Number.isFinite(number) ? number : 0;
+  }
+
+  function normalizePriceText(value) {
+    const cleaned = String(value || "")
+      .replace(/,/g, "")
+      .replace(/[^\d.]/g, "");
+    const [whole = "", ...fractionParts] = cleaned.split(".");
+    const normalized = fractionParts.length ? `${whole || "0"}.${fractionParts.join("")}` : whole;
+    return normalized.replace(/^0+(?=\d)/, "") || "";
   }
 
   function formatListingPrice(value) {
     const price = parsePrice(value);
-    return price > 0 ? price.toLocaleString("th-TH") : "0";
+    return price > 0 ? price.toLocaleString("th-TH", { maximumFractionDigits: 2 }) : "0";
   }
 
   function compareListingNewest(a, b) {

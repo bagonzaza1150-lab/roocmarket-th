@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/site-icons/rooc-icon-180.png" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20260609-mailbox"></script>
+    <script src="supabase-config.js?v=20260609-price-decimal"></script>
   </head>
   <body>
     <header class="site-header">
@@ -605,8 +605,17 @@
       }
 
       function formatListingPrice(value) {
-        const price = Number(String(value || "").replace(/[^\d]/g, ""));
-        return Number.isFinite(price) && price > 0 ? price.toLocaleString("th-TH") : "0";
+        const price = Number(normalizePriceText(value));
+        return Number.isFinite(price) && price > 0 ? price.toLocaleString("th-TH", { maximumFractionDigits: 2 }) : "0";
+      }
+
+      function normalizePriceText(value) {
+        const cleaned = String(value || "")
+          .replace(/,/g, "")
+          .replace(/[^\d.]/g, "");
+        const [whole = "", ...fractionParts] = cleaned.split(".");
+        const normalized = fractionParts.length ? `${whole || "0"}.${fractionParts.join("")}` : whole;
+        return normalized.replace(/^0+(?=\d)/, "") || "";
       }
 
       function resetEditor() {

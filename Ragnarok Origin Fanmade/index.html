@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/site-icons/rooc-icon-180.png" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20260609-mailbox"></script>
+    <script src="supabase-config.js?v=20260609-price-decimal"></script>
   </head>
   <body>
     <header class="site-header">
@@ -507,8 +507,8 @@
             const galleryData = listing.category === "account"
               ? ` data-account-gallery="${escapeHtml(encodeURIComponent(JSON.stringify(listingImages)))}" data-account-title="${escapeHtml(title)}"`
               : "";
-            const rawPrice = Number(String(listing.price_text || "").replace(/[^\d]/g, ""));
-            const formattedPrice = Number.isFinite(rawPrice) && rawPrice > 0 ? rawPrice.toLocaleString("th-TH") : "0";
+            const rawPrice = Number(normalizePriceText(listing.price_text));
+            const formattedPrice = Number.isFinite(rawPrice) && rawPrice > 0 ? rawPrice.toLocaleString("th-TH", { maximumFractionDigits: 2 }) : "0";
             const badges = [
               `<span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
               listing.ready_today ? '<span class="fast">Fast Deal</span>' : "",
@@ -632,7 +632,7 @@
         openSellerContact(title, "", "", "", "");
         if (!offerForm || !offerListingId || !offerPrice || !offerMessageText) return;
         offerListingId.value = listingId || "";
-        offerPrice.value = price ? String(price).replace(/[^\d]/g, "") : "";
+        offerPrice.value = price ? normalizePriceText(price) : "";
         offerMessage.value = "";
         offerMessageText.textContent = "";
         offerForm.hidden = false;
@@ -666,7 +666,7 @@
           return;
         }
 
-        const priceText = String(offerPrice?.value || "").replace(/[^\d]/g, "");
+        const priceText = normalizePriceText(offerPrice?.value || "");
         if (!priceText) {
           setOfferMessage("กรุณาใส่ราคาเสนอ", true);
           offerPrice?.focus();
@@ -693,6 +693,15 @@
 
         setOfferMessage("ส่งราคาเสนอแล้ว เจ้าของประกาศจะเห็นใน Mailbox");
         offerForm.reset();
+      }
+
+      function normalizePriceText(value) {
+        const cleaned = String(value || "")
+          .replace(/,/g, "")
+          .replace(/[^\d.]/g, "");
+        const [whole = "", ...fractionParts] = cleaned.split(".");
+        const normalized = fractionParts.length ? `${whole || "0"}.${fractionParts.join("")}` : whole;
+        return normalized.replace(/^0+(?=\d)/, "") || "";
       }
 
       function updateModalOpenState() {
