@@ -690,6 +690,38 @@ window.ROOC_SUPABASE = {
     sidebar.hidden = false;
   }
 
+  function renderHeroSponsor(settings) {
+    const sponsor = document.querySelector("#heroSponsor");
+    if (!sponsor) return;
+
+    const imageUrl = String(settings.hero_sponsor_image_url || "").trim();
+    const title = String(settings.hero_sponsor_title || "").trim();
+    const text = String(settings.hero_sponsor_text || "").trim();
+    const buttonLabel = String(settings.hero_sponsor_button_label || "ดูรายละเอียด").trim();
+    const buttonUrl = String(settings.hero_sponsor_button_url || "").trim();
+
+    if (!settings.hero_sponsor_enabled || !imageUrl && !title && !text) {
+      sponsor.classList.remove("has-sponsor");
+      sponsor.innerHTML = "";
+      sponsor.setAttribute("aria-hidden", "true");
+      return;
+    }
+
+    sponsor.classList.add("has-sponsor");
+    sponsor.removeAttribute("aria-hidden");
+    sponsor.innerHTML = `
+      <article class="hero-sponsor-card">
+        ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="" loading="lazy" decoding="async" />` : ""}
+        <div class="hero-sponsor-content">
+          <p>Sponsored</p>
+          ${title ? `<h2>${escapeHtml(title)}</h2>` : ""}
+          ${text ? `<span>${escapeHtml(text)}</span>` : ""}
+          ${buttonUrl ? `<a class="btn btn-primary" href="${escapeHtml(buttonUrl)}" target="_blank" rel="noopener">${escapeHtml(buttonLabel || "ดูรายละเอียด")}</a>` : ""}
+        </div>
+      </article>
+    `;
+  }
+
   function renderHeroAnnouncement(settings) {
     const announcement = document.querySelector("#heroAnnouncement");
     if (!announcement) return;
@@ -872,6 +904,7 @@ window.ROOC_SUPABASE = {
       });
       applySiteSettings(settings);
       renderSupportSidebar(settings);
+      renderHeroSponsor(settings);
       renderHeroAnnouncement(settings);
       await refreshListings();
       console.info(`ROOC public listings loaded ${publicListings.length} active rows, ${soldListings.length} sold rows`);

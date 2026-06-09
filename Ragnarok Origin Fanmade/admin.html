@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/site-icons/rooc-icon-180.png" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20260609-price-decimal"></script>
+    <script src="supabase-config.js?v=20260609-hero-sponsor"></script>
   </head>
   <body>
     <header class="site-header">
@@ -343,6 +343,48 @@
 
               <div class="support-admin-card">
                 <div class="form-block-head">
+                  <span>AD</span>
+                  <div>
+                    <h3>Hero Sponsor</h3>
+                    <p>โฆษณาหลักด้านขวาของ Hero หน้าแรก เปิด/ปิดและเปลี่ยนรูปได้</p>
+                  </div>
+                </div>
+                <div class="post-checks">
+                  <label><input id="heroSponsorEnabled" type="checkbox" /> เปิดแสดง Hero Sponsor</label>
+                </div>
+                <label class="post-field">
+                  <span>หัวข้อ</span>
+                  <input id="heroSponsorTitle" type="text" placeholder="เช่น ร้านกลาง ROOC พร้อมดูแลดีล" />
+                </label>
+                <label class="post-field">
+                  <span>ข้อความ</span>
+                  <textarea id="heroSponsorText" rows="3" placeholder="ข้อความสั้น ๆ ที่จะแสดงบนป้ายโฆษณา"></textarea>
+                </label>
+                <label class="post-field">
+                  <span>ข้อความบนปุ่ม</span>
+                  <input id="heroSponsorButtonLabel" type="text" placeholder="ดูรายละเอียด" />
+                </label>
+                <label class="post-field">
+                  <span>ลิงก์ปลายทาง</span>
+                  <input id="heroSponsorButtonUrl" type="url" placeholder="https://..." />
+                </label>
+                <input id="heroSponsorImageUrl" type="hidden" />
+                <input id="heroSponsorImagePath" type="hidden" />
+                <div class="admin-upload-row">
+                  <label class="upload-drop" for="heroSponsorImage">
+                    <input id="heroSponsorImage" type="file" accept="image/*" />
+                    <span>อัปโหลดรูป Hero Sponsor</span>
+                    <small>แนะนำ 1200×520 หรือ 21:9</small>
+                  </label>
+                  <div class="auto-image-box admin-image-preview hero-sponsor-admin-preview">
+                    <img id="heroSponsorPreview" src="assets/hero-rooc.png" alt="" />
+                    <small>ตัวอย่างรูปโฆษณา</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="support-admin-card">
+                <div class="form-block-head">
                   <span>฿</span>
                   <div>
                     <h3>แถบโดเนท</h3>
@@ -505,7 +547,16 @@
         middlemanQrUrl: document.querySelector("#middlemanQrUrl"),
         middlemanQrPath: document.querySelector("#middlemanQrPath"),
         middlemanQrImage: document.querySelector("#middlemanQrImage"),
-        middlemanQrPreview: document.querySelector("#middlemanQrPreview")
+        middlemanQrPreview: document.querySelector("#middlemanQrPreview"),
+        heroSponsorEnabled: document.querySelector("#heroSponsorEnabled"),
+        heroSponsorTitle: document.querySelector("#heroSponsorTitle"),
+        heroSponsorText: document.querySelector("#heroSponsorText"),
+        heroSponsorButtonLabel: document.querySelector("#heroSponsorButtonLabel"),
+        heroSponsorButtonUrl: document.querySelector("#heroSponsorButtonUrl"),
+        heroSponsorImageUrl: document.querySelector("#heroSponsorImageUrl"),
+        heroSponsorImagePath: document.querySelector("#heroSponsorImagePath"),
+        heroSponsorImage: document.querySelector("#heroSponsorImage"),
+        heroSponsorPreview: document.querySelector("#heroSponsorPreview")
       };
 
       const fields = {
@@ -1321,7 +1372,14 @@
           middleman_button_label: supportFields.middlemanButtonLabel.value.trim(),
           middleman_button_url: supportFields.middlemanButtonUrl.value.trim(),
           middleman_qr_url: supportFields.middlemanQrUrl.value,
-          middleman_qr_path: supportFields.middlemanQrPath.value
+          middleman_qr_path: supportFields.middlemanQrPath.value,
+          hero_sponsor_enabled: supportFields.heroSponsorEnabled.checked,
+          hero_sponsor_title: supportFields.heroSponsorTitle.value.trim(),
+          hero_sponsor_text: supportFields.heroSponsorText.value.trim(),
+          hero_sponsor_button_label: supportFields.heroSponsorButtonLabel.value.trim(),
+          hero_sponsor_button_url: supportFields.heroSponsorButtonUrl.value.trim(),
+          hero_sponsor_image_url: supportFields.heroSponsorImageUrl.value,
+          hero_sponsor_image_path: supportFields.heroSponsorImagePath.value
         };
       }
 
@@ -1345,6 +1403,14 @@
         supportFields.middlemanQrUrl.value = settings.middleman_qr_url || "";
         supportFields.middlemanQrPath.value = settings.middleman_qr_path || "";
         supportFields.middlemanQrPreview.src = settings.middleman_qr_url || "assets/site-icons/rooc-icon-192.png";
+        supportFields.heroSponsorEnabled.checked = Boolean(settings.hero_sponsor_enabled);
+        supportFields.heroSponsorTitle.value = settings.hero_sponsor_title || "";
+        supportFields.heroSponsorText.value = settings.hero_sponsor_text || "";
+        supportFields.heroSponsorButtonLabel.value = settings.hero_sponsor_button_label || "";
+        supportFields.heroSponsorButtonUrl.value = settings.hero_sponsor_button_url || "";
+        supportFields.heroSponsorImageUrl.value = settings.hero_sponsor_image_url || "";
+        supportFields.heroSponsorImagePath.value = settings.hero_sponsor_image_path || "";
+        supportFields.heroSponsorPreview.src = settings.hero_sponsor_image_url || "assets/hero-rooc.png";
       }
 
       async function loadSupportSettings() {
@@ -1381,6 +1447,13 @@
             supportFields.middlemanQrPreview.src = uploaded.imageUrl;
           }
 
+          if (supportFields.heroSponsorImage.files?.[0]) {
+            const uploaded = await uploadSupportImage(supportFields.heroSponsorImage.files[0], "hero-sponsor");
+            supportFields.heroSponsorImageUrl.value = uploaded.imageUrl;
+            supportFields.heroSponsorImagePath.value = uploaded.imagePath;
+            supportFields.heroSponsorPreview.src = uploaded.imageUrl;
+          }
+
           const { error } = await supabaseClient
             .from("marketplace_site_settings")
             .upsert({
@@ -1392,6 +1465,7 @@
           if (error) throw error;
           supportFields.donateQrImage.value = "";
           supportFields.middlemanQrImage.value = "";
+          supportFields.heroSponsorImage.value = "";
           setMessage(supportSettingsMessage, "บันทึกแถบข้อความเรียบร้อย");
         } catch (error) {
           setMessage(supportSettingsMessage, error.message || "บันทึกไม่สำเร็จ", true);
@@ -1567,6 +1641,10 @@
       supportFields.middlemanQrImage.addEventListener("change", () => {
         const file = supportFields.middlemanQrImage.files && supportFields.middlemanQrImage.files[0];
         if (file) supportFields.middlemanQrPreview.src = URL.createObjectURL(file);
+      });
+      supportFields.heroSponsorImage.addEventListener("change", () => {
+        const file = supportFields.heroSponsorImage.files && supportFields.heroSponsorImage.files[0];
+        if (file) supportFields.heroSponsorPreview.src = URL.createObjectURL(file);
       });
       adminItems.addEventListener("click", (event) => {
         const editId = event.target.dataset.edit;
