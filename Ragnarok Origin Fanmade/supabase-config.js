@@ -651,8 +651,14 @@ window.ROOC_SUPABASE = {
     const sidebar = document.querySelector("#supportSidebar");
     if (!sidebar) return;
 
+    const defaultDonateGoalUrl = "https://widgets.easydonate.app?w=goal&u=kacamuzqsbaegbgdq3w2ct3j&t=3538844b626beec00859d48a9a1433a7&ts=1781015612021";
+    const donateGoalUrl = String(settings.donate_goal_url || defaultDonateGoalUrl).trim();
+    const donateGoalCurrent = Math.max(0, parsePrice(settings.donate_goal_current));
+    const donateGoalTarget = Math.max(1, parsePrice(settings.donate_goal_target) || 10000);
+    const donateGoalPercent = Math.min(100, Math.round((donateGoalCurrent / donateGoalTarget) * 100));
     const cards = [
       {
+        type: "card",
         enabled: settings.donate_enabled,
         eyebrow: "Donate",
         title: settings.donate_title || "สนับสนุน ROOC Market TH",
@@ -662,6 +668,7 @@ window.ROOC_SUPABASE = {
         url: settings.donate_button_url || ""
       },
       {
+        type: "card",
         enabled: settings.middleman_enabled,
         eyebrow: "Middleman",
         title: settings.middleman_title || "ติดต่อ Middleman",
@@ -669,6 +676,17 @@ window.ROOC_SUPABASE = {
         qr: settings.middleman_qr_url || "",
         button: settings.middleman_button_label || "ติดต่อ Middleman",
         url: settings.middleman_button_url || ""
+      },
+      {
+        type: "goal",
+        enabled: settings.donate_goal_enabled !== false,
+        title: settings.donate_goal_title || "Donate Goal",
+        text: settings.donate_goal_text || "",
+        button: settings.donate_goal_button_label || "à¹‚à¸”à¹€à¸™à¸—",
+        url: donateGoalUrl,
+        current: donateGoalCurrent,
+        target: donateGoalTarget,
+        percent: donateGoalPercent
       }
     ].filter((card) => card.enabled);
 
@@ -678,15 +696,36 @@ window.ROOC_SUPABASE = {
       return;
     }
 
-    sidebar.innerHTML = cards.map((card) => `
-      <article class="support-card">
-        <p class="eyebrow">${escapeHtml(card.eyebrow)}</p>
-        <h3>${escapeHtml(card.title)}</h3>
-        ${card.text ? `<p>${escapeHtml(card.text)}</p>` : ""}
-        ${card.qr ? `<img class="support-qr" src="${escapeHtml(card.qr)}" alt="QR Code ${escapeHtml(card.title)}" loading="lazy" decoding="async" />` : ""}
-        ${card.url ? `<a class="btn btn-primary support-button" href="${escapeHtml(card.url)}" target="_blank" rel="noopener">${escapeHtml(card.button)}</a>` : ""}
-      </article>
-    `).join("");
+    sidebar.innerHTML = cards.map((card) => {
+      if (card.type === "goal") {
+        return `
+          <article class="donate-goal-card">
+            <p class="eyebrow">Donate Goal</p>
+            <h3>${escapeHtml(card.title)}</h3>
+            ${card.text ? `<p>${escapeHtml(card.text)}</p>` : ""}
+            <div class="donate-goal-meter" role="progressbar" aria-valuemin="0" aria-valuemax="${escapeHtml(card.target)}" aria-valuenow="${escapeHtml(card.current)}">
+              <span style="width: ${escapeHtml(card.percent)}%"></span>
+            </div>
+            <div class="donate-goal-stats">
+              <strong>à¸¿ ${card.current.toLocaleString("th-TH")}</strong>
+              <span>${escapeHtml(card.percent)}%</span>
+              <small>à¹€à¸›à¹‰à¸² à¸¿ ${card.target.toLocaleString("th-TH")}</small>
+            </div>
+            ${card.url ? `<a class="btn btn-primary support-button" href="${escapeHtml(card.url)}" target="_blank" rel="noopener">${escapeHtml(card.button)}</a>` : ""}
+          </article>
+        `;
+      }
+
+      return `
+        <article class="support-card">
+          <p class="eyebrow">${escapeHtml(card.eyebrow)}</p>
+          <h3>${escapeHtml(card.title)}</h3>
+          ${card.text ? `<p>${escapeHtml(card.text)}</p>` : ""}
+          ${card.qr ? `<img class="support-qr" src="${escapeHtml(card.qr)}" alt="QR Code ${escapeHtml(card.title)}" loading="lazy" decoding="async" />` : ""}
+          ${card.url ? `<a class="btn btn-primary support-button" href="${escapeHtml(card.url)}" target="_blank" rel="noopener">${escapeHtml(card.button)}</a>` : ""}
+        </article>
+      `;
+    }).join("");
     sidebar.hidden = false;
   }
 

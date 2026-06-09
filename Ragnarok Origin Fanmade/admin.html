@@ -427,6 +427,45 @@
 
               <div class="support-admin-card">
                 <div class="form-block-head">
+                  <span>GO</span>
+                  <div>
+                    <h3>Donate Goal</h3>
+                    <p>ตั้งค่าหลอดเป้าหมายโดเนทด้านซ้าย กรอกยอดเองและใส่ลิงก์ EasyDonate สำหรับปุ่ม</p>
+                  </div>
+                </div>
+                <div class="post-checks">
+                  <label><input id="donateGoalEnabled" type="checkbox" /> เปิดแสดง Donate Goal</label>
+                </div>
+                <label class="post-field">
+                  <span>หัวข้อ</span>
+                  <input id="donateGoalTitle" type="text" placeholder="Donate Goal" />
+                </label>
+                <label class="post-field">
+                  <span>ข้อความ</span>
+                  <textarea id="donateGoalText" rows="2" placeholder="เช่น สนับสนุนค่าเซิร์ฟเวอร์"></textarea>
+                </label>
+                <div class="admin-field-row">
+                  <label class="post-field">
+                    <span>ยอดปัจจุบัน</span>
+                    <input id="donateGoalCurrent" type="number" min="0" step="1" placeholder="0" />
+                  </label>
+                  <label class="post-field">
+                    <span>ยอดเป้าหมาย</span>
+                    <input id="donateGoalTarget" type="number" min="1" step="1" placeholder="10000" />
+                  </label>
+                </div>
+                <label class="post-field">
+                  <span>ข้อความบนปุ่ม</span>
+                  <input id="donateGoalButtonLabel" type="text" placeholder="โดเนท" />
+                </label>
+                <label class="post-field">
+                  <span>ลิงก์ EasyDonate</span>
+                  <input id="donateGoalUrl" type="url" placeholder="https://widgets.easydonate.app?..." />
+                </label>
+              </div>
+
+              <div class="support-admin-card">
+                <div class="form-block-head">
                   <span>M</span>
                   <div>
                     <h3>ติดต่อ Middleman</h3>
@@ -539,6 +578,13 @@
         donateQrPath: document.querySelector("#donateQrPath"),
         donateQrImage: document.querySelector("#donateQrImage"),
         donateQrPreview: document.querySelector("#donateQrPreview"),
+        donateGoalEnabled: document.querySelector("#donateGoalEnabled"),
+        donateGoalTitle: document.querySelector("#donateGoalTitle"),
+        donateGoalText: document.querySelector("#donateGoalText"),
+        donateGoalCurrent: document.querySelector("#donateGoalCurrent"),
+        donateGoalTarget: document.querySelector("#donateGoalTarget"),
+        donateGoalButtonLabel: document.querySelector("#donateGoalButtonLabel"),
+        donateGoalUrl: document.querySelector("#donateGoalUrl"),
         middlemanEnabled: document.querySelector("#middlemanEnabled"),
         middlemanTitle: document.querySelector("#middlemanTitle"),
         middlemanText: document.querySelector("#middlemanText"),
@@ -1366,6 +1412,13 @@
           donate_button_url: supportFields.donateButtonUrl.value.trim(),
           donate_qr_url: supportFields.donateQrUrl.value,
           donate_qr_path: supportFields.donateQrPath.value,
+          donate_goal_enabled: supportFields.donateGoalEnabled.checked,
+          donate_goal_title: supportFields.donateGoalTitle.value.trim(),
+          donate_goal_text: supportFields.donateGoalText.value.trim(),
+          donate_goal_current: supportFields.donateGoalCurrent.value,
+          donate_goal_target: supportFields.donateGoalTarget.value,
+          donate_goal_button_label: supportFields.donateGoalButtonLabel.value.trim(),
+          donate_goal_url: supportFields.donateGoalUrl.value.trim(),
           middleman_enabled: supportFields.middlemanEnabled.checked,
           middleman_title: supportFields.middlemanTitle.value.trim(),
           middleman_text: supportFields.middlemanText.value.trim(),
@@ -1395,6 +1448,13 @@
         supportFields.donateQrUrl.value = settings.donate_qr_url || "";
         supportFields.donateQrPath.value = settings.donate_qr_path || "";
         supportFields.donateQrPreview.src = settings.donate_qr_url || "assets/site-icons/rooc-icon-192.png";
+        supportFields.donateGoalEnabled.checked = settings.donate_goal_enabled !== false;
+        supportFields.donateGoalTitle.value = settings.donate_goal_title || "";
+        supportFields.donateGoalText.value = settings.donate_goal_text || "";
+        supportFields.donateGoalCurrent.value = settings.donate_goal_current || "";
+        supportFields.donateGoalTarget.value = settings.donate_goal_target || "";
+        supportFields.donateGoalButtonLabel.value = settings.donate_goal_button_label || "";
+        supportFields.donateGoalUrl.value = settings.donate_goal_url || "https://widgets.easydonate.app?w=goal&u=kacamuzqsbaegbgdq3w2ct3j&t=3538844b626beec00859d48a9a1433a7&ts=1781015612021";
         supportFields.middlemanEnabled.checked = Boolean(settings.middleman_enabled);
         supportFields.middlemanTitle.value = settings.middleman_title || "";
         supportFields.middlemanText.value = settings.middleman_text || "";
