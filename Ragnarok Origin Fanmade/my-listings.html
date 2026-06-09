@@ -10,7 +10,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/site-icons/rooc-icon-180.png" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20260609-premium-sort"></script>
+    <script src="supabase-config.js?v=20260609-offers"></script>
   </head>
   <body>
     <header class="site-header">
@@ -110,6 +110,8 @@
       const quotaService = document.querySelector("#quotaService");
       const quotaPlan = document.querySelector("#quotaPlan");
       let currentSession = null;
+      let currentListings = [];
+      let offerMailbox = new Map();
 
       function escapeHtml(value) {
         return String(value || "")
@@ -186,6 +188,28 @@
         quotaPlan.textContent = isPremium ? "Premium" : "Free";
       }
 
+      function renderOfferMailbox(listingId) {
+        const offers = offerMailbox.get(listingId) || [];
+        if (!offers.length) {
+          return '<div class="offer-mailbox is-empty"><strong>Mailbox เสนอราคา</strong><p>ยังไม่มีราคาเสนอ</p></div>';
+        }
+
+        return `
+          <div class="offer-mailbox">
+            <strong>Mailbox เสนอราคา (${offers.length})</strong>
+            ${offers.map((offer) => `
+              <article class="offer-mail">
+                <div>
+                  <b>฿ ${formatListingPrice(offer.offer_price_text)}</b>
+                  <span>${escapeHtml(offer.buyer_display_name || "ผู้เสนอราคา")} · ${new Date(offer.created_at).toLocaleString("th-TH")}</span>
+                  ${offer.message ? `<p>${escapeHtml(offer.message)}</p>` : ""}
+                </div>
+              </article>
+            `).join("")}
+          </div>
+        `;
+      }
+
       function renderListings(listings) {
         emptyState.hidden = listings.length > 0;
         grid.innerHTML = listings.map((listing) => {
@@ -206,8 +230,12 @@
                 <p>${listing.character_name ? `ตัวละคร: ${escapeHtml(listing.character_name)}` : "ยังไม่ได้ระบุชื่อตัวละคร"}</p>
                 <p>${escapeHtml(listing.description || "")}</p>
                 <strong>฿ ${formatListingPrice(listing.price_text)}</strong>
+                <p class="offer-status">${listing.offers_enabled ? "เปิดรับเสนอราคา" : "ปิดรับเสนอราคา"}</p>
+                ${renderOfferMailbox(listing.id)}
               </div>
               <div class="my-listing-actions">
+                <button class="btn btn-small btn-light" type="button" data-edit-price="${escapeHtml(listing.id)}">แก้ราคา</button>
+                <button class="btn btn-small btn-light" type="button" data-toggle-offers="${escapeHtml(listing.id)}">${listing.offers_enabled ? "ปิดเสนอราคา" : "เปิดเสนอราคา"}</button>
                 <button class="btn btn-small" type="button" data-toggle="${escapeHtml(listing.id)}">${listing.active ? "ปิดประกาศ" : "เปิดประกาศ"}</button>
                 ${canMarkSold ? `<button class="btn btn-small btn-sold" type="button" data-sold="${escapeHtml(listing.id)}">ขายออกแล้ว</button>` : ""}
                 <button class="btn btn-small my-delete" type="button" data-delete="${escapeHtml(listing.id)}">ลบ</button>
@@ -215,6 +243,34 @@
             </article>
           `;
         }).join("");
+      }
+
+      async function loadOfferMailbox(listings) {
+        offerMailbox = new Map();
+        const listingIds = listings.map((listing) => listing.id).filter(Boolean);
+        if (!listingIds.length) return;
+
+        const { data, error } = await supabaseClient
+          .from("marketplace_listing_offers")
+          .select("*")
+          .in("listing_id", listingIds)
+          .neq("status", "deleted")
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          if (/marketplace_listing_offers|relation|schema cache/i.test(error.message || "")) {
+            setMessage("ยังไม่ได้รัน supabase-offers-migration.sql: Mailbox เสนอราคายังไม่พร้อม", true);
+            return;
+          }
+          setMessage(error.message, true);
+          return;
+        }
+
+        (data || []).forEach((offer) => {
+          const items = offerMailbox.get(offer.listing_id) || [];
+          items.push(offer);
+          offerMailbox.set(offer.listing_id, items);
+        });
       }
 
       async function loadMyListings() {
@@ -238,6 +294,8 @@
 
         const allListings = data || [];
         const visibleListings = allListings.filter((listing) => listing.sale_status !== "deleted");
+        currentListings = visibleListings;
+        await loadOfferMailbox(visibleListings);
         const isPremium = Boolean(premiumResult);
         const limit = isPremium ? 5 : 2;
         const oneHourAgo = Date.now() - 3600000;
@@ -282,6 +340,62 @@
 
         if (!data || !data.length) {
           setMessage("อัปเดตไม่ได้: ประกาศนี้อาจเป็นโพสต์เก่าที่ยังไม่ได้ผูกกับบัญชี Discord ของคุณ", true);
+          return;
+        }
+
+        await loadMyListings();
+      }
+
+      async function editListingPrice(id) {
+        const listing = currentListings.find((entry) => entry.id === id);
+        if (!listing) return;
+        const nextPrice = prompt("ใส่ราคาใหม่", formatListingPrice(listing.price_text));
+        if (nextPrice === null) return;
+        const priceText = String(nextPrice || "").replace(/[^\d]/g, "");
+        if (!priceText) {
+          setMessage("กรุณาใส่ราคาเป็นตัวเลข", true);
+          return;
+        }
+
+        setMessage("กำลังแก้ไขราคา...");
+        const { data, error } = await supabaseClient
+          .from("marketplace_listings")
+          .update({ price_text: priceText })
+          .eq("id", id)
+          .select("id");
+
+        if (error) {
+          setMessage(error.message, true);
+          return;
+        }
+
+        if (!data || !data.length) {
+          setMessage("แก้ราคาไม่ได้: ประกาศนี้อาจไม่ได้ผูกกับบัญชี Discord ของคุณ", true);
+          return;
+        }
+
+        await loadMyListings();
+      }
+
+      async function toggleOffers(id) {
+        const listing = currentListings.find((entry) => entry.id === id);
+        if (!listing) return;
+        const nextEnabled = !Boolean(listing.offers_enabled);
+        setMessage("กำลังอัปเดตการเสนอราคา...");
+        const { data, error } = await supabaseClient
+          .from("marketplace_listings")
+          .update({ offers_enabled: nextEnabled })
+          .eq("id", id)
+          .select("id");
+
+        if (error) {
+          const needsMigration = /offers_enabled|schema cache|column/i.test(error.message || "");
+          setMessage(needsMigration ? "ยังไม่ได้รัน supabase-offers-migration.sql ใน Supabase" : error.message, true);
+          return;
+        }
+
+        if (!data || !data.length) {
+          setMessage("อัปเดตไม่ได้: ประกาศนี้อาจไม่ได้ผูกกับบัญชี Discord ของคุณ", true);
           return;
         }
 
@@ -349,8 +463,12 @@
       refreshButton.addEventListener("click", loadMyListings);
       grid.addEventListener("click", (event) => {
         const toggleId = event.target.dataset.toggle;
+        const editPriceId = event.target.dataset.editPrice;
+        const toggleOffersId = event.target.dataset.toggleOffers;
         const soldId = event.target.dataset.sold;
         const deleteId = event.target.dataset.delete;
+        if (editPriceId) editListingPrice(editPriceId);
+        if (toggleOffersId) toggleOffers(toggleOffersId);
         if (toggleId) toggleListing(toggleId);
         if (soldId) markListingSold(soldId);
         if (deleteId) deleteListing(deleteId);

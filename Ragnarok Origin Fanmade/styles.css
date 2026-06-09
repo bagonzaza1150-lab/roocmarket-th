@@ -1372,6 +1372,13 @@ h1 {
   align-items: center;
 }
 
+.listing-card-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .price-row strong {
   color: #d89000;
   font-size: 21px;
@@ -1481,6 +1488,33 @@ h1 {
   overflow-wrap: anywhere;
   color: var(--text);
   font-size: 17px;
+}
+
+.offer-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.offer-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.offer-form input,
+.offer-form textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 11px 12px;
+  resize: vertical;
 }
 
 .seller-profile-button {
@@ -2896,6 +2930,54 @@ h1 {
 
 .my-listing-card strong {
   color: #d89000;
+}
+
+.offer-status {
+  margin-top: 8px !important;
+  font-weight: 800;
+  color: var(--blue) !important;
+}
+
+.offer-mailbox {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-soft);
+}
+
+.offer-mailbox > strong {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.offer-mailbox.is-empty p {
+  margin: 0;
+}
+
+.offer-mail {
+  display: grid;
+  gap: 4px;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+}
+
+.offer-mail b {
+  color: #d89000;
+}
+
+.offer-mail span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.offer-mail p {
+  margin-top: 4px;
 }
 
 .my-listing-actions {

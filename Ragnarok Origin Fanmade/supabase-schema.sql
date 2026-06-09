@@ -63,6 +63,7 @@ create table if not exists public.marketplace_listings (
   contact text not null default '',
   description text not null default '',
   middleman boolean not null default true,
+  offers_enabled boolean not null default false,
   verified_seller boolean not null default false,
   ready_today boolean not null default false,
   active boolean not null default true,
@@ -74,6 +75,25 @@ create table if not exists public.marketplace_listings (
 
 create index if not exists marketplace_listings_public_idx
   on public.marketplace_listings (active, sale_status, listing_type, category, created_at desc);
+
+create table if not exists public.marketplace_listing_offers (
+  id uuid primary key default gen_random_uuid(),
+  listing_id uuid not null references public.marketplace_listings(id) on delete cascade,
+  buyer_user_id uuid not null references auth.users(id) on delete cascade,
+  buyer_display_name text not null default '',
+  buyer_avatar_url text not null default '',
+  offer_price_text text not null default '',
+  message text not null default '',
+  status text not null default 'new' check (status in ('new', 'read', 'accepted', 'declined', 'deleted')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists marketplace_listing_offers_listing_idx
+  on public.marketplace_listing_offers (listing_id, created_at desc);
+
+create index if not exists marketplace_listing_offers_buyer_idx
+  on public.marketplace_listing_offers (buyer_user_id, created_at desc);
 
 create table if not exists public.marketplace_admins (
   user_id uuid primary key references auth.users(id) on delete cascade,
@@ -175,6 +195,9 @@ add column if not exists seller_discord_id text not null default '';
 
 alter table public.marketplace_listings
 add column if not exists seller_is_premium boolean not null default false;
+
+alter table public.marketplace_listings
+add column if not exists offers_enabled boolean not null default false;
 
 alter table public.marketplace_listings
 add column if not exists image_urls jsonb not null default '[]'::jsonb;
@@ -285,6 +308,11 @@ create trigger marketplace_listings_set_updated_at
 before update on public.marketplace_listings
 for each row execute function public.set_updated_at();
 
+drop trigger if exists marketplace_listing_offers_set_updated_at on public.marketplace_listing_offers;
+create trigger marketplace_listing_offers_set_updated_at
+before update on public.marketplace_listing_offers
+for each row execute function public.set_updated_at();
+
 drop trigger if exists marketplace_profiles_set_updated_at on public.marketplace_profiles;
 create trigger marketplace_profiles_set_updated_at
 before update on public.marketplace_profiles
@@ -309,6 +337,7 @@ alter table public.marketplace_items enable row level security;
 alter table public.marketplace_servers enable row level security;
 alter table public.marketplace_dungeons enable row level security;
 alter table public.marketplace_listings enable row level security;
+alter table public.marketplace_listing_offers enable row level security;
 alter table public.marketplace_admins enable row level security;
 alter table public.marketplace_profiles enable row level security;
 alter table public.marketplace_premium_users enable row level security;
@@ -396,6 +425,7 @@ grant select on table public.marketplace_dungeons to anon;
 grant all privileges on table public.marketplace_dungeons to authenticated;
 grant select on table public.marketplace_listings to anon;
 grant all privileges on table public.marketplace_listings to authenticated;
+grant all privileges on table public.marketplace_listing_offers to authenticated;
 grant select on table public.marketplace_admins to authenticated;
 grant all privileges on table public.marketplace_profiles to authenticated;
 grant all privileges on table public.marketplace_premium_users to authenticated;
@@ -697,6 +727,68 @@ on public.marketplace_listings
 for delete
 to authenticated
 using (public.is_market_admin() or auth.uid() = user_id);
+
+drop policy if exists "Offer members can read listing offers" on public.marketplace_listing_offers;
+create policy "Offer members can read listing offers"
+on public.marketplace_listing_offers
+for select
+to authenticated
+using (
+  buyer_user_id = auth.uid()
+  or public.is_market_admin()
+  or exists (
+    select 1
+    from public.marketplace_listings listings
+    where listings.id = marketplace_listing_offers.listing_id
+      and listings.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "Authenticated users can create listing offers" on public.marketplace_listing_offers;
+create policy "Authenticated users can create listing offers"
+on public.marketplace_listing_offers
+for insert
+to authenticated
+with check (
+  buyer_user_id = auth.uid()
+  and offer_price_text <> ''
+  and exists (
+    select 1
+    from public.marketplace_listings listings
+    where listings.id = marketplace_listing_offers.listing_id
+      and listings.offers_enabled = true
+      and listings.active = true
+      and listings.sale_status = 'active'
+      and (listings.expires_at is null or listings.expires_at > now())
+      and listings.user_id is distinct from auth.uid()
+  )
+);
+
+drop policy if exists "Offer participants can update own offer status" on public.marketplace_listing_offers;
+create policy "Offer participants can update own offer status"
+on public.marketplace_listing_offers
+for update
+to authenticated
+using (
+  buyer_user_id = auth.uid()
+  or public.is_market_admin()
+  or exists (
+    select 1
+    from public.marketplace_listings listings
+    where listings.id = marketplace_listing_offers.listing_id
+      and listings.user_id = auth.uid()
+  )
+)
+with check (
+  buyer_user_id = auth.uid()
+  or public.is_market_admin()
+  or exists (
+    select 1
+    from public.marketplace_listings listings
+    where listings.id = marketplace_listing_offers.listing_id
+      and listings.user_id = auth.uid()
+  )
+);
 
 insert into storage.buckets (id, name, public)
 values ('item-images', 'item-images', true)

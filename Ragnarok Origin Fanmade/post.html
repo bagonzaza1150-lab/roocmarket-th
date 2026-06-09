@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/site-icons/rooc-icon-180.png" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20260609-premium-sort"></script>
+    <script src="supabase-config.js?v=20260609-offers"></script>
   </head>
   <body>
     <header class="site-header">
@@ -220,6 +220,7 @@
               <div class="post-checks">
                 <label><input id="middlemanCheck" type="checkbox" checked /> รองรับ Middleman</label>
                 <label><input id="readyCheck" type="checkbox" /> พร้อมเทรดวันนี้</label>
+                <label><input id="offersEnabledCheck" type="checkbox" /> เปิดรับเสนอราคา</label>
               </div>
             </div>
 
@@ -420,6 +421,7 @@
       const listingDescription = document.querySelector("#listingDescription");
       const middlemanCheck = document.querySelector("#middlemanCheck");
       const readyCheck = document.querySelector("#readyCheck");
+      const offersEnabledCheck = document.querySelector("#offersEnabledCheck");
       const postForm = document.querySelector("#postForm");
       const previewMedia = document.querySelector("#previewMedia");
       const previewImage = document.querySelector("#previewImage");
@@ -922,6 +924,7 @@
             contact: listingContact.value.trim() || getDiscordProfileUrl(currentSession),
             description,
             middleman: middlemanCheck.checked,
+            offers_enabled: offersEnabledCheck.checked,
             ready_today: readyCheck.checked,
             active: true,
             sale_status: "active",
@@ -929,6 +932,10 @@
           };
 
           let { error } = await supabaseClient.from("marketplace_listings").insert(listingPayload);
+          if (error && /offers_enabled|schema cache|column/i.test(error.message || "")) {
+            throw new Error("ฐานข้อมูลยังไม่ได้อัปเดตสำหรับระบบเสนอราคา กรุณารันไฟล์ supabase-offers-migration.sql ใน Supabase SQL Editor ก่อน");
+          }
+
           if (error && /listing_type|schema cache|column/i.test(error.message || "")) {
             if (activeListingType === "buy" || activeListingType === "service") {
               throw new Error("ฐานข้อมูลยังไม่ได้อัปเดตสำหรับประกาศรับซื้อ/รับจ้างลงดัน กรุณารันไฟล์ supabase-dungeon-services-migration.sql ใน Supabase SQL Editor ก่อน");

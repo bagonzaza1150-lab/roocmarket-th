@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/site-icons/rooc-icon-180.png" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20260609-premium-sort"></script>
+    <script src="supabase-config.js?v=20260609-offers"></script>
   </head>
   <body>
     <header class="site-header">
@@ -301,6 +301,19 @@
           <a class="seller-profile-button" id="sellerContactLink" href="#" target="_blank" rel="noopener" hidden>เปิดโปรไฟล์ผู้ขาย</a>
         </div>
         <p id="sellerContactNote">กดเปิดโปรไฟล์เพื่อแอดเพื่อน หรือคัดลอกชื่อ Discord ไปค้นหาใน DM</p>
+        <form class="offer-form" id="offerForm" hidden>
+          <input id="offerListingId" type="hidden" />
+          <label>
+            <span>ราคาเสนอ</span>
+            <input id="offerPrice" type="text" inputmode="numeric" placeholder="เช่น 3,500" />
+          </label>
+          <label>
+            <span>ข้อความถึงเจ้าของประกาศ</span>
+            <textarea id="offerMessage" rows="3" placeholder="รายละเอียดเพิ่มเติม เช่น นัดเวลาเทรด หรือต่อรองได้"></textarea>
+          </label>
+          <button class="btn btn-primary" type="submit">ส่งราคาเสนอ</button>
+          <p class="post-message" id="offerMessageText"></p>
+        </form>
       </section>
     </div>
 
@@ -544,6 +557,11 @@
       const sellerContactValue = document.querySelector("#sellerContactValue");
       const sellerContactLink = document.querySelector("#sellerContactLink");
       const sellerContactCopy = document.querySelector("#sellerContactCopy");
+      const offerForm = document.querySelector("#offerForm");
+      const offerListingId = document.querySelector("#offerListingId");
+      const offerPrice = document.querySelector("#offerPrice");
+      const offerMessage = document.querySelector("#offerMessage");
+      const offerMessageText = document.querySelector("#offerMessageText");
       let activeSellerName = "";
       const accountImageModal = document.querySelector("#accountImageModal");
       const accountImageLarge = document.querySelector("#accountImageLarge");
@@ -604,8 +622,77 @@
         sellerContactLink.textContent = "เปิดโปรไฟล์ผู้ขาย";
         sellerContactCopy.hidden = !sellerName;
         sellerContactCopy.classList.remove("is-copied");
+        if (offerForm) offerForm.hidden = true;
+        if (offerMessageText) offerMessageText.textContent = "";
         sellerContactModal.hidden = false;
         document.body.classList.add("modal-open");
+      }
+
+      function openOfferForm(listingId, title, price) {
+        openSellerContact(title, "", "", "", "");
+        if (!offerForm || !offerListingId || !offerPrice || !offerMessageText) return;
+        offerListingId.value = listingId || "";
+        offerPrice.value = price ? String(price).replace(/[^\d]/g, "") : "";
+        offerMessage.value = "";
+        offerMessageText.textContent = "";
+        offerForm.hidden = false;
+      }
+
+      function setOfferMessage(message, isError = false) {
+        if (!offerMessageText) return;
+        offerMessageText.textContent = message;
+        offerMessageText.classList.toggle("is-error", isError);
+      }
+
+      function getSessionDisplayName(session) {
+        return window.ROOC_APP?.getDiscordDisplayName?.(session) || session?.user?.email || "ผู้เสนอราคา";
+      }
+
+      function getSessionAvatarUrl(session) {
+        return window.ROOC_APP?.getDiscordAvatarUrl?.(session) || "";
+      }
+
+      async function submitOffer(event) {
+        event.preventDefault();
+        if (!supabaseClient) {
+          setOfferMessage("ยังไม่ได้ตั้งค่า Supabase", true);
+          return;
+        }
+
+        const { data } = await supabaseClient.auth.getSession();
+        const session = data.session;
+        if (!session) {
+          location.href = `login.html?redirect=${encodeURIComponent(`${location.pathname.split("/").pop() || "index.html"}${location.search || ""}`)}`;
+          return;
+        }
+
+        const priceText = String(offerPrice?.value || "").replace(/[^\d]/g, "");
+        if (!priceText) {
+          setOfferMessage("กรุณาใส่ราคาเสนอ", true);
+          offerPrice?.focus();
+          return;
+        }
+
+        setOfferMessage("กำลังส่งราคาเสนอ...");
+        const { error } = await supabaseClient
+          .from("marketplace_listing_offers")
+          .insert({
+            listing_id: offerListingId.value,
+            buyer_user_id: session.user.id,
+            buyer_display_name: getSessionDisplayName(session),
+            buyer_avatar_url: getSessionAvatarUrl(session),
+            offer_price_text: priceText,
+            message: offerMessage?.value.trim() || ""
+          });
+
+        if (error) {
+          const needsMigration = /marketplace_listing_offers|offers_enabled|schema cache|relation/i.test(error.message || "");
+          setOfferMessage(needsMigration ? "ยังไม่ได้รัน supabase-offers-migration.sql ใน Supabase" : error.message, true);
+          return;
+        }
+
+        setOfferMessage("ส่งราคาเสนอแล้ว เจ้าของประกาศจะเห็นใน Mailbox");
+        offerForm.reset();
       }
 
       function updateModalOpenState() {
@@ -691,6 +778,16 @@
           return;
         }
 
+        const offerButton = event.target.closest(".offer-button");
+        if (offerButton) {
+          openOfferForm(
+            offerButton.dataset.offerListingId,
+            offerButton.dataset.offerTitle,
+            offerButton.dataset.offerPrice
+          );
+          return;
+        }
+
         if (event.target.closest("#sellerContactCopy") && activeSellerName) {
           navigator.clipboard?.writeText(activeSellerName);
           sellerContactCopy.classList.add("is-copied");
@@ -742,6 +839,8 @@
           renderAccountImageModal();
         }
       });
+
+      offerForm?.addEventListener("submit", submitOffer);
 
       async function syncAuthLink() {
         const authLink = document.querySelector(".auth-link");

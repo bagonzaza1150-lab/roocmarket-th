@@ -35,6 +35,7 @@ window.ROOC_SUPABASE = {
     "contact",
     "description",
     "middleman",
+    "offers_enabled",
     "ready_today",
     "active",
     "sale_status",
@@ -44,7 +45,7 @@ window.ROOC_SUPABASE = {
   ].join(",");
   const legacyListingSelectColumns = listingSelectColumns
     .split(",")
-    .filter((column) => column !== "listing_type")
+    .filter((column) => column !== "listing_type" && column !== "offers_enabled")
     .join(",");
   let currentListingPage = 1;
   let activeListingType = "sell";
@@ -558,7 +559,10 @@ window.ROOC_SUPABASE = {
           ${descriptionParts.truncated ? '<button class="description-toggle" type="button" data-description-toggle aria-expanded="false" onclick="event.stopPropagation(); window.toggleListingDescription?.(this)">ดูเพิ่มเติม</button>' : ""}
           <div class="price-row">
             <strong>฿ ${formatListingPrice(listing.price_text)}</strong>
-            <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">${listingType === "buy" ? "ติดต่อผู้รับซื้อ" : listingType === "service" ? "ติดต่อผู้รับจ้าง" : "ติดต่อผู้ขาย"}</button>
+            <span class="listing-card-actions">
+              ${listing.offers_enabled ? `<button class="btn btn-small btn-light offer-button" type="button" data-offer-listing-id="${escapeHtml(listing.id)}" data-offer-title="${escapeHtml(title)}" data-offer-price="${escapeHtml(listing.price_text)}">เสนอราคา</button>` : ""}
+              <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">${listingType === "buy" ? "ติดต่อผู้รับซื้อ" : listingType === "service" ? "ติดต่อผู้รับจ้าง" : "ติดต่อผู้ขาย"}</button>
+            </span>
           </div>
         </article>
       `;
