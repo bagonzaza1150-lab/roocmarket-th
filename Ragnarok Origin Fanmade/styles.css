@@ -3288,8 +3288,13 @@ h1 {
   }
 
   .nav-actions {
-    display: grid;
-    grid-template-columns: auto 1fr 1fr;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .nav-actions > .btn {
+    flex: 0 0 auto;
   }
 
   .search-card {
@@ -3396,23 +3401,19 @@ h1 {
     grid-template-columns: 1fr;
   }
 
-  .user-menu,
-  .user-tools,
-  .user-menu-trigger {
-    width: 100%;
-  }
-
   .user-tools {
-    grid-column: 1 / -1;
+    flex: 0 1 auto;
+    width: auto;
   }
 
   .user-menu-trigger {
     justify-content: center;
+    max-width: 190px;
   }
 
   .user-menu-panel,
   .mailbox-panel {
-    left: 0;
+    left: auto;
     right: 0;
   }
 
