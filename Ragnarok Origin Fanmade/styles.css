@@ -1202,6 +1202,9 @@ h1 {
 }
 
 .listing-card {
+  display: flex;
+  min-height: 492px;
+  flex-direction: column;
   overflow: hidden;
   padding: 12px;
 }
@@ -1249,7 +1252,7 @@ h1 {
 
 .item-media {
   display: grid;
-  min-height: 156px;
+  height: 156px;
   place-items: center;
   border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
   border-radius: 16px;
@@ -1274,7 +1277,7 @@ h1 {
 }
 
 .card-media {
-  min-height: 190px;
+  height: 190px;
   background:
     linear-gradient(135deg, rgba(255, 247, 232, 0.78), rgba(223, 246, 255, 0.86)),
     radial-gradient(circle at 50% 20%, rgba(240, 173, 36, 0.2), transparent 8rem);
@@ -1296,7 +1299,7 @@ h1 {
 
 .account-listing-media {
   position: relative;
-  min-height: 220px;
+  height: 220px;
   align-content: center;
   background:
     linear-gradient(135deg, rgba(223, 246, 255, 0.72), rgba(255, 255, 255, 0.88)),
@@ -1456,18 +1459,28 @@ h1 {
 }
 
 .listing-card h3 {
+  display: -webkit-box;
+  min-height: 46px;
   margin: 12px 0 6px;
   overflow-wrap: anywhere;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   font-size: 18px;
 }
 
 .listing-card p {
-  min-height: 38px;
+  display: -webkit-box;
+  min-height: 56px;
+  max-height: 56px;
   margin-bottom: 12px;
   color: var(--muted);
   font-size: 13px;
   line-height: 1.45;
+  overflow: hidden;
   overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
   word-break: break-word;
 }
 
@@ -1490,19 +1503,29 @@ h1 {
 
 .price-row {
   display: flex;
+  margin-top: auto;
   justify-content: space-between;
   gap: 12px;
-  align-items: center;
+  align-items: flex-end;
 }
 
 .listing-card-actions {
-  display: inline-flex;
-  flex-wrap: wrap;
+  display: grid;
+  flex: 0 0 112px;
   justify-content: flex-end;
   gap: 8px;
 }
 
+.listing-card-actions .btn {
+  min-height: 36px;
+  padding-inline: 12px;
+  white-space: nowrap;
+}
+
 .price-row strong {
+  display: grid;
+  min-height: 56px;
+  align-content: end;
   color: #d89000;
   font-size: 21px;
 }
@@ -3381,10 +3404,14 @@ h1 {
     grid-template-columns: 1fr;
   }
 
-  .section-head,
-  .price-row {
+  .section-head {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .listing-card .price-row {
+    align-items: flex-end;
+    flex-direction: row;
   }
 
   .section-head select,
