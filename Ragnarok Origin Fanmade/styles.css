@@ -179,6 +179,129 @@ a:focus-visible {
   position: relative;
 }
 
+.user-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mailbox-menu {
+  position: relative;
+}
+
+.mailbox-trigger {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  color: var(--blue);
+  box-shadow: 0 8px 24px rgba(26, 83, 124, 0.12);
+}
+
+.mailbox-trigger span {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.mailbox-trigger b {
+  position: absolute;
+  top: -5px;
+  right: -4px;
+  display: inline-grid;
+  min-width: 19px;
+  height: 19px;
+  place-items: center;
+  border: 2px solid var(--paper);
+  border-radius: 999px;
+  background: #ff4d67;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.mailbox-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 31;
+  width: min(360px, calc(100vw - 24px));
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.mailbox-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.mailbox-head a {
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.mailbox-list {
+  display: grid;
+  max-height: 360px;
+  overflow: auto;
+}
+
+.mailbox-empty {
+  margin: 0;
+  padding: 14px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.mailbox-item {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  padding: 12px;
+  text-align: left;
+}
+
+.mailbox-item:hover {
+  background: var(--paper-soft);
+}
+
+.mailbox-item.is-new {
+  background: color-mix(in srgb, var(--aqua) 55%, var(--paper));
+}
+
+.mailbox-item strong {
+  color: #d89000;
+}
+
+.mailbox-item small,
+.mailbox-item em {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.mailbox-item em {
+  font-style: normal;
+}
+
 .user-menu-trigger {
   display: inline-flex;
   align-items: center;
@@ -3274,15 +3397,21 @@ h1 {
   }
 
   .user-menu,
+  .user-tools,
   .user-menu-trigger {
     width: 100%;
+  }
+
+  .user-tools {
+    grid-column: 1 / -1;
   }
 
   .user-menu-trigger {
     justify-content: center;
   }
 
-  .user-menu-panel {
+  .user-menu-panel,
+  .mailbox-panel {
     left: 0;
     right: 0;
   }

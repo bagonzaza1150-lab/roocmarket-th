@@ -969,6 +969,80 @@ window.ROOC_SUPABASE = {
     return link;
   }
 
+  async function fetchReceivedOffers(session, limit = 20) {
+    if (!session || !supabaseClient) return [];
+
+    const { data: listings, error: listingsError } = await supabaseClient
+      .from("marketplace_listings")
+      .select("id,title,item_name,price_text")
+      .eq("user_id", session.user.id)
+      .neq("sale_status", "deleted")
+      .limit(120);
+
+    if (listingsError || !listings?.length) return [];
+
+    const listingMap = new Map(listings.map((listing) => [listing.id, listing]));
+    const { data: offers, error: offersError } = await supabaseClient
+      .from("marketplace_listing_offers")
+      .select("id,listing_id,buyer_display_name,offer_price_text,message,status,created_at")
+      .in("listing_id", listings.map((listing) => listing.id))
+      .neq("status", "deleted")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (offersError) {
+      if (!/marketplace_listing_offers|relation|schema cache/i.test(offersError.message || "")) {
+        console.warn("ROOC mailbox offers failed:", offersError);
+      }
+      return [];
+    }
+
+    return (offers || []).map((offer) => ({
+      ...offer,
+      listing: listingMap.get(offer.listing_id) || null
+    }));
+  }
+
+  function renderMailboxItems(offers) {
+    if (!offers.length) {
+      return '<p class="mailbox-empty">ยังไม่มีราคาเสนอใหม่</p>';
+    }
+
+    return offers.map((offer) => {
+      const listingTitle = offer.listing?.title || offer.listing?.item_name || "ประกาศของคุณ";
+      return `
+        <button class="mailbox-item${offer.status === "new" ? " is-new" : ""}" type="button" data-offer-read="${escapeHtml(offer.id)}">
+          <span>
+            <strong>฿ ${formatListingPrice(offer.offer_price_text)}</strong>
+            <small>${escapeHtml(offer.buyer_display_name || "ผู้เสนอราคา")} เสนอใน ${escapeHtml(listingTitle)}</small>
+          </span>
+          ${offer.message ? `<em>${escapeHtml(offer.message)}</em>` : ""}
+        </button>
+      `;
+    }).join("");
+  }
+
+  async function createMailboxMenu(session) {
+    const offers = await fetchReceivedOffers(session);
+    const unreadCount = offers.filter((offer) => offer.status === "new").length;
+    const mailbox = document.createElement("div");
+    mailbox.className = "mailbox-menu";
+    mailbox.innerHTML = `
+      <button class="mailbox-trigger" type="button" aria-label="Mailbox เสนอราคา" aria-expanded="false">
+        <span aria-hidden="true">✉</span>
+        ${unreadCount ? `<b>${unreadCount > 99 ? "99+" : unreadCount}</b>` : ""}
+      </button>
+      <div class="mailbox-panel" hidden>
+        <div class="mailbox-head">
+          <strong>Mailbox เสนอราคา</strong>
+          <a href="my-listings.html">ดูทั้งหมด</a>
+        </div>
+        <div class="mailbox-list">${renderMailboxItems(offers)}</div>
+      </div>
+    `;
+    return mailbox;
+  }
+
   async function syncAuthUi(session) {
     const authLinks = document.querySelectorAll(".auth-link");
     const myListingsLink = document.querySelector(".my-listings-link") || ensureAccountLink();
@@ -977,12 +1051,15 @@ window.ROOC_SUPABASE = {
     const avatarUrl = session ? getDiscordAvatarUrl(session) : "";
     const isPremium = await getPremiumStatus(session);
 
-    authLinks.forEach((link) => {
+    for (const link of authLinks) {
       if (!link.dataset.defaultAuthHref) {
         link.dataset.defaultAuthHref = link.getAttribute("href") || "login.html";
       }
 
       if (session) {
+        const tools = document.createElement("div");
+        tools.className = "user-tools";
+        const mailbox = await createMailboxMenu(session);
         const menu = document.createElement("div");
         menu.className = "user-menu";
         menu.innerHTML = `
@@ -998,12 +1075,13 @@ window.ROOC_SUPABASE = {
             <button type="button" data-user-logout>ออกจากระบบ</button>
           </div>
         `;
-        link.replaceWith(menu);
+        tools.append(mailbox, menu);
+        link.replaceWith(tools);
       } else {
         link.textContent = "เข้าสู่ระบบ";
         link.href = link.dataset.defaultAuthHref || "login.html";
       }
-    });
+    }
 
     if (myListingsLink) myListingsLink.hidden = !session;
     adminLinks.forEach((link) => {
@@ -1025,6 +1103,8 @@ window.ROOC_SUPABASE = {
   document.addEventListener("click", async (event) => {
     const descriptionToggle = event.target.closest("[data-description-toggle]");
     const trigger = event.target.closest(".user-menu-trigger");
+    const mailboxTrigger = event.target.closest(".mailbox-trigger");
+    const offerRead = event.target.closest("[data-offer-read]");
     const logout = event.target.closest("[data-user-logout]");
 
     if (descriptionToggle) {
@@ -1036,6 +1116,9 @@ window.ROOC_SUPABASE = {
     document.querySelectorAll(".user-menu-panel").forEach((panel) => {
       if (!trigger || !panel.closest(".user-menu")?.contains(trigger)) panel.hidden = true;
     });
+    document.querySelectorAll(".mailbox-panel").forEach((panel) => {
+      if (!mailboxTrigger || !panel.closest(".mailbox-menu")?.contains(mailboxTrigger)) panel.hidden = true;
+    });
 
     if (trigger) {
       const panel = trigger.closest(".user-menu")?.querySelector(".user-menu-panel");
@@ -1043,6 +1126,32 @@ window.ROOC_SUPABASE = {
         panel.hidden = !panel.hidden;
         trigger.setAttribute("aria-expanded", String(!panel.hidden));
       }
+    }
+
+    if (mailboxTrigger) {
+      const panel = mailboxTrigger.closest(".mailbox-menu")?.querySelector(".mailbox-panel");
+      if (panel) {
+        panel.hidden = !panel.hidden;
+        mailboxTrigger.setAttribute("aria-expanded", String(!panel.hidden));
+      }
+      return;
+    }
+
+    if (offerRead && supabaseClient) {
+      const offerId = offerRead.dataset.offerRead;
+      offerRead.classList.remove("is-new");
+      await supabaseClient
+        .from("marketplace_listing_offers")
+        .update({ status: "read" })
+        .eq("id", offerId)
+        .eq("status", "new");
+      const badge = offerRead.closest(".mailbox-menu")?.querySelector(".mailbox-trigger b");
+      if (badge) {
+        const nextCount = Math.max(0, Number(badge.textContent || 0) - 1);
+        if (nextCount) badge.textContent = String(nextCount);
+        else badge.remove();
+      }
+      return;
     }
 
     if (logout && supabaseClient) {
