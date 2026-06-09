@@ -7,13 +7,13 @@
       name="description"
       content="ROOC Market TH ตลาดกลางซื้อขายไอเทม Ragnarok Origin Classic สำหรับผู้เล่นไทย"
     />
-    <title>??????????? | ROOC Market TH</title>
+    <title>ลงประกาศ | ROOC Market TH</title>
     <link rel="icon" type="image/png" sizes="32x32" href="assets/site-icons/rooc-icon-32.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="assets/site-icons/rooc-icon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/site-icons/rooc-icon-180.png" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
+    <script src="supabase-config.js?v=20260609-premium-sort"></script>
   </head>
   <body>
     <header class="site-header">
@@ -432,12 +432,11 @@
       let activeCategory = "mvp";
       let uploadedAccountImages = [];
       let optimizedAccountFiles = [];
-      const supabaseConfig = window.ROOC_SUPABASE || {};
-      const canUseSupabase = Boolean(supabaseConfig.url && supabaseConfig.anonKey && window.supabase);
+      const app = window.ROOC_APP || {};
+      const supabaseConfig = app.config || window.ROOC_SUPABASE || {};
+      const supabaseClient = app.getSupabaseClient?.() || null;
+      const canUseSupabase = Boolean(supabaseClient);
       const listingBucket = supabaseConfig.listingBucket || "listing-images";
-      const supabaseClient = canUseSupabase
-        ? window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey)
-        : null;
       let currentSession = null;
       let accountListingEnabled = true;
       const accountImageMaxBytes = 2 * 1024 * 1024;
@@ -1172,19 +1171,7 @@
         supabaseClient.auth.getSession().then(({ data }) => syncAuthLink(data.session));
       }
 
-      const themeToggle = document.querySelector("#themeToggle");
-      const savedTheme = localStorage.getItem("theme");
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const activeTheme = savedTheme || (prefersDark ? "dark" : "light");
-
-      document.documentElement.dataset.theme = activeTheme;
-      themeToggle.checked = activeTheme === "dark";
-
-      themeToggle.addEventListener("change", () => {
-        const nextTheme = themeToggle.checked ? "dark" : "light";
-        document.documentElement.dataset.theme = nextTheme;
-        localStorage.setItem("theme", nextTheme);
-      });
+      window.ROOC_APP?.initTheme();
     </script>
   </body>
 </html>

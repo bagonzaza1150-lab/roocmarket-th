@@ -67,6 +67,30 @@ window.ROOC_SUPABASE = {
       .replace(/'/g, "&#039;");
   }
 
+  function initTheme() {
+    const savedTheme = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const activeTheme = savedTheme || (prefersDark ? "dark" : "light");
+    const themeToggle = document.querySelector("#themeToggle");
+
+    document.documentElement.dataset.theme = activeTheme;
+    if (!themeToggle) return;
+
+    themeToggle.checked = activeTheme === "dark";
+    if (themeToggle.dataset.themeBound === "true") return;
+
+    themeToggle.dataset.themeBound = "true";
+    themeToggle.addEventListener("change", () => {
+      const nextTheme = themeToggle.checked ? "dark" : "light";
+      document.documentElement.dataset.theme = nextTheme;
+      localStorage.setItem("theme", nextTheme);
+    });
+  }
+
+  function getSupabaseClient() {
+    return supabaseClient;
+  }
+
   function getDescriptionParts(value, maxLength = 120) {
     const text = String(value || "").trim();
     const hasLongToken = text.split(/\s+/).some((part) => part.length > 34);
@@ -198,6 +222,14 @@ window.ROOC_SUPABASE = {
     return price > 0 ? price.toLocaleString("th-TH") : "0";
   }
 
+  function compareListingNewest(a, b) {
+    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+  }
+
+  function comparePremiumPriority(a, b) {
+    return Number(Boolean(b.seller_is_premium)) - Number(Boolean(a.seller_is_premium));
+  }
+
   function compareListingPrice(a, b, direction) {
     const priceA = parsePrice(a.price_text);
     const priceB = parsePrice(b.price_text);
@@ -206,12 +238,12 @@ window.ROOC_SUPABASE = {
 
     if (hasPriceA !== hasPriceB) return hasPriceA ? -1 : 1;
     if (!hasPriceA && !hasPriceB) {
-      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+      return compareListingNewest(a, b);
     }
 
     const priceDiff = direction === "asc" ? priceA - priceB : priceB - priceA;
     if (priceDiff !== 0) return priceDiff;
-    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    return compareListingNewest(a, b);
   }
 
   function getContactProfileUrl(contact) {
@@ -361,12 +393,12 @@ window.ROOC_SUPABASE = {
     });
 
     return filtered.sort((a, b) => {
+      const premiumOrder = comparePremiumPriority(a, b);
+      if (premiumOrder !== 0) return premiumOrder;
+
       if (filters.sort === "price-low") return compareListingPrice(a, b, "asc");
       if (filters.sort === "price-high") return compareListingPrice(a, b, "desc");
-      if (Boolean(b.seller_is_premium) !== Boolean(a.seller_is_premium)) {
-        return Number(Boolean(b.seller_is_premium)) - Number(Boolean(a.seller_is_premium));
-      }
-      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+      return compareListingNewest(a, b);
     });
   }
 
@@ -907,6 +939,20 @@ window.ROOC_SUPABASE = {
       discordIds.some((id) => (config.adminDiscordIds || []).includes(id));
   }
 
+  window.ROOC_APP = {
+    config,
+    canUseSupabase,
+    supabaseClient,
+    getSupabaseClient,
+    initTheme,
+    escapeHtml,
+    getDiscordDisplayName,
+    getDiscordAvatarUrl,
+    getDiscordId,
+    getSessionEmail,
+    isAdminSession
+  };
+
   function ensureAccountLink() {
     const navLinks = document.querySelector(".nav-links");
     if (!navLinks || navLinks.querySelector(".my-listings-link")) return null;
@@ -928,6 +974,10 @@ window.ROOC_SUPABASE = {
     const isPremium = await getPremiumStatus(session);
 
     authLinks.forEach((link) => {
+      if (!link.dataset.defaultAuthHref) {
+        link.dataset.defaultAuthHref = link.getAttribute("href") || "login.html";
+      }
+
       if (session) {
         const menu = document.createElement("div");
         menu.className = "user-menu";
@@ -947,7 +997,7 @@ window.ROOC_SUPABASE = {
         link.replaceWith(menu);
       } else {
         link.textContent = "เข้าสู่ระบบ";
-        link.href = "login.html";
+        link.href = link.dataset.defaultAuthHref || "login.html";
       }
     });
 
@@ -999,10 +1049,12 @@ window.ROOC_SUPABASE = {
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
+      initTheme();
       hydratePublicListings();
       hydrateAuthUi();
     });
   } else {
+    initTheme();
     hydratePublicListings();
     hydrateAuthUi();
   }

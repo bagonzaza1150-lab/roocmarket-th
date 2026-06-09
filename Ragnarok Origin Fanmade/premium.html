@@ -10,7 +10,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/site-icons/rooc-icon-180.png" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
+    <script src="supabase-config.js?v=20260609-premium-sort"></script>
   </head>
   <body>
     <header class="site-header">
@@ -103,21 +103,12 @@
     </main>
 
     <script>
-      const themeToggle = document.querySelector("#themeToggle");
-      const savedTheme = localStorage.getItem("theme");
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const activeTheme = savedTheme || (prefersDark ? "dark" : "light");
-      document.documentElement.dataset.theme = activeTheme;
-      themeToggle.checked = activeTheme === "dark";
-      themeToggle.addEventListener("change", () => {
-        const nextTheme = themeToggle.checked ? "dark" : "light";
-        document.documentElement.dataset.theme = nextTheme;
-        localStorage.setItem("theme", nextTheme);
-      });
+      window.ROOC_APP?.initTheme();
 
-      const config = window.ROOC_SUPABASE || {};
-      const canUseSupabase = Boolean(config.url && config.anonKey && window.supabase);
-      const supabaseClient = canUseSupabase ? window.supabase.createClient(config.url, config.anonKey) : null;
+      const app = window.ROOC_APP || {};
+      const config = app.config || window.ROOC_SUPABASE || {};
+      const supabaseClient = app.getSupabaseClient?.() || null;
+      const canUseSupabase = Boolean(supabaseClient);
       const premiumStatusText = document.querySelector("#premiumStatusText");
       const premiumUserBox = document.querySelector("#premiumUserBox");
       const premiumUserId = document.querySelector("#premiumUserId");

@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/site-icons/rooc-icon-180.png" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20260607-account-lock"></script>
+    <script src="supabase-config.js?v=20260609-premium-sort"></script>
   </head>
   <body>
     <header class="site-header">
@@ -359,8 +359,7 @@
       const appConfig = window.ROOC_SUPABASE || {};
 
       function getSupabaseClient() {
-        const canUseSupabase = Boolean(appConfig.url && appConfig.anonKey && window.supabase);
-        return canUseSupabase ? window.supabase.createClient(appConfig.url, appConfig.anonKey) : null;
+        return window.ROOC_APP?.getSupabaseClient?.() || null;
       }
 
       async function fetchListingsFromRest(params = "select=*&active=eq.true&order=created_at.desc") {
@@ -786,19 +785,7 @@
       syncAuthLink();
       if (supabaseClient) supabaseClient.auth.onAuthStateChange(() => syncAuthLink());
 
-      const themeToggle = document.querySelector("#themeToggle");
-      const savedTheme = localStorage.getItem("theme");
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const activeTheme = savedTheme || (prefersDark ? "dark" : "light");
-
-      document.documentElement.dataset.theme = activeTheme;
-      themeToggle.checked = activeTheme === "dark";
-
-      themeToggle.addEventListener("change", () => {
-        const nextTheme = themeToggle.checked ? "dark" : "light";
-        document.documentElement.dataset.theme = nextTheme;
-        localStorage.setItem("theme", nextTheme);
-      });
+      window.ROOC_APP?.initTheme();
     </script>
   </body>
 </html>
