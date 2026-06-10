@@ -587,7 +587,9 @@ window.ROOC_SUPABASE = {
           </div>`}
           <div class="listing-seller">
             <img src="${escapeHtml(sellerAvatar)}" alt="" loading="lazy" decoding="async" />
-            <span>${escapeHtml(sellerName)}</span>
+            <a href="store.html?id=${encodeURIComponent(discordId || contact)}" class="seller-store-link" title="ไปที่หน้าร้านค้า" onclick="event.stopPropagation();">
+              <span>${escapeHtml(sellerName)}</span>
+            </a>
             ${listing.seller_is_premium ? '<strong title="Premium">♛</strong>' : ""}
             ${listing.facebook_url ? `<a href="${escapeHtml(listing.facebook_url)}" target="_blank" rel="noopener" class="seller-facebook-link" title="เปิด Facebook ผู้ขาย" onclick="event.stopPropagation();">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
@@ -1068,7 +1070,132 @@ window.ROOC_SUPABASE = {
     getDiscordAvatarUrl,
     getDiscordId,
     getSessionEmail,
-    isAdminSession
+    isAdminSession,
+    initStorePage: async (sellerId) => {
+      const grid = document.querySelector("#storeListingGrid");
+      const emptyState = document.querySelector("#storeEmptyState");
+      const storeName = document.querySelector("#storeName");
+      const storeAvatar = document.querySelector("#storeAvatar");
+      const storeFacebook = document.querySelector("#storeFacebook");
+      const storeDiscordText = document.querySelector("#storeDiscordText");
+      const storeTotalListings = document.querySelector("#storeTotalListings");
+      const storeSoldItems = document.querySelector("#storeSoldItems");
+      
+      let storeListings = [];
+      let currentCategory = "all";
+      let currentSort = "newest";
+
+      const renderStoreGrid = () => {
+        let filtered = storeListings.filter(l => currentCategory === "all" || l.category === currentCategory);
+        
+        if (currentSort === "price-low") filtered.sort((a, b) => parsePrice(a.price_text) - parsePrice(b.price_text));
+        else if (currentSort === "price-high") filtered.sort((a, b) => parsePrice(b.price_text) - parsePrice(a.price_text));
+        else filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        grid.innerHTML = filtered.map(listing => {
+          const title = listing.title || listing.item_name || "ประกาศขาย";
+          const listingType = listing.listing_type || "sell";
+          const isServiceListing = listingType === "service";
+          const listingImages = getListingImages(listing);
+          const contact = listing.contact || "";
+          const profileUrl = getListingProfileUrl(listing);
+          const discordId = getListingDiscordId(listing);
+          const sellerName = listing.seller_name || "ผู้ขาย ROOC";
+          const sellerAvatar = listing.seller_avatar_url || "assets/category-icons/account-b.png";
+          const badges = [
+            `<span class="${listingType === "buy" ? "buy" : listingType === "service" ? "verified" : "fast"}">${listingType === "buy" ? "รับซื้อ" : listingType === "service" ? "รับจ้าง" : "ขาย"}</span>`,
+            `<span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
+            listing.ready_today ? '<span class="fast">Fast Deal</span>' : "",
+            listing.category === "mvp" ? '<span class="mvp">MVP</span>' : ""
+          ].filter(Boolean).join("");
+          const description = listing.description || "";
+          const descriptionParts = getDescriptionParts(description);
+
+          return `
+            <article class="listing-card${isServiceListing ? " service-listing-card" : ""}">
+              ${isServiceListing ? "" : `<div class="item-media">
+                <img src="${escapeHtml(listingImages[0])}" alt="" loading="lazy" />
+              </div>`}
+              <div class="listing-seller">
+                <img src="${escapeHtml(sellerAvatar)}" alt="" />
+                <span>${escapeHtml(sellerName)}</span>
+                ${listing.seller_is_premium ? '<strong title="Premium">♛</strong>' : ""}
+              </div>
+              <div class="listing-meta">${badges}</div>
+              <h3>${escapeHtml(title)}</h3>
+              <p class="listing-description">${escapeHtml(descriptionParts.shortText)}</p>
+              <div class="price-row">
+                <strong>฿ ${formatListingPrice(listing.price_text)}</strong>
+                <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">ติดต่อ</button>
+              </div>
+            </article>
+          `;
+        }).join("");
+        
+        emptyState.hidden = filtered.length > 0;
+        
+        grid.querySelectorAll(".contact-seller-button").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const data = btn.dataset;
+            // ผูกกับ Logic ของหน้า index.html
+            const modal = document.querySelector("#sellerContactModal");
+            if (modal) {
+              document.querySelector("#sellerContactTitle").textContent = "ติดต่อผู้ขาย";
+              document.querySelector("#sellerContactItem").textContent = data.title;
+              document.querySelector("#sellerContactValue").textContent = data.discordId || data.contact;
+              modal.hidden = false;
+            }
+          });
+        });
+      };
+
+      try {
+        const { data, error } = await supabaseClient
+          .from("marketplace_listings")
+          .select(listingSelectColumns)
+          .or(`seller_discord_id.eq.${sellerId},contact.eq.${sellerId}`)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        storeListings = data || [];
+        
+        if (storeListings.length > 0) {
+          const seller = storeListings[0];
+          storeName.textContent = seller.seller_name;
+          if (seller.seller_avatar_url) storeAvatar.src = seller.seller_avatar_url;
+          if (seller.facebook_url) {
+            storeFacebook.href = seller.facebook_url;
+            storeFacebook.hidden = false;
+          }
+          storeDiscordText.textContent = seller.seller_discord_id || seller.contact || "N/A";
+          
+          storeTotalListings.textContent = storeListings.filter(l => l.active).length;
+          storeSoldItems.textContent = storeListings.filter(l => l.sale_status === "sold").length;
+          
+          renderStoreGrid();
+        } else {
+          storeName.textContent = "ไม่พบผู้ขาย";
+          emptyState.hidden = false;
+        }
+      } catch (err) {
+        console.error("Store error:", err);
+        storeName.textContent = "เกิดข้อผิดพลาด";
+      }
+
+      document.querySelectorAll("#storeCategoryTabs button").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll("#storeCategoryTabs button").forEach(b => b.classList.remove("is-active"));
+          btn.classList.add("is-active");
+          currentCategory = btn.dataset.category;
+          renderStoreGrid();
+        });
+      });
+
+      document.querySelector("#storeSortFilter")?.addEventListener("change", (e) => {
+        currentSort = e.target.value;
+        renderStoreGrid();
+      });
+    }
   };
 
   function ensureAccountLink() {

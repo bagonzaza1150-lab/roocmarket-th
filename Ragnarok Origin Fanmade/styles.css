@@ -3694,3 +3694,174 @@ h1 {
   font-weight: 700;
   color: var(--ink);
 }
+
+/* --- Seller Storefront Styles --- */
+.store-header {
+  background: var(--paper-soft);
+  padding: 4rem 0;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 3rem;
+}
+
+.store-header-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3rem;
+  align-items: center;
+}
+
+.store-profile {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.store-avatar {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.store-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--blue);
+  background: var(--paper);
+}
+
+.status-indicator {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 3px solid var(--paper-soft);
+}
+
+.status-indicator.online { background: #10b981; }
+
+.store-info h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--ink);
+}
+
+.verified-badge {
+  color: var(--blue);
+  width: 28px;
+  height: 28px;
+}
+
+.store-tagline {
+  color: var(--muted);
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+.store-socials {
+  display: flex;
+  gap: 1rem;
+}
+
+.social-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 50px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.social-btn.facebook {
+  background: #1877f2;
+  color: white;
+}
+
+.social-btn.discord {
+  background: #5865f2;
+  color: white;
+}
+
+.social-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.store-stats {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.stat-card {
+  background: var(--paper);
+  padding: 1.5rem 2rem;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(26, 83, 124, 0.08);
+  min-width: 140px;
+  border: 1px solid var(--line);
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--blue);
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.store-content {
+  padding-bottom: 5rem;
+}
+
+/* Link in listing card to store */
+.seller-store-link {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s;
+}
+
+.seller-store-link:hover {
+  color: var(--blue);
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .store-header-grid {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 2rem;
+  }
+  
+  .store-profile {
+    flex-direction: column;
+  }
+  
+  .store-info h1 {
+    justify-content: center;
+  }
+  
+  .store-socials {
+    justify-content: center;
+  }
+  
+  .store-stats {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
