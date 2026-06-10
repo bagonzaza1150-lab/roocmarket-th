@@ -208,7 +208,11 @@
                 </label>
                 <label class="post-field">
                   <span>ช่องทางติดต่อ</span>
-              <input id="listingContact" type="text" placeholder="ว่างไว้ได้ ระบบจะใช้โปรไฟล์ Discord ของคุณ" />
+                  <input id="listingContact" type="text" placeholder="ว่างไว้ได้ ระบบจะใช้โปรไฟล์ Discord ของคุณ" />
+                </label>
+                <label class="post-field">
+                  <span>Facebook URL (ไม่บังคับ)</span>
+                  <input id="listingFacebookUrl" type="url" placeholder="เช่น https://www.facebook.com/profile.php?id=..." />
                 </label>
               </div>
 
@@ -931,6 +935,7 @@
             middleman: middlemanCheck.checked,
             offers_enabled: offersEnabledCheck.checked,
             ready_today: readyCheck.checked,
+            facebook_url: document.querySelector("#listingFacebookUrl")?.value.trim() || null,
             active: true,
             sale_status: "active",
             expires_at: getExpiryIso(isPremiumSeller)

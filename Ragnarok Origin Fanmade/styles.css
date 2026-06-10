@@ -3649,3 +3649,48 @@ h1 {
     width: 100%;
   }
 }
+
+/* Facebook Icon Style */
+.seller-facebook-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-left: 8px;
+  border-radius: 50%;
+  background-color: #1877f2;
+  color: #ffffff;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  vertical-align: middle;
+}
+
+.seller-facebook-link:hover {
+  background-color: #166fe5;
+  transform: scale(1.1);
+}
+
+.seller-facebook-link svg {
+  width: 14px;
+  height: 14px;
+}
+
+.listing-seller {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.listing-seller img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.listing-seller span {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}

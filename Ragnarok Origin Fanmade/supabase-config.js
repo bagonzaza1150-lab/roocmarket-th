@@ -37,15 +37,23 @@ window.ROOC_SUPABASE = {
     "middleman",
     "offers_enabled",
     "ready_today",
+    "facebook_url",
     "active",
     "sale_status",
     "expires_at",
     "created_at",
     "updated_at"
   ].join(",");
+  // สำหรับกรณีที่ยังไม่ได้อัปเดตระบบ "รับซื้อ/รับจ้าง" (listing_type) และ "เสนอราคา" (offers_enabled)
   const legacyListingSelectColumns = listingSelectColumns
     .split(",")
-    .filter((column) => column !== "listing_type" && column !== "offers_enabled")
+    .filter((column) => column !== "listing_type" && column !== "offers_enabled" && column !== "facebook_url")
+    .join(",");
+
+  // สำหรับกรณีที่อัปเดตระบบ "รับซื้อ/รับจ้าง" แล้ว แต่ยังไม่ได้เพิ่มคอลัมน์ "facebook_url"
+  const noFacebookListingSelectColumns = listingSelectColumns
+    .split(",")
+    .filter((column) => column !== "facebook_url")
     .join(",");
   let currentListingPage = 1;
   let activeListingType = "sell";
@@ -158,13 +166,23 @@ window.ROOC_SUPABASE = {
         force
       );
     } catch (error) {
-      console.warn("ROOC listing_type column not ready, using legacy listing query:", error);
-      return fetchCachedJson(
-        "rooc-public-listings-legacy-v1",
-        `${config.url}/rest/v1/marketplace_listings?select=${legacyListingSelectColumns}&active=eq.true&or=(expires_at.is.null,expires_at.gte.${now})&order=created_at.desc&limit=200`,
-        listingCacheMs,
-        force
-      );
+      console.warn("Facebook column not ready, trying without facebook_url...");
+      try {
+        return await fetchCachedJson(
+          "rooc-public-listings-v3-no-fb",
+          `${config.url}/rest/v1/marketplace_listings?select=${noFacebookListingSelectColumns}&active=eq.true&or=(expires_at.is.null,expires_at.gte.${now})&order=created_at.desc&limit=200`,
+          listingCacheMs,
+          force
+        );
+      } catch (legacyError) {
+        console.warn("ROOC listing_type/offers columns not ready, using legacy listing query:", legacyError);
+        return fetchCachedJson(
+          "rooc-public-listings-legacy-v1",
+          `${config.url}/rest/v1/marketplace_listings?select=${legacyListingSelectColumns}&active=eq.true&or=(expires_at.is.null,expires_at.gte.${now})&order=created_at.desc&limit=200`,
+          listingCacheMs,
+          force
+        );
+      }
     }
   }
 
@@ -177,13 +195,23 @@ window.ROOC_SUPABASE = {
         force
       );
     } catch (error) {
-      console.warn("ROOC sold listing_type column not ready, using legacy sold query:", error);
-      return fetchCachedJson(
-        "rooc-sold-listings-legacy-v1",
-        `${config.url}/rest/v1/marketplace_listings?select=${legacyListingSelectColumns}&active=eq.false&sale_status=eq.sold&order=updated_at.desc&limit=12`,
-        soldListingCacheMs,
-        force
-      );
+      console.warn("Facebook column not ready in sold, trying without facebook_url...");
+      try {
+        return await fetchCachedJson(
+          "rooc-sold-listings-v2-no-fb",
+          `${config.url}/rest/v1/marketplace_listings?select=${noFacebookListingSelectColumns}&active=eq.false&sale_status=eq.sold&order=updated_at.desc&limit=12`,
+          soldListingCacheMs,
+          force
+        );
+      } catch (legacyError) {
+        console.warn("ROOC sold listing_type/offers columns not ready, using legacy sold query:", legacyError);
+        return fetchCachedJson(
+          "rooc-sold-listings-legacy-v1",
+          `${config.url}/rest/v1/marketplace_listings?select=${legacyListingSelectColumns}&active=eq.false&sale_status=eq.sold&order=updated_at.desc&limit=12`,
+          soldListingCacheMs,
+          force
+        );
+      }
     }
   }
 
@@ -561,6 +589,11 @@ window.ROOC_SUPABASE = {
             <img src="${escapeHtml(sellerAvatar)}" alt="" loading="lazy" decoding="async" />
             <span>${escapeHtml(sellerName)}</span>
             ${listing.seller_is_premium ? '<strong title="Premium">♛</strong>' : ""}
+            ${listing.facebook_url ? `<a href="${escapeHtml(listing.facebook_url)}" target="_blank" rel="noopener" class="seller-facebook-link" title="เปิด Facebook ผู้ขาย" onclick="event.stopPropagation();">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/>
+              </svg>
+            </a>` : ""}
           </div>
           <div class="listing-meta">${badges}</div>
           <h3>${escapeHtml(title)}</h3>
