@@ -665,9 +665,12 @@ window.ROOC_SUPABASE = {
       const title = listing.title || listing.item_name || "ประกาศขาย";
       const price = listing.price_text ? `฿ ${formatListingPrice(listing.price_text)}` : "";
       const sellerName = listing.seller_name || "ผู้ขาย ROOC";
+      const listingImages = getListingImages(listing);
+      const displayImage = listingImages[0];
+
       return `
         <article class="sold-card">
-          <img src="${escapeHtml(listing.image_url || "assets/category-icons/mvp-c.png")}" alt="" loading="lazy" decoding="async" />
+          <img src="${escapeHtml(displayImage)}" alt="" loading="lazy" decoding="async" />
           <div>
             <h3>${escapeHtml(title)}</h3>
             <p>${escapeHtml(price)} · ${escapeHtml(sellerName)}</p>
@@ -676,9 +679,14 @@ window.ROOC_SUPABASE = {
         </article>
       `;
     }).join("");
+
     count.textContent = `${visibleListings.length.toLocaleString("th-TH")} รายการ`;
-    scroller.classList.toggle("is-static", visibleListings.length <= 2);
-    scroller.innerHTML = `<div class="sold-track">${cards}${visibleListings.length > 2 ? cards : ""}</div>`;
+    
+    // ปรับ Logic การเลื่อน: ถ้ามีรายการน้อยกว่า 4 ไม่ต้องเลื่อน (Static)
+    // และถ้าจะเลื่อน (มากกว่า 3) ให้เบิ้ลรายการเพื่อให้ Loop เนียนขึ้น
+    const shouldScroll = visibleListings.length > 3;
+    scroller.classList.toggle("is-static", !shouldScroll);
+    scroller.innerHTML = `<div class="sold-track">${cards}${shouldScroll ? cards : ""}</div>`;
     section.hidden = false;
   }
 
