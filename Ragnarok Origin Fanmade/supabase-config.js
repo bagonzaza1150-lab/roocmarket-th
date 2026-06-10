@@ -1082,6 +1082,14 @@ window.ROOC_SUPABASE = {
       const storeTotalListings = document.querySelector("#storeTotalListings");
       const storeSoldItems = document.querySelector("#storeSoldItems");
       
+      // ดึงข้อมูลจาก URL เบื้องต้นเพื่อป้องกันหน้า "เกิดข้อผิดพลาด"
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlName = urlParams.get("name");
+      const urlAvatar = urlParams.get("avatar");
+      
+      if (urlName) storeName.textContent = urlName;
+      if (urlAvatar) storeAvatar.src = urlAvatar;
+
       let storeListings = [];
       let currentCategory = "all";
       let currentSort = "newest";
@@ -1152,33 +1160,38 @@ window.ROOC_SUPABASE = {
       try {
         console.log("Fetching store for user_id:", sellerId);
         
-        // ตรวจสอบว่าคอลัมน์ user_id มีอยู่ใน listingSelectColumns หรือยัง
-        const columnsToSelect = listingSelectColumns.includes("user_id") 
-          ? listingSelectColumns 
-          : listingSelectColumns + ",user_id";
+        // ฟังก์ชันช่วยดึงข้อมูลแบบปลอดภัย
+        const safeFetch = async (columns, idValue, idColumn = "user_id") => {
+          try {
+            const { data, error } = await supabaseClient
+              .from("marketplace_listings")
+              .select(columns)
+              .eq(idColumn, idValue)
+              .order("created_at", { ascending: false });
+            return { data, error };
+          } catch (e) {
+            return { data: null, error: e };
+          }
+        };
 
-        console.log("Selecting columns:", columnsToSelect);
-
-        let { data, error } = await supabaseClient
-          .from("marketplace_listings")
-          .select(columnsToSelect)
-          .eq("user_id", sellerId)
-          .order("created_at", { ascending: false });
-
-        // ถ้าพัง ให้ลองใช้ legacy columns
-        if (error) {
-          console.warn("Failed with primary columns, trying legacy...", error);
-          const legacyResult = await supabaseClient
-            .from("marketplace_listings")
-            .select(legacyListingSelectColumns + ",user_id")
-            .eq("user_id", sellerId)
-            .order("created_at", { ascending: false });
-          
-          data = legacyResult.data;
-          error = legacyResult.error;
+        // ลองดึงด้วย user_id ก่อน
+        let result = await safeFetch(listingSelectColumns.includes("user_id") ? listingSelectColumns : listingSelectColumns + ",user_id", sellerId);
+        
+        // ถ้าหาไม่เจอ หรือพัง ให้ลองดึงด้วย seller_name (Fallback สำหรับประกาศเก่า)
+        if (result.error || !result.data || result.data.length === 0) {
+          console.warn("Fetch by user_id failed or empty, trying seller_name fallback...");
+          const fallbackName = urlName || "ผู้ขาย ROOC";
+          result = await safeFetch(legacyListingSelectColumns, fallbackName, "seller_name");
+        }
+        
+        if (result.error) {
+          console.warn("Secondary fetch failed, trying minimum columns with seller_name...");
+          const fallbackName = urlName || "ผู้ขาย ROOC";
+          result = await safeFetch("id,title,item_name,price_text,listing_type,seller_name,seller_avatar_url,created_at,active,sale_status,category,server_name", fallbackName, "seller_name");
         }
 
-        if (error) throw error;
+        if (result.error) throw result.error;
+        const data = result.data;
         storeListings = data || [];
         console.log("Store listings found:", storeListings.length);
         
