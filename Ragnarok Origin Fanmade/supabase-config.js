@@ -190,7 +190,7 @@ window.ROOC_SUPABASE = {
     try {
       return await fetchCachedJson(
         "rooc-sold-listings-v2",
-        `${config.url}/rest/v1/marketplace_listings?select=${listingSelectColumns}&active=eq.false&sale_status=eq.sold&order=updated_at.desc&limit=12`,
+        `${config.url}/rest/v1/marketplace_listings?select=${listingSelectColumns}&active=eq.false&sale_status=eq.sold&order=updated_at.desc`,
         soldListingCacheMs,
         force
       );
@@ -199,7 +199,7 @@ window.ROOC_SUPABASE = {
       try {
         return await fetchCachedJson(
           "rooc-sold-listings-v2-no-fb",
-          `${config.url}/rest/v1/marketplace_listings?select=${noFacebookListingSelectColumns}&active=eq.false&sale_status=eq.sold&order=updated_at.desc&limit=12`,
+          `${config.url}/rest/v1/marketplace_listings?select=${noFacebookListingSelectColumns}&active=eq.false&sale_status=eq.sold&order=updated_at.desc`,
           soldListingCacheMs,
           force
         );
@@ -207,7 +207,7 @@ window.ROOC_SUPABASE = {
         console.warn("ROOC sold listing_type/offers columns not ready, using legacy sold query:", legacyError);
         return fetchCachedJson(
           "rooc-sold-listings-legacy-v1",
-          `${config.url}/rest/v1/marketplace_listings?select=${storeLegacyListingSelectColumns}&active=eq.false&sale_status=eq.sold&order=updated_at.desc&limit=12`,
+          `${config.url}/rest/v1/marketplace_listings?select=${storeLegacyListingSelectColumns}&active=eq.false&sale_status=eq.sold&order=updated_at.desc`,
           soldListingCacheMs,
           force
         );
