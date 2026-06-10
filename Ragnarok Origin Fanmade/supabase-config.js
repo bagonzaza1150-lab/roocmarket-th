@@ -161,7 +161,7 @@ window.ROOC_SUPABASE = {
     try {
       return await fetchCachedJson(
         "rooc-public-listings-v3",
-        `${config.url}/rest/v1/marketplace_listings?select=${listingSelectColumns}&active=eq.true&sale_status=neq.deleted&order=created_at.desc&limit=200`,
+        `${config.url}/rest/v1/marketplace_listings?select=${listingSelectColumns}&sale_status=neq.deleted&sale_status=neq.sold&order=created_at.desc&limit=1000`,
         listingCacheMs,
         force
       );
@@ -170,7 +170,7 @@ window.ROOC_SUPABASE = {
       try {
         return await fetchCachedJson(
           "rooc-public-listings-v3-no-fb",
-          `${config.url}/rest/v1/marketplace_listings?select=${noFacebookListingSelectColumns}&active=eq.true&sale_status=neq.deleted&order=created_at.desc&limit=200`,
+          `${config.url}/rest/v1/marketplace_listings?select=${noFacebookListingSelectColumns}&sale_status=neq.deleted&sale_status=neq.sold&order=created_at.desc&limit=1000`,
           listingCacheMs,
           force
         );
@@ -178,7 +178,7 @@ window.ROOC_SUPABASE = {
         console.warn("ROOC listing_type/offers columns not ready, using legacy listing query:", legacyError);
         return fetchCachedJson(
           "rooc-public-listings-legacy-v1",
-          `${config.url}/rest/v1/marketplace_listings?select=${storeLegacyListingSelectColumns}&active=eq.true&sale_status=neq.deleted&order=created_at.desc&limit=200`,
+          `${config.url}/rest/v1/marketplace_listings?select=${storeLegacyListingSelectColumns}&sale_status=neq.deleted&sale_status=neq.sold&order=created_at.desc&limit=1000`,
           listingCacheMs,
           force
         );
@@ -513,9 +513,9 @@ window.ROOC_SUPABASE = {
       if (target) target.textContent = counts[category].toLocaleString("th-TH");
     });
 
-    const sellTotal = visibleListings.filter((listing) => (listing.listing_type || "sell") === "sell").length;
-    const buyTotal = visibleListings.filter((listing) => (listing.listing_type || "sell") === "buy").length;
-    const serviceTotal = visibleListings.filter((listing) => (listing.listing_type || "sell") === "service").length;
+    const sellTotal = listings.filter((listing) => (listing.listing_type || "sell") === "sell" && listing.sale_status !== "deleted" && listing.sale_status !== "sold").length;
+    const buyTotal = listings.filter((listing) => (listing.listing_type || "sell") === "buy" && listing.sale_status !== "deleted" && listing.sale_status !== "sold").length;
+    const serviceTotal = listings.filter((listing) => (listing.listing_type || "sell") === "service" && listing.sale_status !== "deleted" && listing.sale_status !== "sold").length;
     const sellTarget = document.querySelector("#totalSellListingCount");
     const buyTarget = document.querySelector("#totalBuyListingCount");
     const serviceTarget = document.querySelector("#totalServiceListingCount");

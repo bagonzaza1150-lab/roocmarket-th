@@ -1208,7 +1208,7 @@
           .from("marketplace_listings")
           .select("*")
           .order("created_at", { ascending: false })
-          .limit(120);
+          .limit(1000);
         if (error) {
           setMessage(listingAdminMessage, error.message, true);
           return;
@@ -1865,8 +1865,8 @@
       // Update Dashboard Stats
       function updateDashboardStats() {
         const totalListings = listingCache.length;
-        const activeListings = listingCache.filter((l) => l.active && l.sale_status !== "deleted").length;
-        const bannedUsers = bannedCache.filter((u) => u.active).length;
+        const activeListings = listingCache.filter((l) => l.sale_status !== "deleted" && l.sale_status !== "sold").length;
+        const bannedUsers = bannedCache.length;
         const premiumUsers = premiumCache.filter((u) => u.active).length;
 
         document.getElementById("totalListingsCount").textContent = totalListings.toLocaleString("th-TH");
