@@ -45,13 +45,12 @@ window.ROOC_SUPABASE = {
     "created_at",
     "updated_at"
   ].join(",");
-  // สำหรับกรณีที่ยังไม่ได้อัปเดตระบบ "รับซื้อ/รับจ้าง" (listing_type) และ "เสนอราคา" (offers_enabled)
+  
   const legacyListingSelectColumns = listingSelectColumns
     .split(",")
     .filter((column) => column !== "listing_type" && column !== "offers_enabled" && column !== "facebook_url")
     .join(",");
 
-  // สำหรับกรณีที่อัปเดตระบบ "รับซื้อ/รับจ้าง" แล้ว แต่ยังไม่ได้เพิ่มคอลัมน์ "facebook_url"
   const noFacebookListingSelectColumns = listingSelectColumns
     .split(",")
     .filter((column) => column !== "facebook_url")
@@ -477,7 +476,7 @@ window.ROOC_SUPABASE = {
 
   function updatePagination(totalItems) {
     const totalPages = Math.ceil(totalItems / listingsPerPage);
-    const container = document.querySelector("#pagination");
+    const container = document.querySelector("#listingPagination"); // แก้ไข ID ให้ตรงกับ index.html
     if (!container) return;
 
     if (totalPages <= 1) {
@@ -531,7 +530,7 @@ window.ROOC_SUPABASE = {
 
     const start = (currentListingPage - 1) * listingsPerPage;
     const paginated = filtered.slice(start, start + listingsPerPage);
-    renderListingGrid(paginated, "#listingGrid");
+    renderListingGrid(paginated, "#latestListingGrid"); // แก้ไข ID ให้ตรงกับ index.html
     updatePagination(filtered.length);
 
     if (forceScroll) {
@@ -557,7 +556,7 @@ window.ROOC_SUPABASE = {
   async function refreshSoldListings(force = false) {
     try {
       soldListings = await fetchSoldListings(force);
-      renderListingGrid(soldListings, "#soldListingGrid");
+      renderListingGrid(soldListings, "#soldListingScroller"); // แก้ไข ID ให้ตรงกับ index.html
     } catch (error) {
       console.error("ROOC sold listings failed:", error);
     }
@@ -748,7 +747,6 @@ window.ROOC_SUPABASE = {
         return;
       }
 
-      // แสดงชื่อชั่วคราวจาก URL เพื่อให้หน้าเว็บไม่ดูเหมือนค้าง
       if (urlName) storeName.textContent = decodeURIComponent(urlName);
 
       let storeListings = [];
@@ -831,8 +829,6 @@ window.ROOC_SUPABASE = {
       try {
         if (!supabaseClient) throw new Error("Supabase client not initialized");
         
-        console.log("Fetching store for:", { sellerId, urlName });
-        
         const safeFetch = async (columns, idValue, idColumn = "user_id") => {
           if (!idValue) return { data: [], error: null };
           try {
@@ -849,20 +845,12 @@ window.ROOC_SUPABASE = {
 
         let result = { data: [], error: null };
         
-        // 1. ลองดึงด้วย user_id ก่อน (ถ้ามี)
         if (sellerId && sellerId !== "null" && sellerId !== "undefined") {
           result = await safeFetch(listingSelectColumns, sellerId, "user_id");
-          
-          // ถ้าพังเพราะคอลัมน์ (เช่น facebook_url) ให้ลองแบบ legacy
-          if (result.error) {
-            result = await safeFetch(noFacebookListingSelectColumns, sellerId, "user_id");
-          }
-          if (result.error) {
-            result = await safeFetch(legacyListingSelectColumns, sellerId, "user_id");
-          }
+          if (result.error) result = await safeFetch(noFacebookListingSelectColumns, sellerId, "user_id");
+          if (result.error) result = await safeFetch(legacyListingSelectColumns, sellerId, "user_id");
         }
         
-        // 2. ถ้าดึงด้วย ID ไม่ได้ผล ให้ลองด้วยชื่อ (Fallback)
         if (!result.data || result.data.length === 0) {
           const nameToSearch = urlName ? decodeURIComponent(urlName) : "";
           if (nameToSearch) {
