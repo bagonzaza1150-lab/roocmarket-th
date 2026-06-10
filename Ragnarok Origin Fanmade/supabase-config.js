@@ -686,7 +686,16 @@ window.ROOC_SUPABASE = {
     // และถ้าจะเลื่อน (มากกว่า 3) ให้เบิ้ลรายการเพื่อให้ Loop เนียนขึ้น
     const shouldScroll = visibleListings.length > 3;
     scroller.classList.toggle("is-static", !shouldScroll);
-    scroller.innerHTML = `<div class="sold-track">${cards}${shouldScroll ? cards : ""}</div>`;
+    
+    // คำนวณเวลา (Duration) ตามจำนวนรายการ เพื่อให้ความเร็วในการเลื่อนคงที่
+    // ให้เฉลี่ยรายการละ 3 วินาที (ขั้นต่ำ 20 วินาที)
+    const scrollDuration = Math.max(20, visibleListings.length * 3);
+    
+    scroller.innerHTML = `
+      <div class="sold-track" style="animation-duration: ${scrollDuration}s">
+        ${cards}${shouldScroll ? cards : ""}
+      </div>
+    `;
     section.hidden = false;
   }
 
