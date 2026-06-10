@@ -2747,6 +2747,110 @@ h1 {
   margin: 18px auto 42px;
 }
 
+.admin-tabs-container {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 24px;
+  padding: 0 16px;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 12px 0;
+  margin: 0;
+}
+
+.admin-tab {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper-soft);
+  color: var(--muted);
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.admin-tab:hover {
+  border-color: color-mix(in srgb, var(--blue) 42%, var(--line));
+  background: color-mix(in srgb, var(--blue) 12%, var(--paper));
+  color: var(--blue);
+}
+
+.admin-tab.is-active {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: #fff;
+}
+
+.admin-tab-content {
+  display: none;
+}
+
+.admin-tab-content.is-active {
+  display: block;
+}
+
+.admin-dashboard {
+  margin-bottom: 32px;
+}
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--blue) 28%, var(--line));
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--blue-soft) 48%, var(--paper));
+  padding: 18px;
+  transition: all 200ms ease;
+}
+
+.stat-card:hover {
+  border-color: color-mix(in srgb, var(--blue) 58%, var(--line));
+  background: color-mix(in srgb, var(--blue-soft) 68%, var(--paper));
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.stat-info strong {
+  display: block;
+  font-size: 28px;
+  color: var(--blue);
+  margin-bottom: 4px;
+}
+
+.stat-info span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.dashboard-actions {
+  display: flex;
+  gap: 12px;
+}
+
 .admin-head {
   display: flex;
   justify-content: space-between;

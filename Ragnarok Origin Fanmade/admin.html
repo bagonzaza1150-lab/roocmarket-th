@@ -80,6 +80,59 @@
       </section>
 
       <section class="admin-workspace" id="adminWorkspace" hidden>
+        <!-- Admin Navigation Tabs -->
+        <div class="admin-tabs-container">
+          <div class="admin-tabs">
+            <button class="admin-tab is-active" data-tab="dashboard" type="button">📊 Dashboard</button>
+            <button class="admin-tab" data-tab="items" type="button">📦 ไอเท็ม</button>
+            <button class="admin-tab" data-tab="servers" type="button">🖥️ Server</button>
+            <button class="admin-tab" data-tab="listings" type="button">📋 ประกาศ</button>
+            <button class="admin-tab" data-tab="premium" type="button">👑 Premium</button>
+            <button class="admin-tab" data-tab="settings" type="button">⚙️ ตั้งค่า</button>
+          </div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div class="admin-tab-content is-active" data-tab-content="dashboard">
+          <section class="admin-dashboard">
+            <div class="dashboard-stats">
+              <div class="stat-card">
+                <div class="stat-icon">📝</div>
+                <div class="stat-info">
+                  <strong id="totalListingsCount">0</strong>
+                  <span>ประกาศทั้งหมด</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-info">
+                  <strong id="activeListingsCount">0</strong>
+                  <span>ประกาศที่เปิดอยู่</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">🚫</div>
+                <div class="stat-info">
+                  <strong id="bannedUsersCount">0</strong>
+                  <span>ผู้ใช้ที่ถูกแบน</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">👑</div>
+                <div class="stat-info">
+                  <strong id="premiumUsersCount">0</strong>
+                  <span>สมาชิก Premium</span>
+                </div>
+              </div>
+            </div>
+            <div class="dashboard-actions">
+              <button class="btn btn-primary" id="dashboardRefreshBtn" type="button">🔄 รีเฟรชข้อมูล</button>
+            </div>
+          </section>
+        </div>
+
+        <!-- Items Tab -->
+        <div class="admin-tab-content" data-tab-content="items">
         <form class="admin-editor" id="itemForm">
           <div class="form-block-head">
             <span id="editorMode">+</span>
@@ -160,7 +213,10 @@
           <div class="admin-items" id="adminItems"></div>
           <div class="admin-pagination" id="adminItemsPagination"></div>
         </section>
+        </div>
 
+        <!-- Servers Tab -->
+        <div class="admin-tab-content" data-tab-content="servers">
         <section class="admin-list-panel server-admin-panel">
           <div class="section-head">
             <div>
@@ -194,8 +250,10 @@
           <div class="admin-items server-list" id="adminServers"></div>
           <div class="admin-pagination" id="adminServersPagination"></div>
         </section>
+        </div>
 
-        <section class="admin-list-panel dungeon-admin-panel">
+        <!-- Dungeons Tab (inside Servers) -->
+        <section class="admin-list-panel dungeon-admin-panel" style="display:none;">
           <div class="section-head">
             <div>
               <p class="eyebrow">Dungeons</p>
@@ -232,7 +290,10 @@
           <div class="admin-items server-list" id="adminDungeons"></div>
           <div class="admin-pagination" id="adminDungeonsPagination"></div>
         </section>
+        </div>
 
+        <!-- Listings Tab -->
+        <div class="admin-tab-content" data-tab-content="listings">
         <section class="admin-list-panel listing-admin-panel">
           <div class="section-head">
             <div>
@@ -246,7 +307,10 @@
           <div class="admin-pagination" id="adminListingsPagination"></div>
           <div class="admin-items banned-user-list" id="bannedUsers"></div>
         </section>
+        </div>
 
+        <!-- Premium Tab -->
+        <div class="admin-tab-content" data-tab-content="premium">
         <section class="admin-list-panel premium-admin-panel">
           <div class="section-head">
             <div>
@@ -300,7 +364,10 @@
 
           <div class="admin-items premium-user-list" id="premiumUsers"></div>
         </section>
+        </div>
 
+        <!-- Settings Tab -->
+        <div class="admin-tab-content" data-tab-content="settings">
         <section class="admin-list-panel support-admin-panel">
           <div class="section-head">
             <div>
@@ -1775,6 +1842,68 @@
         const profile = premiumProfileResults.find((entry) => entry.user_id === grantId);
         if (profile) grantPremiumFromProfile(profile);
       });
+
+      // Admin Tabs Navigation
+      document.querySelectorAll(".admin-tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          const tabName = tab.dataset.tab;
+          // Hide all tab contents
+          document.querySelectorAll(".admin-tab-content").forEach((content) => {
+            content.classList.remove("is-active");
+          });
+          // Remove active class from all tabs
+          document.querySelectorAll(".admin-tab").forEach((t) => {
+            t.classList.remove("is-active");
+          });
+          // Show selected tab content
+          const selectedContent = document.querySelector(`[data-tab-content="${tabName}"]`);
+          if (selectedContent) selectedContent.classList.add("is-active");
+          tab.classList.add("is-active");
+        });
+      });
+
+      // Update Dashboard Stats
+      function updateDashboardStats() {
+        const totalListings = listingCache.length;
+        const activeListings = listingCache.filter((l) => l.active && l.sale_status !== "deleted").length;
+        const bannedUsers = bannedCache.filter((u) => u.active).length;
+        const premiumUsers = premiumCache.filter((u) => u.active).length;
+
+        document.getElementById("totalListingsCount").textContent = totalListings.toLocaleString("th-TH");
+        document.getElementById("activeListingsCount").textContent = activeListings.toLocaleString("th-TH");
+        document.getElementById("bannedUsersCount").textContent = bannedUsers.toLocaleString("th-TH");
+        document.getElementById("premiumUsersCount").textContent = premiumUsers.toLocaleString("th-TH");
+      }
+
+      // Dashboard Refresh Button
+      document.getElementById("dashboardRefreshBtn")?.addEventListener("click", async () => {
+        const btn = document.getElementById("dashboardRefreshBtn");
+        btn.disabled = true;
+        btn.textContent = "🔄 กำลังรีเฟรช...";
+        await Promise.all([loadItems(), loadServers(), loadDungeons(), loadAdminListings(), loadBannedUsers(), loadPremiumUsers()]);
+        updateDashboardStats();
+        btn.disabled = false;
+        btn.textContent = "🔄 รีเฟรชข้อมูล";
+      });
+
+      // Update dashboard stats when data loads
+      const originalLoadAdminListings = loadAdminListings;
+      loadAdminListings = async function() {
+        await originalLoadAdminListings();
+        updateDashboardStats();
+      };
+
+      const originalLoadBannedUsers = loadBannedUsers;
+      loadBannedUsers = async function() {
+        await originalLoadBannedUsers();
+        updateDashboardStats();
+      };
+
+      const originalLoadPremiumUsers = loadPremiumUsers;
+      loadPremiumUsers = async function() {
+        await originalLoadPremiumUsers();
+        updateDashboardStats();
+      };
 
       window.ROOC_APP?.initTheme();
     </script>
