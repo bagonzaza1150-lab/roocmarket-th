@@ -46,7 +46,7 @@ window.ROOC_SUPABASE = {
     "updated_at"
   ].join(",");
   // สำหรับกรณีที่ยังไม่ได้อัปเดตระบบ "รับซื้อ/รับจ้าง" (listing_type) และ "เสนอราคา" (offers_enabled)
-  const legacyListingSelectColumns = listingSelectColumns
+  const storeLegacyListingSelectColumns = listingSelectColumns
     .split(",")
     .filter((column) => column !== "listing_type" && column !== "offers_enabled" && column !== "facebook_url")
     .join(",");
@@ -179,7 +179,7 @@ window.ROOC_SUPABASE = {
         console.warn("ROOC listing_type/offers columns not ready, using legacy listing query:", legacyError);
         return fetchCachedJson(
           "rooc-public-listings-legacy-v1",
-          `${config.url}/rest/v1/marketplace_listings?select=${legacyListingSelectColumns}&active=eq.true&or=(expires_at.is.null,expires_at.gte.${now})&order=created_at.desc&limit=200`,
+          `${config.url}/rest/v1/marketplace_listings?select=${storeLegacyListingSelectColumns}&active=eq.true&or=(expires_at.is.null,expires_at.gte.${now})&order=created_at.desc&limit=200`,
           listingCacheMs,
           force
         );
@@ -208,7 +208,7 @@ window.ROOC_SUPABASE = {
         console.warn("ROOC sold listing_type/offers columns not ready, using legacy sold query:", legacyError);
         return fetchCachedJson(
           "rooc-sold-listings-legacy-v1",
-          `${config.url}/rest/v1/marketplace_listings?select=${legacyListingSelectColumns}&active=eq.false&sale_status=eq.sold&order=updated_at.desc&limit=12`,
+          `${config.url}/rest/v1/marketplace_listings?select=${storeLegacyListingSelectColumns}&active=eq.false&sale_status=eq.sold&order=updated_at.desc&limit=12`,
           soldListingCacheMs,
           force
         );
@@ -1072,6 +1072,12 @@ window.ROOC_SUPABASE = {
     getDiscordId,
     getSessionEmail,
     isAdminSession,
+    getListingImages,
+    getListingProfileUrl,
+    getListingDiscordId,
+    parsePrice,
+    formatListingPrice,
+    getDescriptionParts,
     initStorePage: async (sellerId) => {
       const grid = document.querySelector("#storeListingGrid");
       const emptyState = document.querySelector("#storeEmptyState");
@@ -1093,6 +1099,38 @@ window.ROOC_SUPABASE = {
       let storeListings = [];
       let currentCategory = "all";
       let currentSort = "newest";
+      
+      // กำหนด listingSelectColumns ที่ใช้ในฟังก์ชัน
+      const storeListingSelectColumns = [
+        "id",
+        "user_id",
+        "listing_type",
+        "category",
+        "item_name",
+        "title",
+        "image_url",
+        "image_urls",
+        "character_name",
+        "seller_name",
+        "seller_avatar_url",
+        "seller_discord_id",
+        "seller_is_premium",
+        "price_text",
+        "server_name",
+        "contact",
+        "description",
+        "middleman",
+        "ready_today",
+        "facebook_url",
+        "active",
+        "sale_status",
+        "created_at"
+      ].join(",");
+      
+      const storeLegacyListingSelectColumns = storeListingSelectColumns
+        .split(",")
+        .filter((column) => column !== "listing_type" && column !== "facebook_url")
+        .join(",");
 
       const renderStoreGrid = () => {
         let filtered = storeListings.filter(l => currentCategory === "all" || l.category === currentCategory);
@@ -1160,6 +1198,12 @@ window.ROOC_SUPABASE = {
       try {
         console.log("Fetching store for user_id:", sellerId);
         
+        if (!supabaseClient) {
+          storeName.textContent = "ไม่สามารถเชื่อมต่อ Supabase";
+          emptyState.hidden = false;
+          return;
+        }
+        
         // ฟังก์ชันช่วยดึงข้อมูลแบบปลอดภัย
         const safeFetch = async (columns, idValue, idColumn = "user_id") => {
           try {
@@ -1175,13 +1219,13 @@ window.ROOC_SUPABASE = {
         };
 
         // ลองดึงด้วย user_id ก่อน
-        let result = await safeFetch(listingSelectColumns.includes("user_id") ? listingSelectColumns : listingSelectColumns + ",user_id", sellerId);
+        let result = await safeFetch(storeListingSelectColumns.includes("user_id") ? storeListingSelectColumns : storeListingSelectColumns + ",user_id", sellerId);
         
         // ถ้าหาไม่เจอ หรือพัง ให้ลองดึงด้วย seller_name (Fallback สำหรับประกาศเก่า)
         if (result.error || !result.data || result.data.length === 0) {
           console.warn("Fetch by user_id failed or empty, trying seller_name fallback...");
           const fallbackName = urlName || "ผู้ขาย ROOC";
-          result = await safeFetch(legacyListingSelectColumns, fallbackName, "seller_name");
+          result = await safeFetch(storeLegacyListingSelectColumns, fallbackName, "seller_name");
         }
         
         if (result.error) {
