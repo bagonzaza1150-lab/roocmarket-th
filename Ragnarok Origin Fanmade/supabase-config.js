@@ -718,7 +718,7 @@ window.ROOC_SUPABASE = {
         enabled: settings.donate_goal_enabled !== false,
         title: settings.donate_goal_title || "Donate Goal",
         text: settings.donate_goal_text || "",
-        button: settings.donate_goal_button_label || "à¹‚à¸”à¹€à¸™à¸—",
+        button: settings.donate_goal_button_label || "โดเนท",
         url: donateGoalUrl,
         current: donateGoalCurrent,
         target: donateGoalTarget,
@@ -743,9 +743,9 @@ window.ROOC_SUPABASE = {
               <span style="width: ${escapeHtml(card.percent)}%"></span>
             </div>
             <div class="donate-goal-stats">
-              <strong>à¸¿ ${card.current.toLocaleString("th-TH")}</strong>
+              <strong>฿ ${card.current.toLocaleString("th-TH")}</strong>
               <span>${escapeHtml(card.percent)}%</span>
-              <small>à¹€à¸›à¹‰à¸² à¸¿ ${card.target.toLocaleString("th-TH")}</small>
+              <small>เป้าหมาย ฿ ${card.target.toLocaleString("th-TH")}</small>
             </div>
             ${card.url ? `<a class="btn btn-primary support-button" href="${escapeHtml(card.url)}" target="_blank" rel="noopener">${escapeHtml(card.button)}</a>` : ""}
           </article>
