@@ -158,11 +158,10 @@ window.ROOC_SUPABASE = {
   }
 
   async function fetchPublicListings(force = false) {
-    const now = encodeURIComponent(new Date().toISOString());
     try {
       return await fetchCachedJson(
         "rooc-public-listings-v3",
-        `${config.url}/rest/v1/marketplace_listings?select=${listingSelectColumns}&active=eq.true&or=(expires_at.is.null,expires_at.gte.${now})&order=created_at.desc&limit=200`,
+        `${config.url}/rest/v1/marketplace_listings?select=${listingSelectColumns}&active=eq.true&sale_status=neq.deleted&order=created_at.desc&limit=200`,
         listingCacheMs,
         force
       );
@@ -171,7 +170,7 @@ window.ROOC_SUPABASE = {
       try {
         return await fetchCachedJson(
           "rooc-public-listings-v3-no-fb",
-          `${config.url}/rest/v1/marketplace_listings?select=${noFacebookListingSelectColumns}&active=eq.true&or=(expires_at.is.null,expires_at.gte.${now})&order=created_at.desc&limit=200`,
+          `${config.url}/rest/v1/marketplace_listings?select=${noFacebookListingSelectColumns}&active=eq.true&sale_status=neq.deleted&order=created_at.desc&limit=200`,
           listingCacheMs,
           force
         );
@@ -179,7 +178,7 @@ window.ROOC_SUPABASE = {
         console.warn("ROOC listing_type/offers columns not ready, using legacy listing query:", legacyError);
         return fetchCachedJson(
           "rooc-public-listings-legacy-v1",
-          `${config.url}/rest/v1/marketplace_listings?select=${storeLegacyListingSelectColumns}&active=eq.true&or=(expires_at.is.null,expires_at.gte.${now})&order=created_at.desc&limit=200`,
+          `${config.url}/rest/v1/marketplace_listings?select=${storeLegacyListingSelectColumns}&active=eq.true&sale_status=neq.deleted&order=created_at.desc&limit=200`,
           listingCacheMs,
           force
         );
@@ -1204,6 +1203,7 @@ window.ROOC_SUPABASE = {
               .from("marketplace_listings")
               .select(columns)
               .eq(idColumn, idValue)
+              .neq("sale_status", "deleted")
               .order("created_at", { ascending: false });
             return { data, error };
           } catch (e) {
