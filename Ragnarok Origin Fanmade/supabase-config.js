@@ -1152,16 +1152,22 @@ window.ROOC_SUPABASE = {
       try {
         console.log("Fetching store for user_id:", sellerId);
         
-        // ลองดึงข้อมูลด้วย listingSelectColumns
+        // ตรวจสอบว่าคอลัมน์ user_id มีอยู่ใน listingSelectColumns หรือยัง
+        const columnsToSelect = listingSelectColumns.includes("user_id") 
+          ? listingSelectColumns 
+          : listingSelectColumns + ",user_id";
+
+        console.log("Selecting columns:", columnsToSelect);
+
         let { data, error } = await supabaseClient
           .from("marketplace_listings")
-          .select(listingSelectColumns)
+          .select(columnsToSelect)
           .eq("user_id", sellerId)
           .order("created_at", { ascending: false });
 
-        // ถ้าพัง (อาจเพราะคอลัมน์ใหม่ๆ) ให้ลองใช้ legacy columns
+        // ถ้าพัง ให้ลองใช้ legacy columns
         if (error) {
-          console.warn("Failed with full columns, trying legacy...", error);
+          console.warn("Failed with primary columns, trying legacy...", error);
           const legacyResult = await supabaseClient
             .from("marketplace_listings")
             .select(legacyListingSelectColumns + ",user_id")
