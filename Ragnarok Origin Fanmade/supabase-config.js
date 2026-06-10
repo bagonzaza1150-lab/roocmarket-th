@@ -587,7 +587,7 @@ window.ROOC_SUPABASE = {
           </div>`}
           <div class="listing-seller">
             <img src="${escapeHtml(sellerAvatar)}" alt="" loading="lazy" decoding="async" />
-            <a href="store.html?id=${encodeURIComponent(discordId || contact)}" class="seller-store-link" title="ไปที่หน้าร้านค้า" onclick="event.stopPropagation();">
+            <a href="store.html?id=${encodeURIComponent(listing.user_id)}" class="seller-store-link" title="ไปที่หน้าร้านค้า" onclick="event.stopPropagation();">
               <span>${escapeHtml(sellerName)}</span>
             </a>
             ${listing.seller_is_premium ? '<strong title="Premium">♛</strong>' : ""}
@@ -1137,7 +1137,6 @@ window.ROOC_SUPABASE = {
         grid.querySelectorAll(".contact-seller-button").forEach(btn => {
           btn.addEventListener("click", () => {
             const data = btn.dataset;
-            // ผูกกับ Logic ของหน้า index.html
             const modal = document.querySelector("#sellerContactModal");
             if (modal) {
               document.querySelector("#sellerContactTitle").textContent = "ติดต่อผู้ขาย";
@@ -1153,7 +1152,7 @@ window.ROOC_SUPABASE = {
         const { data, error } = await supabaseClient
           .from("marketplace_listings")
           .select(listingSelectColumns)
-          .or(`seller_discord_id.eq.${sellerId},contact.eq.${sellerId}`)
+          .eq("user_id", sellerId)
           .order("created_at", { ascending: false });
 
         if (error) throw error;
@@ -1194,6 +1193,13 @@ window.ROOC_SUPABASE = {
       document.querySelector("#storeSortFilter")?.addEventListener("change", (e) => {
         currentSort = e.target.value;
         renderStoreGrid();
+      });
+
+      document.querySelectorAll("[data-close-contact]").forEach(el => {
+        el.addEventListener("click", () => {
+          const modal = document.querySelector("#sellerContactModal");
+          if (modal) modal.hidden = true;
+        });
       });
     }
   };
