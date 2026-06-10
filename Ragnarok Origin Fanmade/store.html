@@ -122,21 +122,18 @@
     </footer>
 
     <script>
-      // Modal elements
-      const sellerContactModal = document.querySelector("#sellerContactModal");
-      const sellerContactItem = document.querySelector("#sellerContactItem");
-      const sellerContactValue = document.querySelector("#sellerContactValue");
-      const sellerContactLink = document.querySelector("#sellerContactLink");
-      const sellerContactCopy = document.querySelector("#sellerContactCopy");
-      const sellerContactNote = document.querySelector("#sellerContactNote");
-      const offerForm = document.querySelector("#offerForm");
-      const offerListingId = document.querySelector("#offerListingId");
-      const offerPrice = document.querySelector("#offerPrice");
-      const offerMessage = document.querySelector("#offerMessage");
-      const offerMessageText = document.querySelector("#offerMessageText");
       let activeSellerName = "";
 
       function openSellerContact(title, contact, profileUrlOverride = "", sellerName = "", discordIdOverride = "") {
+        const sellerContactModal = document.querySelector("#sellerContactModal");
+        const sellerContactItem = document.querySelector("#sellerContactItem");
+        const sellerContactValue = document.querySelector("#sellerContactValue");
+        const sellerContactLink = document.querySelector("#sellerContactLink");
+        const sellerContactCopy = document.querySelector("#sellerContactCopy");
+        const sellerContactNote = document.querySelector("#sellerContactNote");
+        const offerForm = document.querySelector("#offerForm");
+        const offerMessageText = document.querySelector("#offerMessageText");
+
         if (!sellerContactModal || !sellerContactItem || !sellerContactValue || !sellerContactLink || !sellerContactCopy) return;
         
         const app = window.ROOC_APP;
@@ -167,6 +164,12 @@
       }
 
       function openOfferForm(listingId, title, price) {
+        const offerForm = document.querySelector("#offerForm");
+        const offerListingId = document.querySelector("#offerListingId");
+        const offerPrice = document.querySelector("#offerPrice");
+        const offerMessage = document.querySelector("#offerMessage");
+        const offerMessageText = document.querySelector("#offerMessageText");
+
         openSellerContact(title, "", "", "", "");
         if (!offerForm || !offerListingId || !offerPrice || !offerMessageText) return;
         offerListingId.value = listingId || "";
@@ -180,7 +183,13 @@
         event.preventDefault();
         const app = window.ROOC_APP;
         const supabase = app?.getSupabaseClient?.();
-        if (!supabase) return;
+        const offerForm = document.querySelector("#offerForm");
+        const offerListingId = document.querySelector("#offerListingId");
+        const offerPrice = document.querySelector("#offerPrice");
+        const offerMessage = document.querySelector("#offerMessage");
+        const offerMessageText = document.querySelector("#offerMessageText");
+
+        if (!supabase || !offerForm) return;
 
         const { data } = await supabase.auth.getSession();
         if (!data.session) {
@@ -197,7 +206,10 @@
           return;
         }
 
-        if (offerMessageText) offerMessageText.textContent = "กำลังส่งราคาเสนอ...";
+        if (offerMessageText) {
+          offerMessageText.textContent = "กำลังส่งราคาเสนอ...";
+          offerMessageText.classList.remove("is-error");
+        }
         
         const { error } = await supabase
           .from("marketplace_listing_offers")
@@ -261,7 +273,11 @@
         }
       });
 
-      offerForm?.addEventListener("submit", submitOffer);
+      document.addEventListener("submit", (event) => {
+        if (event.target.id === "offerForm") {
+          submitOffer(event);
+        }
+      });
 
       // เรียกใช้ initStorePage เมื่อหน้าโหลดเสร็จ
       window.addEventListener("DOMContentLoaded", () => {
