@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/site-icons/rooc-icon-180.png" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20260610-store"></script>
+    <script src="supabase-config.js?v=20260610-v2"></script>
   </head>
   <body>
     <header class="site-header">
@@ -58,7 +58,6 @@
             <div class="store-info">
               <div class="store-name-row">
                 <h1 id="storeName">กำลังโหลด...</h1>
-
               </div>
               <p class="store-tagline"></p>
               <div class="store-socials">
@@ -66,7 +65,6 @@
                   <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.04c-5.5 0-10 4.49-10 10.02 0 5 3.66 9.15 8.44 9.9v-7h-2.54v-2.9h2.54v-2.2c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.23.19 2.23.19v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.9h-2.33v7a10 10 0 0 0 8.44-9.9c0-5.53-4.5-10.02-10-10.02z"/></svg>
                   Facebook
                 </a>
-                <!-- Discord Button Removed -->
               </div>
             </div>
           </div>
@@ -79,7 +77,6 @@
               <span class="stat-value" id="storeSoldItems">0</span>
               <span class="stat-label">ขายออกแล้ว</span>
             </div>
-
           </div>
         </div>
       </section>
@@ -124,7 +121,7 @@
       </div>
     </footer>
 
-    <!-- Contact Modal (Same as index.html) -->
+    <!-- Contact Modal -->
     <div class="contact-modal" id="sellerContactModal" hidden>
       <div class="contact-modal-backdrop" data-close-contact></div>
       <section class="contact-modal-card" role="dialog" aria-modal="true" aria-labelledby="sellerContactTitle">
@@ -139,50 +136,10 @@
           <span>Discord / ช่องทางติดต่อ</span>
           <div class="seller-name-row">
             <strong id="sellerContactValue">-</strong>
-            <button class="seller-copy-button" id="sellerContactCopy" type="button" hidden>
-              <svg viewBox="0 0 24 24"><path d="M8 8V6.2C8 5 9 4 10.2 4h7.6C19 4 20 5 20 6.2v7.6C20 15 19 16 17.8 16H16"/><path d="M4 10.2C4 9 5 8 6.2 8h7.6C15 8 16 9 16 10.2v7.6C16 19 15 20 13.8 20H6.2C5 20 4 19 4 17.8v-7.6Z"/></svg>
-            </button>
           </div>
         </div>
-        <p id="sellerContactNote">กดคัดลอกชื่อ Discord ไปค้นหาใน DM เพื่อติดต่อผู้ขาย</p>
+        <p id="sellerContactNote">ใช้ข้อมูลด้านบนเพื่อติดต่อผู้ขายโดยตรง</p>
       </section>
     </div>
-
-    <script>
-      // Initialize Store Page Logic
-      document.addEventListener('DOMContentLoaded', async () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const sellerId = urlParams.get('id');
-
-        if (!sellerId) {
-          window.location.href = 'index.html';
-          return;
-        }
-
-        // Initialize Supabase Config and Store Logic
-        if (window.ROOC_APP) {
-          const app = window.ROOC_APP;
-          
-          // Theme Toggle
-          const themeToggle = document.getElementById('themeToggle');
-          const savedTheme = localStorage.getItem('theme') || 'light';
-          document.documentElement.setAttribute('data-theme', savedTheme);
-          themeToggle.checked = savedTheme === 'dark';
-
-          themeToggle.addEventListener('change', () => {
-            const theme = themeToggle.checked ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme);
-          });
-
-          // Load Store Data
-          try {
-            await app.initStorePage(sellerId);
-          } catch (error) {
-            console.error('Failed to load store:', error);
-          }
-        }
-      });
-    </script>
   </body>
 </html>
