@@ -122,22 +122,154 @@
     </footer>
 
     <script>
-      // เรียกใช้ initStorePage เมื่อหน้าโหลดเสร็จ
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", () => {
-          const urlParams = new URLSearchParams(window.location.search);
-          const sellerId = urlParams.get("id");
-          if (window.ROOC_APP?.initStorePage && sellerId) {
-            window.ROOC_APP.initStorePage(sellerId);
+      // Modal elements
+      const sellerContactModal = document.querySelector("#sellerContactModal");
+      const sellerContactItem = document.querySelector("#sellerContactItem");
+      const sellerContactValue = document.querySelector("#sellerContactValue");
+      const sellerContactLink = document.querySelector("#sellerContactLink");
+      const sellerContactCopy = document.querySelector("#sellerContactCopy");
+      const sellerContactNote = document.querySelector("#sellerContactNote");
+      const offerForm = document.querySelector("#offerForm");
+      const offerListingId = document.querySelector("#offerListingId");
+      const offerPrice = document.querySelector("#offerPrice");
+      const offerMessage = document.querySelector("#offerMessage");
+      const offerMessageText = document.querySelector("#offerMessageText");
+      let activeSellerName = "";
+
+      function openSellerContact(title, contact, profileUrlOverride = "", sellerName = "", discordIdOverride = "") {
+        if (!sellerContactModal || !sellerContactItem || !sellerContactValue || !sellerContactLink || !sellerContactCopy) return;
+        
+        const app = window.ROOC_APP;
+        const discordId = String(discordIdOverride || (app?.getDiscordIdFromContact ? app.getDiscordIdFromContact(profileUrlOverride || contact) : "")).trim();
+        const profileUrl = profileUrlOverride || (discordId ? `https://discord.com/users/${discordId}` : "") || (app?.getContactProfileUrl ? app.getContactProfileUrl(contact) : "");
+        
+        activeSellerName = sellerName || "";
+        sellerContactItem.textContent = title || "ประกาศขาย";
+        sellerContactValue.textContent = sellerName
+          ? sellerName
+          : profileUrl
+          ? "กดปุ่มด้านบนเพื่อไปหน้าโปรไฟล์ผู้ขาย"
+          : (contact || "ผู้ขายยังไม่ได้ระบุช่องทางติดต่อ");
+        
+        sellerContactLink.hidden = !profileUrl;
+        sellerContactLink.href = profileUrl || "#";
+        sellerContactCopy.hidden = !sellerName;
+        sellerContactCopy.classList.remove("is-copied");
+        
+        if (offerForm) offerForm.hidden = true;
+        if (offerMessageText) offerMessageText.textContent = "";
+        if (sellerContactNote) {
+          sellerContactNote.textContent = "กดเปิดโปรไฟล์เพื่อแอดเพื่อน หรือคัดลอกชื่อ Discord ไปค้นหาใน DM";
+        }
+        
+        sellerContactModal.hidden = false;
+        document.body.classList.add("modal-open");
+      }
+
+      function openOfferForm(listingId, title, price) {
+        openSellerContact(title, "", "", "", "");
+        if (!offerForm || !offerListingId || !offerPrice || !offerMessageText) return;
+        offerListingId.value = listingId || "";
+        offerPrice.value = price ? (window.ROOC_APP?.parsePrice ? window.ROOC_APP.parsePrice(price) : price) : "";
+        offerMessage.value = "";
+        offerMessageText.textContent = "";
+        offerForm.hidden = false;
+      }
+
+      async function submitOffer(event) {
+        event.preventDefault();
+        const app = window.ROOC_APP;
+        const supabase = app?.getSupabaseClient?.();
+        if (!supabase) return;
+
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          window.location.href = `login.html?redirect=${encodeURIComponent(`store.html${window.location.search}`)}`;
+          return;
+        }
+
+        const priceText = String(offerPrice?.value || "").replace(/,/g, "");
+        if (!priceText) {
+          if (offerMessageText) {
+            offerMessageText.textContent = "กรุณาใส่ราคาเสนอ";
+            offerMessageText.classList.add("is-error");
           }
-        });
-      } else {
-        const urlParams = new URLSearchParams(window.location.search);
-        const sellerId = urlParams.get("id");
+          return;
+        }
+
+        if (offerMessageText) offerMessageText.textContent = "กำลังส่งราคาเสนอ...";
+        
+        const { error } = await supabase
+          .from("marketplace_listing_offers")
+          .insert({
+            listing_id: offerListingId.value,
+            buyer_user_id: data.session.user.id,
+            buyer_display_name: app.getDiscordDisplayName(data.session),
+            buyer_avatar_url: app.getDiscordAvatarUrl(data.session),
+            offer_price_text: priceText,
+            message: offerMessage?.value.trim() || ""
+          });
+
+        if (error) {
+          if (offerMessageText) {
+            offerMessageText.textContent = error.message;
+            offerMessageText.classList.add("is-error");
+          }
+          return;
+        }
+
+        if (offerMessageText) {
+          offerMessageText.textContent = "ส่งราคาเสนอแล้ว เจ้าของประกาศจะเห็นใน Mailbox";
+          offerMessageText.classList.remove("is-error");
+        }
+        offerForm.reset();
+      }
+
+      // Event Listeners
+      document.addEventListener("click", (event) => {
+        const contactButton = event.target.closest(".contact-seller-button");
+        if (contactButton) {
+          openSellerContact(
+            contactButton.dataset.title,
+            contactButton.dataset.contact,
+            contactButton.dataset.profileUrl,
+            contactButton.dataset.sellerName,
+            contactButton.dataset.discordId
+          );
+          return;
+        }
+
+        const offerButton = event.target.closest(".offer-button");
+        if (offerButton) {
+          openOfferForm(
+            offerButton.dataset.offerListingId,
+            offerButton.dataset.offerTitle,
+            offerButton.dataset.offerPrice
+          );
+          return;
+        }
+
+        if (event.target.closest("#sellerContactCopy") && activeSellerName) {
+          navigator.clipboard?.writeText(activeSellerName);
+          sellerContactCopy.classList.add("is-copied");
+          return;
+        }
+
+        if (event.target.closest("[data-close-contact]")) {
+          if (sellerContactModal) sellerContactModal.hidden = true;
+          document.body.classList.remove("modal-open");
+        }
+      });
+
+      offerForm?.addEventListener("submit", submitOffer);
+
+      // เรียกใช้ initStorePage เมื่อหน้าโหลดเสร็จ
+      window.addEventListener("DOMContentLoaded", () => {
+        const sellerId = new URLSearchParams(window.location.search).get("id");
         if (window.ROOC_APP?.initStorePage && sellerId) {
           window.ROOC_APP.initStorePage(sellerId);
         }
-      }
+      });
     </script>
 
     <!-- Contact Modal -->
@@ -155,9 +287,29 @@
           <span>Discord / ช่องทางติดต่อ</span>
           <div class="seller-name-row">
             <strong id="sellerContactValue">-</strong>
+            <button class="seller-copy-button" id="sellerContactCopy" type="button" hidden aria-label="คัดลอกชื่อ Discord" title="คัดลอกชื่อ Discord">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 8V6.2C8 5 9 4 10.2 4h7.6C19 4 20 5 20 6.2v7.6C20 15 19 16 17.8 16H16" />
+                <path d="M4 10.2C4 9 5 8 6.2 8h7.6C15 8 16 9 16 10.2v7.6C16 19 15 20 13.8 20H6.2C5 20 4 19 4 17.8v-7.6Z" />
+              </svg>
+            </button>
           </div>
+          <a class="seller-profile-button" id="sellerContactLink" href="#" target="_blank" rel="noopener" hidden>เปิดโปรไฟล์ผู้ขาย</a>
         </div>
-        <p id="sellerContactNote">ใช้ข้อมูลด้านบนเพื่อติดต่อผู้ขายโดยตรง</p>
+        <p id="sellerContactNote">กดเปิดโปรไฟล์เพื่อแอดเพื่อน หรือคัดลอกชื่อ Discord ไปค้นหาใน DM</p>
+        <form class="offer-form" id="offerForm" hidden>
+          <input id="offerListingId" type="hidden" />
+          <label>
+            <span>ราคาเสนอ</span>
+            <input id="offerPrice" type="text" inputmode="numeric" placeholder="เช่น 3,500" />
+          </label>
+          <label>
+            <span>ข้อความถึงเจ้าของประกาศ</span>
+            <textarea id="offerMessage" rows="3" placeholder="รายละเอียดเพิ่มเติม เช่น นัดเวลาเทรด หรือต่อรองได้"></textarea>
+          </label>
+          <button class="btn btn-primary" type="submit">ส่งราคาเสนอ</button>
+          <p class="post-message" id="offerMessageText"></p>
+        </form>
       </section>
     </div>
   </body>

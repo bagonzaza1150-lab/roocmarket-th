@@ -1075,6 +1075,8 @@ window.ROOC_SUPABASE = {
     getListingImages,
     getListingProfileUrl,
     getListingDiscordId,
+    getDiscordIdFromContact,
+    getContactProfileUrl,
     parsePrice,
     formatListingPrice,
     getDescriptionParts,
@@ -1120,6 +1122,7 @@ window.ROOC_SUPABASE = {
         "contact",
         "description",
         "middleman",
+        "offers_enabled",
         "ready_today",
         "facebook_url",
         "active",
@@ -1173,26 +1176,16 @@ window.ROOC_SUPABASE = {
               <p class="listing-description">${escapeHtml(descriptionParts.shortText)}</p>
               <div class="price-row">
                 <strong>฿ ${formatListingPrice(listing.price_text)}</strong>
-                <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">ติดต่อ</button>
+                <span class="listing-card-actions">
+                  ${listing.offers_enabled ? `<button class="btn btn-small btn-light offer-button" type="button" data-offer-listing-id="${escapeHtml(listing.id)}" data-offer-title="${escapeHtml(title)}" data-offer-price="${escapeHtml(listing.price_text)}">เสนอราคา</button>` : ""}
+                  <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">ติดต่อ</button>
+                </span>
               </div>
             </article>
           `;
         }).join("");
         
         emptyState.hidden = filtered.length > 0;
-        
-        grid.querySelectorAll(".contact-seller-button").forEach(btn => {
-          btn.addEventListener("click", () => {
-            const data = btn.dataset;
-            const modal = document.querySelector("#sellerContactModal");
-            if (modal) {
-              document.querySelector("#sellerContactTitle").textContent = "ติดต่อผู้ขาย";
-              document.querySelector("#sellerContactItem").textContent = data.title;
-              document.querySelector("#sellerContactValue").textContent = data.discordId || data.contact;
-              modal.hidden = false;
-            }
-          });
-        });
       };
 
       try {
