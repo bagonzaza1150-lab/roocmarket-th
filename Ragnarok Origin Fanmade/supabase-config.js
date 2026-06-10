@@ -19,6 +19,7 @@ window.ROOC_SUPABASE = {
   const soldListingCacheMs = 120000;
   const listingSelectColumns = [
     "id",
+    "user_id",
     "listing_type",
     "category",
     "item_name",
@@ -1149,14 +1150,31 @@ window.ROOC_SUPABASE = {
       };
 
       try {
-        const { data, error } = await supabaseClient
+        console.log("Fetching store for user_id:", sellerId);
+        
+        // ลองดึงข้อมูลด้วย listingSelectColumns
+        let { data, error } = await supabaseClient
           .from("marketplace_listings")
           .select(listingSelectColumns)
           .eq("user_id", sellerId)
           .order("created_at", { ascending: false });
 
+        // ถ้าพัง (อาจเพราะคอลัมน์ใหม่ๆ) ให้ลองใช้ legacy columns
+        if (error) {
+          console.warn("Failed with full columns, trying legacy...", error);
+          const legacyResult = await supabaseClient
+            .from("marketplace_listings")
+            .select(legacyListingSelectColumns + ",user_id")
+            .eq("user_id", sellerId)
+            .order("created_at", { ascending: false });
+          
+          data = legacyResult.data;
+          error = legacyResult.error;
+        }
+
         if (error) throw error;
         storeListings = data || [];
+        console.log("Store listings found:", storeListings.length);
         
         if (storeListings.length > 0) {
           const seller = storeListings[0];
