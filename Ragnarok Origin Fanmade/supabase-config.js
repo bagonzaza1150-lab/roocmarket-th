@@ -822,23 +822,22 @@ window.ROOC_SUPABASE = {
     `).join('');
 
     sponsor.innerHTML = `
-      <article class="hero-sponsor-card">
-        ${slidesHtml}
-        <div class="hero-sponsor-content">
-          ${title ? `<h2>${escapeHtml(title)}</h2>` : ""}
-          ${text ? `<span>${escapeHtml(text)}</span>` : ""}
-          <a id="heroSponsorActionBtn" class="btn btn-primary" href="${escapeHtml(ads[0].link || "#")}" target="_blank" rel="noopener" ${!ads[0].link ? 'style="display:none"' : ""}>
-            ${escapeHtml(buttonLabel)}
-          </a>
-        </div>
-      </article>
+      <a id="heroSponsorLink" href="${escapeHtml(ads[0].link || "#")}" target="_blank" rel="noopener" class="hero-sponsor-wrapper" ${!ads[0].link ? 'style="pointer-events:none"' : ""}>
+        <article class="hero-sponsor-card">
+          ${slidesHtml}
+          <div class="hero-sponsor-content">
+            ${title ? `<h2>${escapeHtml(title)}</h2>` : ""}
+            ${text ? `<span>${escapeHtml(text)}</span>` : ""}
+          </div>
+        </article>
+      </a>
     `;
 
     // Setup Auto Slide if more than 1 image
     if (ads.length > 1) {
       let currentSlide = 0;
       const slides = sponsor.querySelectorAll(".sponsor-slide");
-      const actionBtn = sponsor.querySelector("#heroSponsorActionBtn");
+      const sponsorLink = sponsor.querySelector("#heroSponsorLink");
       
       sponsorInterval = setInterval(() => {
         slides[currentSlide].classList.remove("is-active");
@@ -846,13 +845,14 @@ window.ROOC_SUPABASE = {
         slides[currentSlide].classList.add("is-active");
         
         // Update link for current slide
-        if (actionBtn) {
+        if (sponsorLink) {
           const currentAd = ads[currentSlide];
           if (currentAd.link && String(currentAd.link).trim() !== "") {
-            actionBtn.href = currentAd.link;
-            actionBtn.style.display = "inline-flex";
+            sponsorLink.href = currentAd.link;
+            sponsorLink.style.pointerEvents = "auto";
           } else {
-            actionBtn.style.display = "none";
+            sponsorLink.href = "#";
+            sponsorLink.style.pointerEvents = "none";
           }
         }
       }, 3000); // 3 seconds per slide
