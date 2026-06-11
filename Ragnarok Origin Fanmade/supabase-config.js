@@ -826,7 +826,6 @@ window.ROOC_SUPABASE = {
       <article class="hero-sponsor-card">
         ${slidesHtml}
         <div class="hero-sponsor-content">
-          <p>Sponsored</p>
           ${title ? `<h2>${escapeHtml(title)}</h2>` : ""}
           ${text ? `<span>${escapeHtml(text)}</span>` : ""}
           ${buttonUrl ? `<a class="btn btn-primary" href="${escapeHtml(buttonUrl)}" target="_blank" rel="noopener">${escapeHtml(buttonLabel || "ดูรายละเอียด")}</a>` : ""}
