@@ -2962,10 +2962,20 @@ h1 {
 }
 
 .admin-workspace {
+  display: block;
+}
+
+.admin-grid-layout {
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(380px, 1.05fr);
   gap: 12px;
   align-items: start;
+}
+
+@media (max-width: 992px) {
+  .admin-grid-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 .admin-column {

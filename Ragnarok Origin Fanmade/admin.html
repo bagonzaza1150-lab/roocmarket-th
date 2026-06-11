@@ -133,163 +133,173 @@
 
         <!-- Items Tab -->
         <div class="admin-tab-content" data-tab-content="items">
-        <form class="admin-editor" id="itemForm">
-          <div class="form-block-head">
-            <span id="editorMode">+</span>
-            <div>
-              <h2 id="editorTitle">เพิ่มไอเท็มใหม่</h2>
-              <p>รูปที่อัปโหลดจะถูกใช้เป็นรูปอัตโนมัติในหน้า `ลงประกาศ`</p>
+          <div class="admin-grid-layout">
+            <div class="admin-column">
+              <form class="admin-editor" id="itemForm">
+                <div class="form-block-head">
+                  <span id="editorMode">+</span>
+                  <div>
+                    <h2 id="editorTitle">เพิ่มไอเท็มใหม่</h2>
+                    <p>รูปที่อัปโหลดจะถูกใช้เป็นรูปอัตโนมัติในหน้า `ลงประกาศ`</p>
+                  </div>
+                </div>
+
+                <input id="itemId" type="hidden" />
+                <input id="existingImageUrl" type="hidden" />
+                <input id="existingImagePath" type="hidden" />
+
+                <div class="post-grid">
+                  <label class="post-field">
+                    <span>หมวดหมู่</span>
+                    <select id="itemCategory" required>
+                      <option value="mvp">MVP Cards</option>
+                      <option value="accessories">Accessories</option>
+                      <option value="fashion">Fashion</option>
+                    </select>
+                  </label>
+                  <label class="post-field">
+                    <span>ชื่อไอเท็ม</span>
+                    <input id="itemName" type="text" placeholder="เช่น Maya Card" required />
+                  </label>
+                  <label class="post-field">
+                    <span>ราคาแนะนำ</span>
+                    <input id="itemPrice" type="text" placeholder="3,800" />
+                  </label>
+                  <label class="post-field">
+                    <span>ลำดับแสดงผล</span>
+                    <input id="itemSortOrder" type="number" value="0" />
+                  </label>
+                </div>
+
+                <label class="post-field">
+                  <span>รายละเอียดเริ่มต้น</span>
+                  <textarea id="itemDescription" rows="4" placeholder="ข้อความเริ่มต้นที่จะเติมในหน้าโพสต์ประกาศ"></textarea>
+                </label>
+
+                <div class="admin-upload-row">
+                  <label class="upload-drop" for="itemImage">
+                    <input id="itemImage" type="file" accept="image/*" />
+                    <span>อัปโหลดรูปไอเท็ม</span>
+                    <small>PNG, JPG หรือ WebP</small>
+                  </label>
+                  <div class="auto-image-box admin-image-preview">
+                    <img id="itemImagePreview" src="assets/category-icons/mvp-c.png" alt="" />
+                    <small>ตัวอย่างรูป</small>
+                  </div>
+                </div>
+
+                <div class="post-checks">
+                  <label><input id="itemActive" type="checkbox" checked /> เปิดใช้งาน</label>
+                </div>
+
+                <div class="post-actions">
+                  <button class="btn btn-light" id="resetFormButton" type="button">ล้างฟอร์ม</button>
+                  <button class="btn btn-primary" type="submit">บันทึกไอเท็ม</button>
+                </div>
+                <p class="admin-message" id="editorMessage"></p>
+              </form>
+            </div>
+
+            <div class="admin-column">
+              <section class="admin-list-panel item-admin-panel">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Items</p>
+                    <h2>รายการไอเท็ม</h2>
+                  </div>
+                  <select id="adminCategoryFilter" aria-label="กรองหมวด">
+                    <option value="all">ทั้งหมด</option>
+                    <option value="mvp">MVP Cards</option>
+                    <option value="accessories">Accessories</option>
+                    <option value="fashion">Fashion</option>
+                  </select>
+                </div>
+                <div class="admin-items" id="adminItems"></div>
+                <div class="admin-pagination" id="adminItemsPagination"></div>
+              </section>
             </div>
           </div>
-
-          <input id="itemId" type="hidden" />
-          <input id="existingImageUrl" type="hidden" />
-          <input id="existingImagePath" type="hidden" />
-
-          <div class="post-grid">
-            <label class="post-field">
-              <span>หมวดหมู่</span>
-              <select id="itemCategory" required>
-                <option value="mvp">MVP Cards</option>
-                <option value="accessories">Accessories</option>
-                <option value="fashion">Fashion</option>
-              </select>
-            </label>
-            <label class="post-field">
-              <span>ชื่อไอเท็ม</span>
-              <input id="itemName" type="text" placeholder="เช่น Maya Card" required />
-            </label>
-            <label class="post-field">
-              <span>ราคาแนะนำ</span>
-              <input id="itemPrice" type="text" placeholder="3,800" />
-            </label>
-            <label class="post-field">
-              <span>ลำดับแสดงผล</span>
-              <input id="itemSortOrder" type="number" value="0" />
-            </label>
-          </div>
-
-          <label class="post-field">
-            <span>รายละเอียดเริ่มต้น</span>
-            <textarea id="itemDescription" rows="4" placeholder="ข้อความเริ่มต้นที่จะเติมในหน้าโพสต์ประกาศ"></textarea>
-          </label>
-
-          <div class="admin-upload-row">
-            <label class="upload-drop" for="itemImage">
-              <input id="itemImage" type="file" accept="image/*" />
-              <span>อัปโหลดรูปไอเท็ม</span>
-              <small>PNG, JPG หรือ WebP</small>
-            </label>
-            <div class="auto-image-box admin-image-preview">
-              <img id="itemImagePreview" src="assets/category-icons/mvp-c.png" alt="" />
-              <small>ตัวอย่างรูป</small>
-            </div>
-          </div>
-
-          <div class="post-checks">
-            <label><input id="itemActive" type="checkbox" checked /> เปิดใช้งาน</label>
-          </div>
-
-          <div class="post-actions">
-            <button class="btn btn-light" id="resetFormButton" type="button">ล้างฟอร์ม</button>
-            <button class="btn btn-primary" type="submit">บันทึกไอเท็ม</button>
-          </div>
-          <p class="admin-message" id="editorMessage"></p>
-        </form>
-
-        <section class="admin-list-panel item-admin-panel">
-          <div class="section-head">
-            <div>
-              <p class="eyebrow">Items</p>
-              <h2>รายการไอเท็ม</h2>
-            </div>
-            <select id="adminCategoryFilter" aria-label="กรองหมวด">
-              <option value="all">ทั้งหมด</option>
-              <option value="mvp">MVP Cards</option>
-              <option value="accessories">Accessories</option>
-              <option value="fashion">Fashion</option>
-            </select>
-          </div>
-          <div class="admin-items" id="adminItems"></div>
-          <div class="admin-pagination" id="adminItemsPagination"></div>
-        </section>
         </div>
 
         <!-- Servers Tab -->
         <div class="admin-tab-content" data-tab-content="servers">
-        <section class="admin-list-panel server-admin-panel">
-          <div class="section-head">
-            <div>
-              <p class="eyebrow">Servers</p>
-              <h2>จัดการรายชื่อ Server</h2>
+          <div class="admin-grid-layout">
+            <div class="admin-column">
+              <section class="admin-list-panel server-admin-panel">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Servers</p>
+                    <h2>จัดการรายชื่อ Server</h2>
+                  </div>
+                </div>
+
+                <form class="server-admin-form" id="serverForm">
+                  <input id="serverId" type="hidden" />
+                  <div class="post-grid">
+                    <label class="post-field">
+                      <span>ชื่อ Server</span>
+                      <input id="serverName" type="text" placeholder="เช่น Prontera 1" required />
+                    </label>
+                    <label class="post-field">
+                      <span>ลำดับแสดงผล</span>
+                      <input id="serverSortOrder" type="number" value="0" />
+                    </label>
+                  </div>
+                  <div class="post-checks">
+                    <label><input id="serverActive" type="checkbox" checked /> เปิดใช้งาน</label>
+                  </div>
+                  <div class="post-actions">
+                    <button class="btn btn-light" id="serverResetButton" type="button">ล้างฟอร์ม</button>
+                    <button class="btn btn-primary" type="submit">บันทึก Server</button>
+                  </div>
+                  <p class="admin-message" id="serverMessage"></p>
+                </form>
+
+                <div class="admin-items server-list" id="adminServers"></div>
+                <div class="admin-pagination" id="adminServersPagination"></div>
+              </section>
+            </div>
+
+            <div class="admin-column">
+              <section class="admin-list-panel dungeon-admin-panel">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Dungeons</p>
+                    <h2>จัดการลิสต์ดัน</h2>
+                  </div>
+                </div>
+
+                <form class="server-admin-form" id="dungeonForm">
+                  <input id="dungeonId" type="hidden" />
+                  <div class="post-grid">
+                    <label class="post-field">
+                      <span>ชื่อดัน</span>
+                      <input id="dungeonName" type="text" placeholder="เช่น Helheim Hard" required />
+                    </label>
+                    <label class="post-field">
+                      <span>ลำดับแสดงผล</span>
+                      <input id="dungeonSortOrder" type="number" value="0" />
+                    </label>
+                  </div>
+                  <label class="post-field">
+                    <span>รายละเอียด</span>
+                    <textarea id="dungeonDescription" rows="3" placeholder="เช่น รับลงดันรายวัน / บอส / ปาร์ตี้"></textarea>
+                  </label>
+                  <div class="post-checks">
+                    <label><input id="dungeonActive" type="checkbox" checked /> เปิดใช้งาน</label>
+                  </div>
+                  <div class="post-actions">
+                    <button class="btn btn-light" id="dungeonResetButton" type="button">ล้างฟอร์ม</button>
+                    <button class="btn btn-primary" type="submit">บันทึกลิสต์ดัน</button>
+                  </div>
+                  <p class="admin-message" id="dungeonMessage"></p>
+                </form>
+
+                <div class="admin-items server-list" id="adminDungeons"></div>
+                <div class="admin-pagination" id="adminDungeonsPagination"></div>
+              </section>
             </div>
           </div>
-
-          <form class="server-admin-form" id="serverForm">
-            <input id="serverId" type="hidden" />
-            <div class="post-grid">
-              <label class="post-field">
-                <span>ชื่อ Server</span>
-                <input id="serverName" type="text" placeholder="เช่น Prontera 1" required />
-              </label>
-              <label class="post-field">
-                <span>ลำดับแสดงผล</span>
-                <input id="serverSortOrder" type="number" value="0" />
-              </label>
-            </div>
-            <div class="post-checks">
-              <label><input id="serverActive" type="checkbox" checked /> เปิดใช้งาน</label>
-            </div>
-            <div class="post-actions">
-              <button class="btn btn-light" id="serverResetButton" type="button">ล้างฟอร์ม</button>
-              <button class="btn btn-primary" type="submit">บันทึก Server</button>
-            </div>
-            <p class="admin-message" id="serverMessage"></p>
-          </form>
-
-          <div class="admin-items server-list" id="adminServers"></div>
-          <div class="admin-pagination" id="adminServersPagination"></div>
-        </section>
-        </div>
-
-        <!-- Dungeons Tab (inside Servers) -->
-        <section class="admin-list-panel dungeon-admin-panel" style="display:none;">
-          <div class="section-head">
-            <div>
-              <p class="eyebrow">Dungeons</p>
-              <h2>จัดการลิสต์ดัน</h2>
-            </div>
-          </div>
-
-          <form class="server-admin-form" id="dungeonForm">
-            <input id="dungeonId" type="hidden" />
-            <div class="post-grid">
-              <label class="post-field">
-                <span>ชื่อดัน</span>
-                <input id="dungeonName" type="text" placeholder="เช่น Helheim Hard" required />
-              </label>
-              <label class="post-field">
-                <span>ลำดับแสดงผล</span>
-                <input id="dungeonSortOrder" type="number" value="0" />
-              </label>
-            </div>
-            <label class="post-field">
-              <span>รายละเอียด</span>
-              <textarea id="dungeonDescription" rows="3" placeholder="เช่น รับลงดันรายวัน / บอส / ปาร์ตี้"></textarea>
-            </label>
-            <div class="post-checks">
-              <label><input id="dungeonActive" type="checkbox" checked /> เปิดใช้งาน</label>
-            </div>
-            <div class="post-actions">
-              <button class="btn btn-light" id="dungeonResetButton" type="button">ล้างฟอร์ม</button>
-              <button class="btn btn-primary" type="submit">บันทึกลิสต์ดัน</button>
-            </div>
-            <p class="admin-message" id="dungeonMessage"></p>
-          </form>
-
-          <div class="admin-items server-list" id="adminDungeons"></div>
-          <div class="admin-pagination" id="adminDungeonsPagination"></div>
-        </section>
         </div>
 
         <!-- Listings Tab -->
@@ -311,72 +321,86 @@
 
         <!-- Premium Tab -->
         <div class="admin-tab-content" data-tab-content="premium">
-        <section class="admin-list-panel premium-admin-panel">
-          <div class="section-head">
-            <div>
-              <p class="eyebrow">Premium</p>
-              <h2>จัดการสมาชิก Premium</h2>
+          <div class="admin-grid-layout">
+            <div class="admin-column">
+              <section class="admin-list-panel premium-admin-panel">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Premium</p>
+                    <h2>จัดการสมาชิก Premium</h2>
+                  </div>
+                </div>
+
+                <form class="premium-admin-form" id="premiumForm">
+                  <input id="premiumUserId" type="hidden" />
+                  <div class="premium-search-box">
+                    <label class="post-field">
+                      <span>ค้นหาผู้ใช้จากชื่อ Discord</span>
+                      <input id="premiumSearchInput" type="search" placeholder="พิมพ์ชื่อ Discord เช่น squidward1975" />
+                    </label>
+                    <button class="btn btn-light" id="premiumSearchButton" type="button">ค้นหา</button>
+                  </div>
+                  <div class="premium-search-results" id="premiumSearchResults"></div>
+
+                  <div class="post-grid">
+                    <label class="post-field">
+                      <span>Supabase User ID</span>
+                      <input id="premiumUserIdInput" type="text" placeholder="UUID ของผู้ใช้" required />
+                    </label>
+                    <label class="post-field">
+                      <span>Discord ID</span>
+                      <input id="premiumDiscordId" type="text" placeholder="ตัวเลข Discord ID" />
+                    </label>
+                    <label class="post-field">
+                      <span>ชื่อแสดงผล</span>
+                      <input id="premiumDisplayName" type="text" placeholder="ชื่อ Discord" />
+                    </label>
+                    <label class="post-field">
+                      <span>รูปโปรไฟล์</span>
+                      <input id="premiumAvatarUrl" type="url" placeholder="Avatar URL" />
+                    </label>
+                  </div>
+                  <label class="post-field">
+                    <span>บันทึกเพิ่มเติม</span>
+                    <textarea id="premiumNote" rows="2" placeholder="เช่น จ่ายแล้วถึงวันที่..."></textarea>
+                  </label>
+                  <div class="post-checks">
+                    <label><input id="premiumActive" type="checkbox" checked /> เปิดใช้งานสิทธิ์ Premium</label>
+                  </div>
+                  <div class="post-actions">
+                    <button class="btn btn-light" id="premiumResetButton" type="button">ล้างฟอร์ม</button>
+                    <button class="btn btn-primary" type="submit">บันทึกสิทธิ์ Premium</button>
+                  </div>
+                  <p class="admin-message" id="premiumMessage"></p>
+                </form>
+              </section>
+            </div>
+
+            <div class="admin-column">
+              <section class="admin-list-panel">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Members</p>
+                    <h2>รายการสมาชิก Premium</h2>
+                  </div>
+                </div>
+                <div class="admin-items premium-list" id="premiumUsers"></div>
+              </section>
             </div>
           </div>
-
-          <form class="premium-admin-form" id="premiumForm">
-            <input id="premiumUserId" type="hidden" />
-            <div class="premium-search-box">
-              <label class="post-field">
-                <span>ค้นหาผู้ใช้จากชื่อ Discord</span>
-                <input id="premiumSearchInput" type="search" placeholder="พิมพ์ชื่อ Discord เช่น squidward1975" />
-              </label>
-              <button class="btn btn-light" id="premiumSearchButton" type="button">ค้นหา</button>
-            </div>
-            <div class="premium-search-results" id="premiumSearchResults"></div>
-
-            <div class="post-grid">
-              <label class="post-field">
-                <span>Supabase User ID</span>
-                <input id="premiumUserIdInput" type="text" placeholder="UUID ของผู้ใช้" required />
-              </label>
-              <label class="post-field">
-                <span>Discord ID</span>
-                <input id="premiumDiscordId" type="text" placeholder="ตัวเลข Discord ID" />
-              </label>
-              <label class="post-field">
-                <span>ชื่อแสดงผล</span>
-                <input id="premiumDisplayName" type="text" placeholder="ชื่อ Discord" />
-              </label>
-              <label class="post-field">
-                <span>รูปโปรไฟล์</span>
-                <input id="premiumAvatarUrl" type="url" placeholder="Avatar URL" />
-              </label>
-            </div>
-            <label class="post-field">
-              <span>หมายเหตุ</span>
-              <input id="premiumNote" type="text" placeholder="เช่น จ่ายแล้ว / Ticket #123" />
-            </label>
-            <div class="post-checks">
-              <label><input id="premiumActive" type="checkbox" checked /> เปิดสิทธิ์ Premium</label>
-            </div>
-            <div class="post-actions">
-              <button class="btn btn-light" id="premiumResetButton" type="button">ล้างฟอร์ม</button>
-              <button class="btn btn-premium" type="submit">บันทึก Premium</button>
-            </div>
-            <p class="admin-message" id="premiumMessage"></p>
-          </form>
-
-          <div class="admin-items premium-user-list" id="premiumUsers"></div>
-        </section>
         </div>
 
         <!-- Settings Tab -->
         <div class="admin-tab-content" data-tab-content="settings">
-        <section class="admin-list-panel support-admin-panel">
-          <div class="section-head">
-            <div>
-              <p class="eyebrow">Support Bar</p>
-              <h2>ตั้งค่าโดเนทและ Middleman</h2>
+          <section class="admin-list-panel support-admin-panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Support Bar</p>
+                <h2>ตั้งค่าโดเนทและ Middleman</h2>
+              </div>
             </div>
-          </div>
 
-          <form class="support-admin-form" id="supportSettingsForm">
+            <form class="support-admin-form" id="supportSettingsForm">
             <div class="support-admin-grid">
               <div class="support-admin-card announcement-admin-card">
                 <div class="form-block-head">
@@ -579,7 +603,7 @@
             </div>
             <p class="admin-message" id="supportSettingsMessage"></p>
           </form>
-        </section>
+        </div>
       </section>
     </main>
 
@@ -726,23 +750,8 @@
       };
 
       function arrangeAdminPanels() {
-        if (adminWorkspace.dataset.arranged === "true") return;
-        const leftColumn = document.createElement("div");
-        const rightColumn = document.createElement("div");
-        leftColumn.className = "admin-column";
-        rightColumn.className = "admin-column";
-
-        const itemPanel = document.querySelector(".item-admin-panel");
-        const serverPanel = document.querySelector(".server-admin-panel");
-        const dungeonPanel = document.querySelector(".dungeon-admin-panel");
-        const listingPanel = document.querySelector(".listing-admin-panel");
-        const premiumPanel = document.querySelector(".premium-admin-panel");
-        const supportPanel = document.querySelector(".support-admin-panel");
-
-        [itemForm, serverPanel, dungeonPanel, premiumPanel].filter(Boolean).forEach((panel) => leftColumn.append(panel));
-        [itemPanel, listingPanel, supportPanel].filter(Boolean).forEach((panel) => rightColumn.append(panel));
-
-        adminWorkspace.append(leftColumn, rightColumn);
+        // ยกเลิกการจัด Column แบบ Dynamic ที่ทำให้ Layout เละเทะเมื่อเปลี่ยน Tab
+        // และให้แต่ละ Tab จัดการ Layout ภายในตัวเองแทน
         adminWorkspace.dataset.arranged = "true";
       }
 
