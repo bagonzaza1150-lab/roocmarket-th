@@ -13,6 +13,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/site-icons/rooc-icon-180.png" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <script src="supabase-config.js?v=20260609-hero-sponsor"></script>
   </head>
   <body>
@@ -125,6 +126,53 @@
                 </div>
               </div>
             </div>
+
+            <!-- Visitor Stats Section -->
+            <div class="visitor-stats-section">
+              <h2>📈 สถิติผู้เข้าชมเว็บไซต์</h2>
+
+              <div id="visitorStatsLoading" class="visitor-stats-loading">กำลังโหลดสถิติ...</div>
+
+              <div id="visitorStatsContent" hidden>
+                <!-- Summary Cards -->
+                <div class="visitor-summary-grid">
+                  <div class="visitor-stat-card is-highlight">
+                    <span class="vs-label">วันนี้ (Unique)</span>
+                    <span class="vs-value" id="vsTodayVisitors">0</span>
+                    <span class="vs-sub" id="vsTodayViews">0 pageviews</span>
+                  </div>
+                  <div class="visitor-stat-card">
+                    <span class="vs-label">เดือนนี้ (Unique)</span>
+                    <span class="vs-value" id="vsThisMonthVisitors">0</span>
+                    <span class="vs-sub" id="vsThisMonthViews">0 pageviews</span>
+                  </div>
+                  <div class="visitor-stat-card">
+                    <span class="vs-label">เดือนที่แล้ว (Unique)</span>
+                    <span class="vs-value" id="vsLastMonthVisitors">0</span>
+                    <span class="vs-sub" id="vsLastMonthViews">0 pageviews</span>
+                  </div>
+                  <div class="visitor-stat-card">
+                    <span class="vs-label">รวมทั้งหมด (Unique)</span>
+                    <span class="vs-value" id="vsTotalVisitors">0</span>
+                    <span class="vs-sub" id="vsTotalViews">0 pageviews</span>
+                  </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="visitor-chart-block">
+                  <div class="visitor-chart-tabs">
+                    <button class="visitor-chart-tab is-active" data-chart-period="daily" type="button">รายวัน (30 วัน)</button>
+                    <button class="visitor-chart-tab" data-chart-period="monthly" type="button">รายเดือน (12 เดือน)</button>
+                  </div>
+                  <div class="visitor-chart-canvas-wrap">
+                    <canvas id="visitorChart"></canvas>
+                  </div>
+                </div>
+              </div>
+
+              <p id="visitorStatsError" class="admin-message is-error" hidden></p>
+            </div>
+
             <div class="dashboard-actions">
               <button class="btn btn-primary" id="dashboardRefreshBtn" type="button">🔄 รีเฟรชข้อมูล</button>
             </div>
@@ -1913,6 +1961,215 @@
         await originalLoadPremiumUsers();
         updateDashboardStats();
       };
+
+      // =====================================================
+      // Visitor Stats Dashboard
+      // =====================================================
+
+      let visitorChart = null;
+      let visitorDailyData = [];
+      let visitorMonthlyData = [];
+      let currentChartPeriod = "daily";
+
+      function formatThaiMonth(dateStr) {
+        const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
+          "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+        const d = new Date(dateStr);
+        return months[d.getMonth()] + " " + (d.getFullYear() + 543).toString().slice(2);
+      }
+
+      function formatThaiDate(dateStr) {
+        const d = new Date(dateStr);
+        return d.getDate() + "/" + (d.getMonth() + 1);
+      }
+
+      function getChartColors(isDark) {
+        return {
+          visitors: isDark ? "rgba(85, 184, 255, 0.85)" : "rgba(23, 125, 220, 0.85)",
+          views: isDark ? "rgba(69, 214, 149, 0.65)" : "rgba(24, 166, 106, 0.65)",
+          visitorsLine: isDark ? "#55b8ff" : "#177ddc",
+          viewsLine: isDark ? "#45d695" : "#18a66a",
+          grid: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)",
+          text: isDark ? "#9fb3c8" : "#637386"
+        };
+      }
+
+      function renderVisitorChart(period) {
+        const canvas = document.getElementById("visitorChart");
+        if (!canvas) return;
+
+        const isDark = document.documentElement.dataset.theme === "dark";
+        const colors = getChartColors(isDark);
+
+        const data = period === "daily" ? visitorDailyData : visitorMonthlyData;
+        const labels = data.map((row) =>
+          period === "daily" ? formatThaiDate(row.stat_date) : formatThaiMonth(row.stat_month)
+        );
+        const visitorsData = data.map((row) => Number(row.unique_visitors || 0));
+        const viewsData = data.map((row) => Number(row.total_views || 0));
+
+        if (visitorChart) {
+          visitorChart.destroy();
+          visitorChart = null;
+        }
+
+        if (!data.length) {
+          canvas.closest(".visitor-chart-canvas-wrap").innerHTML =
+            '<div class="visitor-chart-empty">ยังไม่มีข้อมูลสถิติในช่วงนี้</div>';
+          return;
+        }
+
+        visitorChart = new Chart(canvas, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "ผู้เข้าชม (Unique)",
+                data: visitorsData,
+                backgroundColor: colors.visitors,
+                borderColor: colors.visitorsLine,
+                borderWidth: 1.5,
+                borderRadius: 6,
+                order: 2
+              },
+              {
+                label: "Pageviews",
+                data: viewsData,
+                type: "line",
+                backgroundColor: "transparent",
+                borderColor: colors.viewsLine,
+                borderWidth: 2.5,
+                pointRadius: 3,
+                pointBackgroundColor: colors.viewsLine,
+                tension: 0.35,
+                order: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+              legend: {
+                position: "top",
+                labels: {
+                  color: colors.text,
+                  font: { size: 12, weight: "700" },
+                  boxWidth: 14,
+                  padding: 16
+                }
+              },
+              tooltip: {
+                backgroundColor: isDark ? "#101b2a" : "#fff",
+                titleColor: isDark ? "#f4f9ff" : "#102033",
+                bodyColor: isDark ? "#9fb3c8" : "#637386",
+                borderColor: isDark ? "#263a50" : "#dce8ef",
+                borderWidth: 1,
+                padding: 10
+              }
+            },
+            scales: {
+              x: {
+                grid: { color: colors.grid },
+                ticks: {
+                  color: colors.text,
+                  font: { size: 11 },
+                  maxTicksLimit: period === "daily" ? 15 : 12
+                }
+              },
+              y: {
+                beginAtZero: true,
+                grid: { color: colors.grid },
+                ticks: {
+                  color: colors.text,
+                  font: { size: 11 },
+                  precision: 0
+                }
+              }
+            }
+          }
+        });
+      }
+
+      async function loadVisitorStats() {
+        const loading = document.getElementById("visitorStatsLoading");
+        const content = document.getElementById("visitorStatsContent");
+        const errorEl = document.getElementById("visitorStatsError");
+
+        loading.hidden = false;
+        content.hidden = true;
+        errorEl.hidden = true;
+
+        try {
+          // โหลด summary, daily, monthly พร้อมกัน
+          const [summaryResult, dailyResult, monthlyResult] = await Promise.all([
+            supabaseClient.rpc("get_visitor_summary"),
+            supabaseClient.rpc("get_daily_visitor_stats", { p_days: 30 }),
+            supabaseClient.rpc("get_monthly_visitor_stats", { p_months: 12 })
+          ]);
+
+          if (summaryResult.error) throw summaryResult.error;
+          if (dailyResult.error) throw dailyResult.error;
+          if (monthlyResult.error) throw monthlyResult.error;
+
+          const summary = summaryResult.data?.[0] || {};
+          visitorDailyData = dailyResult.data || [];
+          visitorMonthlyData = monthlyResult.data || [];
+
+          // อัปเดต summary cards
+          const fmt = (n) => Number(n || 0).toLocaleString("th-TH");
+          document.getElementById("vsTodayVisitors").textContent = fmt(summary.today_visitors);
+          document.getElementById("vsTodayViews").textContent = fmt(summary.today_views) + " pageviews";
+          document.getElementById("vsThisMonthVisitors").textContent = fmt(summary.this_month_visitors);
+          document.getElementById("vsThisMonthViews").textContent = fmt(summary.this_month_views) + " pageviews";
+          document.getElementById("vsLastMonthVisitors").textContent = fmt(summary.last_month_visitors);
+          document.getElementById("vsLastMonthViews").textContent = fmt(summary.last_month_views) + " pageviews";
+          document.getElementById("vsTotalVisitors").textContent = fmt(summary.total_visitors);
+          document.getElementById("vsTotalViews").textContent = fmt(summary.total_views) + " pageviews";
+
+          loading.hidden = true;
+          content.hidden = false;
+
+          // render chart
+          renderVisitorChart(currentChartPeriod);
+
+        } catch (err) {
+          loading.hidden = true;
+          errorEl.hidden = false;
+          errorEl.textContent = "โหลดสถิติไม่สำเร็จ: " + (err.message || String(err));
+          console.error("Visitor stats error:", err);
+        }
+      }
+
+      // Chart period tab switching
+      document.querySelectorAll(".visitor-chart-tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".visitor-chart-tab").forEach((t) => t.classList.remove("is-active"));
+          tab.classList.add("is-active");
+          currentChartPeriod = tab.dataset.chartPeriod;
+          renderVisitorChart(currentChartPeriod);
+        });
+      });
+
+      // โหลดสถิติเมื่อ admin เข้าสู่ระบบ
+      const originalShowApp = showApp;
+      // ใช้ wrapper ผ่าน event แทน เพราะ showApp ถูก define ก่อนหน้า
+      // โหลดสถิติเมื่อ admin workspace แสดงผล
+      const visitorObserver = new MutationObserver(() => {
+        if (!adminWorkspace.hidden) {
+          visitorObserver.disconnect();
+          loadVisitorStats();
+        }
+      });
+      visitorObserver.observe(adminWorkspace, { attributes: true, attributeFilter: ["hidden"] });
+
+      // Dashboard refresh รวม visitor stats ด้วย
+      const origDashboardRefresh = document.getElementById("dashboardRefreshBtn");
+      origDashboardRefresh?.addEventListener("click", () => {
+        loadVisitorStats();
+      }, { capture: true });
 
       window.ROOC_APP?.initTheme();
     </script>

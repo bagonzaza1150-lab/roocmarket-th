@@ -3995,3 +3995,166 @@ h1 {
     flex: 1 1 140px;
   }
 }
+
+/* =====================================================
+   Visitor Stats Section (Admin Dashboard)
+   ===================================================== */
+
+.visitor-stats-section {
+  margin-top: 32px;
+}
+
+.visitor-stats-section h2 {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0 0 16px;
+  color: var(--ink);
+}
+
+.visitor-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.visitor-stat-card {
+  border: 1px solid color-mix(in srgb, var(--blue) 28%, var(--line));
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--aqua) 30%, var(--paper));
+  padding: 16px 18px;
+  transition: all 200ms ease;
+}
+
+.visitor-stat-card:hover {
+  border-color: color-mix(in srgb, var(--blue) 58%, var(--line));
+  transform: translateY(-2px);
+}
+
+.visitor-stat-card .vs-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.visitor-stat-card .vs-value {
+  display: block;
+  font-size: 30px;
+  font-weight: 900;
+  color: var(--blue);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.visitor-stat-card .vs-sub {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.visitor-stat-card.is-highlight {
+  border-color: color-mix(in srgb, var(--green) 50%, var(--line));
+  background: color-mix(in srgb, var(--green) 8%, var(--paper));
+}
+
+.visitor-stat-card.is-highlight .vs-value {
+  color: var(--green);
+}
+
+.visitor-chart-block {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--paper);
+  padding: 20px 20px 12px;
+  margin-bottom: 20px;
+}
+
+.visitor-chart-block h3 {
+  font-size: 14px;
+  font-weight: 800;
+  margin: 0 0 16px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.visitor-chart-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.visitor-chart-tab {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: var(--paper-soft);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.visitor-chart-tab.is-active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+
+.visitor-chart-canvas-wrap {
+  position: relative;
+  height: 220px;
+}
+
+.visitor-chart-canvas-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.visitor-chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.visitor-stats-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 12px 0;
+}
+
+.visitor-stats-loading::before {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--line);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 600px) {
+  .visitor-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .visitor-chart-canvas-wrap {
+    height: 180px;
+  }
+}
