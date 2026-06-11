@@ -781,17 +781,32 @@ window.ROOC_SUPABASE = {
     sidebar.hidden = false;
   }
 
+  let sponsorInterval = null;
+
   function renderHeroSponsor(settings) {
     const sponsor = document.querySelector("#heroSponsor");
     if (!sponsor) return;
 
-    const imageUrl = String(settings.hero_sponsor_image_url || "").trim();
+    // Clear existing interval if any
+    if (sponsorInterval) {
+      clearInterval(sponsorInterval);
+      sponsorInterval = null;
+    }
+
+    // Support up to 4 images (hero_sponsor_image_url, hero_sponsor_image_url_2, etc.)
+    const images = [
+      settings.hero_sponsor_image_url,
+      settings.hero_sponsor_image_url_2,
+      settings.hero_sponsor_image_url_3,
+      settings.hero_sponsor_image_url_4
+    ].filter(url => url && String(url).trim() !== "");
+
     const title = String(settings.hero_sponsor_title || "").trim();
     const text = String(settings.hero_sponsor_text || "").trim();
     const buttonLabel = String(settings.hero_sponsor_button_label || "ดูรายละเอียด").trim();
     const buttonUrl = String(settings.hero_sponsor_button_url || "").trim();
 
-    if (!settings.hero_sponsor_enabled || !imageUrl && !title && !text) {
+    if (!settings.hero_sponsor_enabled || (images.length === 0 && !title && !text)) {
       sponsor.classList.remove("has-sponsor");
       sponsor.innerHTML = "";
       sponsor.setAttribute("aria-hidden", "true");
@@ -800,9 +815,16 @@ window.ROOC_SUPABASE = {
 
     sponsor.classList.add("has-sponsor");
     sponsor.removeAttribute("aria-hidden");
+
+    const slidesHtml = images.map((url, index) => `
+      <div class="sponsor-slide ${index === 0 ? 'is-active' : ''}">
+        <img src="${escapeHtml(url)}" alt="" loading="lazy" decoding="async" />
+      </div>
+    `).join('');
+
     sponsor.innerHTML = `
       <article class="hero-sponsor-card">
-        ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="" loading="lazy" decoding="async" />` : ""}
+        ${slidesHtml}
         <div class="hero-sponsor-content">
           <p>Sponsored</p>
           ${title ? `<h2>${escapeHtml(title)}</h2>` : ""}
@@ -811,6 +833,18 @@ window.ROOC_SUPABASE = {
         </div>
       </article>
     `;
+
+    // Setup Auto Slide if more than 1 image
+    if (images.length > 1) {
+      let currentSlide = 0;
+      const slides = sponsor.querySelectorAll(".sponsor-slide");
+      
+      sponsorInterval = setInterval(() => {
+        slides[currentSlide].classList.remove("is-active");
+        currentSlide = (currentSlide + 1) % slides.length;
+        slides[currentSlide].classList.add("is-active");
+      }, 3000); // 3 seconds per slide
+    }
   }
 
   function renderHeroAnnouncement(settings) {

@@ -613,10 +613,10 @@ h1 {
 
 .search-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 170px auto;
+  grid-template-columns: minmax(0, 1fr) 150px auto;
   gap: 12px;
   align-items: end;
-  max-width: 840px;
+  max-width: 560px;
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -769,7 +769,20 @@ h1 {
   z-index: 1;
 }
 
-.hero-sponsor-card img {
+.hero-sponsor-card .sponsor-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  z-index: 0;
+}
+
+.hero-sponsor-card .sponsor-slide.is-active {
+  opacity: 1;
+  z-index: 1;
+}
+
+.hero-sponsor-card .sponsor-slide img {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -786,13 +799,18 @@ h1 {
 
 .hero-sponsor-content {
   position: relative;
-  z-index: 2;
+  z-index: 5;
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding: 32px;
-  background: linear-gradient(to top, rgba(16, 27, 42, 0.8), transparent);
-  backdrop-filter: blur(4px);
+  background: linear-gradient(to top, rgba(16, 27, 42, 0.85) 0%, rgba(16, 27, 42, 0.4) 60%, transparent 100%);
+  backdrop-filter: blur(2px);
+  pointer-events: none;
+}
+
+.hero-sponsor-content * {
+  pointer-events: auto;
 }
 
 .hero-sponsor-content p {
