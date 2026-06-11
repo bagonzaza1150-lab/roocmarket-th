@@ -4000,99 +4000,140 @@ h1 {
    Visitor Stats Section (Admin Dashboard)
    ===================================================== */
 
+/* =====================================================
+   Visitor Stats Section (Admin Dashboard) - Improved UX
+   ===================================================== */
+
 .visitor-stats-section {
-  margin-top: 32px;
+  margin-top: 48px;
+  padding: 32px 0;
+  border-top: 1px solid var(--line);
 }
 
 .visitor-stats-section h2 {
-  font-size: 20px;
-  font-weight: 800;
-  margin: 0 0 16px;
+  font-size: 24px;
+  font-weight: 900;
+  margin: 0 0 28px;
   color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .visitor-summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 14px;
-  margin-bottom: 28px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
 }
 
 .visitor-stat-card {
-  border: 1px solid color-mix(in srgb, var(--blue) 28%, var(--line));
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--aqua) 30%, var(--paper));
-  padding: 16px 18px;
-  transition: all 200ms ease;
+  border: 2px solid color-mix(in srgb, var(--blue) 20%, var(--line));
+  border-radius: 20px;
+  background: linear-gradient(135deg, 
+    color-mix(in srgb, var(--aqua) 25%, var(--paper)) 0%,
+    color-mix(in srgb, var(--blue-2) 8%, var(--paper)) 100%);
+  padding: 24px 20px;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.visitor-stat-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--blue), var(--blue-2));
 }
 
 .visitor-stat-card:hover {
-  border-color: color-mix(in srgb, var(--blue) 58%, var(--line));
-  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--blue) 60%, var(--line));
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(23, 125, 220, 0.15);
 }
 
 .visitor-stat-card .vs-label {
   display: block;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: var(--muted);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .visitor-stat-card .vs-value {
   display: block;
-  font-size: 30px;
+  font-size: 36px;
   font-weight: 900;
   color: var(--blue);
-  line-height: 1;
-  margin-bottom: 4px;
+  line-height: 1.1;
+  margin-bottom: 6px;
 }
 
 .visitor-stat-card .vs-sub {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
+  font-weight: 600;
 }
 
 .visitor-stat-card.is-highlight {
-  border-color: color-mix(in srgb, var(--green) 50%, var(--line));
-  background: color-mix(in srgb, var(--green) 8%, var(--paper));
+  border-color: color-mix(in srgb, var(--green) 60%, var(--line));
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--green) 12%, var(--paper)) 0%,
+    color-mix(in srgb, var(--green) 4%, var(--paper)) 100%);
+}
+
+.visitor-stat-card.is-highlight::before {
+  background: linear-gradient(90deg, var(--green), #45d695);
 }
 
 .visitor-stat-card.is-highlight .vs-value {
   color: var(--green);
 }
 
+.visitor-stat-card.is-highlight:hover {
+  border-color: color-mix(in srgb, var(--green) 80%, var(--line));
+  box-shadow: 0 12px 32px rgba(24, 166, 106, 0.15);
+}
+
 .visitor-chart-block {
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: 24px;
   background: var(--paper);
-  padding: 20px 20px 12px;
-  margin-bottom: 20px;
+  padding: 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px rgba(26, 83, 124, 0.06);
 }
 
 .visitor-chart-block h3 {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
-  margin: 0 0 16px;
+  margin: 0 0 20px;
   color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
 }
 
 .visitor-chart-tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
+  gap: 10px;
+  margin-bottom: 24px;
+  background: color-mix(in srgb, var(--paper-soft) 60%, transparent);
+  padding: 6px;
+  border-radius: 14px;
+  width: fit-content;
 }
 
 .visitor-chart-tab {
-  padding: 6px 16px;
-  border-radius: 20px;
-  border: 1px solid var(--line);
-  background: var(--paper-soft);
+  padding: 8px 18px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
   font-size: 13px;
   font-weight: 700;
   color: var(--muted);
@@ -4100,15 +4141,21 @@ h1 {
   transition: all 150ms ease;
 }
 
+.visitor-chart-tab:hover {
+  background: color-mix(in srgb, var(--blue) 12%, var(--paper));
+}
+
 .visitor-chart-tab.is-active {
   background: var(--blue);
   border-color: var(--blue);
   color: #fff;
+  box-shadow: 0 4px 12px rgba(23, 125, 220, 0.3);
 }
 
 .visitor-chart-canvas-wrap {
   position: relative;
-  height: 220px;
+  height: 280px;
+  padding: 12px 0;
 }
 
 .visitor-chart-canvas-wrap canvas {
@@ -4120,41 +4167,88 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 200px;
+  height: 240px;
   color: var(--muted);
   font-size: 14px;
+  background: color-mix(in srgb, var(--paper-soft) 50%, transparent);
+  border-radius: 12px;
 }
 
 .visitor-stats-loading {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   color: var(--muted);
-  font-size: 13px;
-  padding: 12px 0;
+  font-size: 14px;
+  padding: 16px 0;
+  font-weight: 600;
 }
 
 .visitor-stats-loading::before {
   content: "";
   display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--line);
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid var(--line);
   border-top-color: var(--blue);
   border-radius: 50%;
-  animation: spin 0.7s linear infinite;
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 900px) {
+  .visitor-stats-section {
+    margin-top: 32px;
+    padding: 24px 0;
+  }
+
   .visitor-summary-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .visitor-stat-card {
+    padding: 20px 16px;
+  }
+
+  .visitor-stat-card .vs-value {
+    font-size: 28px;
+  }
+
+  .visitor-chart-block {
+    padding: 20px;
   }
 
   .visitor-chart-canvas-wrap {
-    height: 180px;
+    height: 240px;
+  }
+}
+
+@media (max-width: 600px) {
+  .visitor-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .visitor-stat-card {
+    padding: 18px 14px;
+  }
+
+  .visitor-stat-card .vs-value {
+    font-size: 24px;
+  }
+
+  .visitor-chart-block {
+    padding: 16px;
+  }
+
+  .visitor-chart-tabs {
+    flex-wrap: wrap;
+  }
+
+  .visitor-chart-canvas-wrap {
+    height: 200px;
   }
 }
