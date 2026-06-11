@@ -1220,7 +1220,8 @@ window.ROOC_SUPABASE = {
               .from("marketplace_listings")
               .select(columns)
               .eq(idColumn, idValue)
-              .neq("sale_status", "deleted")
+              .eq("active", true)
+              .not("sale_status", "in", '("closed","sold","deleted")')
               .order("created_at", { ascending: false });
             return { data, error };
           } catch (e) {

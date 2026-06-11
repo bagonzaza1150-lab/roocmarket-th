@@ -375,7 +375,7 @@
         return window.ROOC_APP?.getSupabaseClient?.() || null;
       }
 
-      async function fetchListingsFromRest(params = "select=*&active=eq.true&order=created_at.desc") {
+      async function fetchListingsFromRest(params = "select=*&active=eq.true&sale_status=neq.closed&sale_status=neq.sold&sale_status=neq.deleted&order=created_at.desc") {
         if (!appConfig.url || !appConfig.anonKey) {
           throw new Error("Supabase config is missing");
         }
@@ -420,20 +420,21 @@
             const result = await client
               .from("marketplace_listings")
               .select("category")
-              .eq("active", true);
+              .eq("active", true)
+              .not("sale_status", "in", '("closed","sold","deleted")');
             data = result.data;
             error = result.error;
           } else {
-            data = await fetchListingsFromRest("select=category&active=eq.true");
+            data = await fetchListingsFromRest("select=category&active=eq.true&sale_status=neq.closed&sale_status=neq.sold&sale_status=neq.deleted");
           }
 
           if (error) {
             console.warn("ROOC count load through supabase-js failed, trying REST:", error);
-            data = await fetchListingsFromRest("select=category&active=eq.true");
+            data = await fetchListingsFromRest("select=category&active=eq.true&sale_status=neq.closed&sale_status=neq.sold&sale_status=neq.deleted");
           }
 
           if (client && (!data || !data.length)) {
-            data = await fetchListingsFromRest("select=category&active=eq.true");
+            data = await fetchListingsFromRest("select=category&active=eq.true&sale_status=neq.closed&sale_status=neq.sold&sale_status=neq.deleted");
           }
 
           if (!data) return;
@@ -468,21 +469,22 @@
               .from("marketplace_listings")
               .select("*")
               .eq("active", true)
+              .not("sale_status", "in", '("closed","sold","deleted")')
               .order("created_at", { ascending: false })
               .limit(12);
             data = result.data;
             error = result.error;
           } else {
-            data = await fetchListingsFromRest("select=*&active=eq.true&order=created_at.desc&limit=12");
+            data = await fetchListingsFromRest("select=*&active=eq.true&sale_status=neq.closed&sale_status=neq.sold&sale_status=neq.deleted&order=created_at.desc&limit=12");
           }
 
           if (error) {
             console.warn("ROOC listing load through supabase-js failed, trying REST:", error);
-            data = await fetchListingsFromRest("select=*&active=eq.true&order=created_at.desc&limit=12");
+            data = await fetchListingsFromRest("select=*&active=eq.true&sale_status=neq.closed&sale_status=neq.sold&sale_status=neq.deleted&order=created_at.desc&limit=12");
           }
 
           if (client && (!data || !data.length)) {
-            data = await fetchListingsFromRest("select=*&active=eq.true&order=created_at.desc&limit=12");
+            data = await fetchListingsFromRest("select=*&active=eq.true&sale_status=neq.closed&sale_status=neq.sold&sale_status=neq.deleted&order=created_at.desc&limit=12");
           }
 
           if (!data || !data.length) {
