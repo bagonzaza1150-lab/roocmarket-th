@@ -794,19 +794,18 @@ window.ROOC_SUPABASE = {
     }
 
     // Support up to 4 images (hero_sponsor_image_url, hero_sponsor_image_url_2, etc.)
-    const images = [
-      settings.hero_sponsor_image_url,
-      settings.hero_sponsor_image_url_2,
-      settings.hero_sponsor_image_url_3,
-      settings.hero_sponsor_image_url_4
-    ].filter(url => url && String(url).trim() !== "");
+    const ads = [
+      { url: settings.hero_sponsor_image_url, link: settings.hero_sponsor_button_url },
+      { url: settings.hero_sponsor_image_url_2, link: settings.hero_sponsor_button_url_2 },
+      { url: settings.hero_sponsor_image_url_3, link: settings.hero_sponsor_button_url_3 },
+      { url: settings.hero_sponsor_image_url_4, link: settings.hero_sponsor_button_url_4 }
+    ].filter(ad => ad.url && String(ad.url).trim() !== "");
 
     const title = String(settings.hero_sponsor_title || "").trim();
     const text = String(settings.hero_sponsor_text || "").trim();
     const buttonLabel = String(settings.hero_sponsor_button_label || "ดูรายละเอียด").trim();
-    const buttonUrl = String(settings.hero_sponsor_button_url || "").trim();
 
-    if (!settings.hero_sponsor_enabled || (images.length === 0 && !title && !text)) {
+    if (!settings.hero_sponsor_enabled || (ads.length === 0 && !title && !text)) {
       sponsor.classList.remove("has-sponsor");
       sponsor.innerHTML = "";
       sponsor.setAttribute("aria-hidden", "true");
@@ -816,9 +815,9 @@ window.ROOC_SUPABASE = {
     sponsor.classList.add("has-sponsor");
     sponsor.removeAttribute("aria-hidden");
 
-    const slidesHtml = images.map((url, index) => `
+    const slidesHtml = ads.map((ad, index) => `
       <div class="sponsor-slide ${index === 0 ? 'is-active' : ''}">
-        <img src="${escapeHtml(url)}" alt="" loading="lazy" decoding="async" />
+        <img src="${escapeHtml(ad.url)}" alt="" loading="lazy" decoding="async" />
       </div>
     `).join('');
 
@@ -828,20 +827,34 @@ window.ROOC_SUPABASE = {
         <div class="hero-sponsor-content">
           ${title ? `<h2>${escapeHtml(title)}</h2>` : ""}
           ${text ? `<span>${escapeHtml(text)}</span>` : ""}
-          ${buttonUrl ? `<a class="btn btn-primary" href="${escapeHtml(buttonUrl)}" target="_blank" rel="noopener">${escapeHtml(buttonLabel || "ดูรายละเอียด")}</a>` : ""}
+          <a id="heroSponsorActionBtn" class="btn btn-primary" href="${escapeHtml(ads[0].link || "#")}" target="_blank" rel="noopener" ${!ads[0].link ? 'style="display:none"' : ""}>
+            ${escapeHtml(buttonLabel)}
+          </a>
         </div>
       </article>
     `;
 
     // Setup Auto Slide if more than 1 image
-    if (images.length > 1) {
+    if (ads.length > 1) {
       let currentSlide = 0;
       const slides = sponsor.querySelectorAll(".sponsor-slide");
+      const actionBtn = sponsor.querySelector("#heroSponsorActionBtn");
       
       sponsorInterval = setInterval(() => {
         slides[currentSlide].classList.remove("is-active");
         currentSlide = (currentSlide + 1) % slides.length;
         slides[currentSlide].classList.add("is-active");
+        
+        // Update link for current slide
+        if (actionBtn) {
+          const currentAd = ads[currentSlide];
+          if (currentAd.link && String(currentAd.link).trim() !== "") {
+            actionBtn.href = currentAd.link;
+            actionBtn.style.display = "inline-flex";
+          } else {
+            actionBtn.style.display = "none";
+          }
+        }
       }, 3000); // 3 seconds per slide
     }
   }
