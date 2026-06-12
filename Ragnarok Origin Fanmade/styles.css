@@ -4757,17 +4757,35 @@ h1 {
 .live-activity-container {
   display: flex;
   align-items: center;
-  gap: 12px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 6px 16px;
   border-radius: 50px;
   margin-left: 20px;
-  width: 400px; /* กำหนดความกว้างตายตัวเพื่อให้ข้อความเลื่อนข้างใน */
-  overflow: hidden; /* บังคับให้ข้อความที่ยาวกว่าเลื่อนหายไปข้างๆ */
+  width: 400px;
+  overflow: hidden;
   position: relative;
   backdrop-filter: blur(4px);
   transition: all 0.3s ease;
+}
+
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.2); /* พื้นหลังเข้มขึ้นเล็กน้อยเพื่อให้ดูแยกส่วน */
+  padding-right: 12px;
+  margin-right: 8px;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 2; /* ให้อยู่เหนือข้อความที่เลื่อน */
+  flex-shrink: 0;
+}
+
+.live-content-wrapper {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
 /* แอนิเมชันเลื่อนข้อความ */
