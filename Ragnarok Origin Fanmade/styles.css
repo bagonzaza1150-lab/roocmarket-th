@@ -5325,10 +5325,11 @@ html, body {
 .vip-listing::before {
   content: '' !important;
   position: absolute !important;
-  top: -50% !important;
-  left: -50% !important;
-  width: 200% !important;
-  height: 200% !important;
+  top: 50% !important;
+  left: 50% !important;
+  /* ใช้ขนาดที่ใหญ่กว่าการ์ดมากๆ (300%) เพื่อให้ครอบคลุมมุมเมื่อหมุน */
+  width: 300% !important;
+  height: 300% !important;
   background: conic-gradient(
     from 0deg,
     #f0ad24,
@@ -5336,9 +5337,20 @@ html, body {
     #4ecdc4,
     #f0ad24
   ) !important;
-  animation: vip-rotate 4s linear infinite !important;
+  /* ปรับจุดหมุนให้อยู่กึ่งกลาง และหมุนจากกึ่งกลาง */
+  transform: translate(-50%, -50%) rotate(0deg) !important;
+  animation: vip-rotate-v2 4s linear infinite !important;
   z-index: -2 !important;
   pointer-events: none !important;
+}
+
+@keyframes vip-rotate-v2 {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
 }
 
 /* สร้างพื้นหลังทับเพื่อให้เหลือแค่ขอบ */
@@ -5355,14 +5367,7 @@ html, body {
   pointer-events: none !important;
 }
 
-@keyframes vip-rotate {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
+/* เอาของเดิมออก */
 
 /* ปรับเนื้อหาภายในการ์ด VIP ให้แสดงผลถูกต้อง */
 .vip-listing > * {
