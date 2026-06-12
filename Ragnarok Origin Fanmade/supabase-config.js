@@ -1162,10 +1162,9 @@ window.ROOC_SUPABASE = {
       .from("marketplace_premium_users")
       .select("active")
       .eq("user_id", session.user.id)
-      .eq("active", true)
       .maybeSingle();
     if (error) return false;
-    return Boolean(data?.active);
+    return data && (data.active === true || data.active === "true");
   }
 
   function isAdminSession(session) {

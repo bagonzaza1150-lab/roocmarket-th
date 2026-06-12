@@ -308,7 +308,7 @@
         const visibleListings = allListings.filter((listing) => listing.sale_status !== "deleted");
         currentListings = visibleListings;
         await loadOfferMailbox(visibleListings);
-        const isPremium = Boolean(premiumResult);
+        const isPremium = premiumResult && (premiumResult.active === true || premiumResult.active === "true");
         const limit = isPremium ? 5 : 2;
         const oneHourAgo = Date.now() - 3600000;
         const sellHourlyUsed = allListings.filter((listing) => getListingType(listing) === "sell" && new Date(listing.created_at).getTime() >= oneHourAgo).length;
@@ -328,10 +328,9 @@
           .from("marketplace_premium_users")
           .select("active")
           .eq("user_id", session.user.id)
-          .eq("active", true)
           .maybeSingle();
         if (error) return false;
-        return Boolean(data?.active);
+        return data && (data.active === true || data.active === "true");
       }
 
       async function toggleListing(id) {
@@ -476,7 +475,7 @@
         const listing = currentListings.find((entry) => entry.id === listingId);
         if (!listing) return;
         
-        const isPremium = premiumResult && premiumResult.active;
+        const isPremium = premiumResult && (premiumResult.active === true || premiumResult.active === "true");
         const themes = [
           { id: 'default', label: 'ปกติ', color: 'var(--paper)' },
           { id: 'marble', label: 'หินอ่อน', color: 'linear-gradient(135deg, #f5f7fa, #c3cfe2)' },
