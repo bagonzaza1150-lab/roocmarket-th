@@ -613,15 +613,18 @@ window.ROOC_SUPABASE = {
         ? ` data-account-gallery="${escapeHtml(encodeURIComponent(JSON.stringify(listingImages)))}" data-account-title="${escapeHtml(title)}"`
         : "";
       const badges = [
-        `<span class="${listingType === "buy" ? "buy" : listingType === "service" ? "verified" : "fast"}">${listingType === "buy" ? "รับซื้อ" : listingType === "service" ? "รับจ้าง" : "ขาย"}</span>`,
+                `<span class="${listingType === "buy" ? "buy" : listingType === "service" ? "verified" : "fast"} shine">${listingType === "buy" ? "รับซื้อ" : listingType === "service" ? "รับจ้าง" : "ขาย"}</span>`,
         `<span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
-        listing.ready_today ? '<span class="fast">Fast Deal</span>' : "",
-        listing.category === "mvp" ? '<span class="mvp">MVP</span>' : "",
-        listing.category === "dungeon" ? '<span class="mvp">Dungeon</span>' : ""
+        listing.ready_today ? 
+          '<span class="fast pulse">Fast Deal</span>' : "",
+        listing.category === "mvp" ? 
+          '<span class="mvp shine">MVP</span>' : "",
+        listing.category === "dungeon" ? 
+          '<span class="mvp shine">Dungeon</span>' : ""
       ].filter(Boolean).join("");
-      const description = listing.middleman
-        ? `${listing.character_name ? `ตัวละคร: ${listing.character_name} · ` : ""}${listing.description || ""} · รองรับ Middleman`
-        : `${listing.character_name ? `ตัวละคร: ${listing.character_name} · ` : ""}${listing.description || ""}`;
+      const characterNameText = listing.character_name ? `ตัวละคร: ${listing.character_name}` : "";
+      const middlemanText = listing.middleman ? "รองรับ Middleman" : "";
+      const description = listing.description || "";
       const descriptionParts = getDescriptionParts(description);
 
       return `
@@ -645,6 +648,8 @@ window.ROOC_SUPABASE = {
           </div>
           <div class="listing-meta">${badges}</div>
           <h3>${escapeHtml(title)}</h3>
+          ${characterNameText ? `<p class="listing-character-name">${escapeHtml(characterNameText)}</p>` : ""}
+          ${middlemanText ? `<p class="listing-middleman-status">${escapeHtml(middlemanText)}</p>` : ""}
           <p class="listing-description" data-short="${escapeHtml(descriptionParts.shortText)}" data-full="${escapeHtml(descriptionParts.fullText)}">${escapeHtml(descriptionParts.shortText)}</p>
           ${descriptionParts.truncated ? '<button class="description-toggle" type="button" data-description-toggle aria-expanded="false" onclick="event.stopPropagation(); window.toggleListingDescription?.(this)">ดูเพิ่มเติม</button>' : ""}
           <div class="price-row">

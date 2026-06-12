@@ -30,6 +30,17 @@
   --shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
 }
 
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shine {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
 [hidden] {
   display: none !important;
 }
@@ -1711,6 +1722,39 @@ h1 {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   font-size: 18px;
+  font-weight: 500;
+}
+
+.listing-character-name,
+.listing-middleman-status {
+  margin-top: -8px;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.listing-meta .fast {
+  animation: pulse 1.5s infinite;
+}
+
+.listing-meta span {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.listing-meta span.shine::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: skewX(-20deg);
+  animation: shine 2s infinite;
+  z-index: 2;
 }
 
 .listing-card p {
@@ -1720,6 +1764,7 @@ h1 {
   margin-bottom: 12px;
   color: var(--muted);
   font-size: 13px;
+  font-weight: 400;
   line-height: 1.45;
   overflow: hidden;
   overflow-wrap: anywhere;
