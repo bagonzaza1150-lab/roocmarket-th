@@ -998,6 +998,11 @@
 
           if (error) throw error;
 
+          // Clear homepage cache so it shows the new listing with background immediately
+          localStorage.removeItem('rooc-public-listings-v3');
+          localStorage.removeItem('rooc-public-listings-v3-no-fb');
+          localStorage.removeItem('rooc-public-listings-legacy-v1');
+
           setPostMessage("เผยแพร่ประกาศเรียบร้อย กลับไปหน้าแรกเพื่อดูจำนวนประกาศที่อัปเดต");
         } catch (error) {
           setPostMessage(error.message || "เผยแพร่ประกาศไม่สำเร็จ", true);

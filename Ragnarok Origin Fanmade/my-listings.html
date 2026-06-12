@@ -589,6 +589,10 @@
             setMessage(needsMigration ? 'ยังไม่ได้รัน supabase-card-bg-migration.sql ใน Supabase' : error.message, true);
           } else {
             setMessage('✨ บันทึกพื้นหลังเรียบร้อย');
+            // Clear homepage cache so it shows the new background immediately
+            localStorage.removeItem('rooc-public-listings-v3');
+            localStorage.removeItem('rooc-public-listings-v3-no-fb');
+            localStorage.removeItem('rooc-public-listings-legacy-v1');
             await loadMyListings();
           }
           modal.remove();
