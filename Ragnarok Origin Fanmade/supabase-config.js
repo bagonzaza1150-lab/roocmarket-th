@@ -548,7 +548,10 @@ window.ROOC_SUPABASE = {
     const pageStart = (currentListingPage - 1) * listingsPerPage;
     const pageListings = listings.slice(pageStart, pageStart + listingsPerPage);
 
-    grid.innerHTML = pageListings.map((listing) => {
+    // Reset animation by clearing grid first if needed
+    grid.innerHTML = "";
+    
+    const cardsHtml = pageListings.map((listing, index) => {
       const title = listing.title || listing.item_name || "ประกาศขาย";
       const listingType = listing.listing_type || "sell";
       const isServiceListing = listingType === "service";
@@ -612,6 +615,7 @@ window.ROOC_SUPABASE = {
       `;
     }).join("");
 
+    grid.innerHTML = cardsHtml;
     emptyState.hidden = true;
     renderListingPagination(listings.length, totalPages);
   }
