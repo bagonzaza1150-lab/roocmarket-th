@@ -496,39 +496,55 @@
         
         const isPremium = premiumResult && premiumResult.active;
         const themes = [
-          { id: 'default', label: 'ปกติ', color: 'var(--paper)' },
+          { id: 'default', label: 'ปกติ', color: 'var(--paper)', isDefault: true },
           { id: 'theme-pixel-grass', label: 'ทุ่งหญ้า', color: '#7ec850' },
           { id: 'theme-pixel-sky', label: 'ท้องฟ้า', color: '#4ec0ca' },
           { id: 'theme-pixel-gold', label: 'ทองพิกเซล', color: '#f1c40f' },
           { id: 'theme-pixel-night', label: 'คืนดาว', color: '#1a1a2e' },
           { id: 'theme-pixel-pink', label: 'ชมพูพิกเซล', color: '#ff85a2' }
         ];
+
+        const currentBg = listing.card_background || 'default';
         
-        const themeHTML = themes.map(theme => `
-          <div class="theme-option${!isPremium && theme.id !== 'default' ? ' locked' : ''}${listing.card_background === theme.id ? ' active' : ''}" 
-               style="background: ${theme.color}" 
-               data-theme="${theme.id}"
-               ${!isPremium && theme.id !== 'default' ? 'disabled' : ''}>
-            ${theme.label}
-          </div>
-        `).join('');
+        const themeHTML = themes.map(theme => {
+          const isActive = currentBg === theme.id;
+          const isLocked = !isPremium && theme.id !== 'default';
+          const bgStyle = theme.isDefault 
+            ? `background: var(--paper); border: 2px solid var(--line);`
+            : `background: ${theme.color};`;
+          return `
+            <div class="theme-option${isActive ? ' active' : ''}${isLocked ? ' locked' : ''}" 
+                 style="${bgStyle}" 
+                 data-theme="${theme.id}">
+              ${theme.label}
+            </div>
+          `;
+        }).join('');
         
         const modal = document.createElement('div');
         modal.className = 'modal';
         modal.innerHTML = `
-          <div class="modal-content">
-            <h3>เลือกพื้นหลังการ์ด</h3>
+          <div class="modal-content" style="max-width: 520px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+              <h3 style="margin: 0;">✨ เลือกพื้นหลังการ์ด Premium</h3>
+              <button class="btn btn-light" style="padding: 4px 10px; font-size: 13px;" onclick="this.closest('.modal').remove()">×</button>
+            </div>
+            <p style="font-size: 12px; color: var(--muted); margin: 0 0 12px;">พื้นหลัง pixel art จะแสดงบนการ์ดประกาศในหน้าแรกเพื่อเพิ่มความโดดเด่น</p>
             <div class="theme-picker-grid">${themeHTML}</div>
-            ${!isPremium ? '<p style="color: #f0ad24; font-size: 12px; margin-top: 10px;">🔒 ฟีเจอร์นี้เปิดให้ Premium เท่านั้น</p>' : ''}
-            <div style="margin-top: 15px; display: flex; gap: 8px;">
+            ${!isPremium ? `
+              <div style="margin-top: 12px; padding: 10px 14px; background: rgba(240,173,36,0.08); border: 1px solid rgba(240,173,36,0.25); border-radius: 8px;">
+                <p style="color: #f0ad24; font-size: 12px; margin: 0;">🔒 พื้นหลัง pixel art เปิดให้เฉพาะ Premium — <a href="premium.html" style="color: #f0ad24;">อัปเกรด</a></p>
+              </div>
+            ` : ''}
+            <div style="margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end;">
               <button class="btn btn-light" onclick="this.closest('.modal').remove()">ยกเลิก</button>
-              <button class="btn btn-primary" id="confirmTheme">บันทึก</button>
+              <button class="btn btn-primary" id="confirmTheme">✨ บันทึกพื้นหลัง</button>
             </div>
           </div>
         `;
         
         document.body.appendChild(modal);
-        let selectedTheme = listing.card_background || 'default';
+        let selectedTheme = currentBg;
         
         modal.querySelectorAll('.theme-option:not(.locked)').forEach(option => {
           option.addEventListener('click', () => {
@@ -541,6 +557,7 @@
         modal.querySelector('#confirmTheme').addEventListener('click', async () => {
           if (!isPremium && selectedTheme !== 'default') {
             setMessage('ฟีเจอร์นี้เปิดให้ Premium เท่านั้น', true);
+            modal.remove();
             return;
           }
           
@@ -551,12 +568,18 @@
             .eq('id', listingId);
           
           if (error) {
-            setMessage(error.message, true);
+            const needsMigration = /card_background|schema cache|column/i.test(error.message || '');
+            setMessage(needsMigration ? 'ยังไม่ได้รัน supabase-card-bg-migration.sql ใน Supabase' : error.message, true);
           } else {
-            setMessage('บันทึกพื้นหลังเรียบร้อย');
+            setMessage('✨ บันทึกพื้นหลังเรียบร้อย');
             await loadMyListings();
           }
           modal.remove();
+        });
+
+        // Close on backdrop click
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) modal.remove();
         });
       }
 

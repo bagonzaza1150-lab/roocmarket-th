@@ -68,6 +68,7 @@ create table if not exists public.marketplace_listings (
   ready_today boolean not null default false,
   active boolean not null default true,
   sale_status text not null default 'active' check (sale_status in ('active', 'closed', 'sold', 'deleted')),
+  card_background text not null default 'default',
   expires_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -222,6 +223,9 @@ add column if not exists sale_status text not null default 'active';
 
 alter table public.marketplace_listings
 add column if not exists expires_at timestamptz;
+
+alter table public.marketplace_listings
+add column if not exists card_background text not null default 'default';
 
 update public.marketplace_listings
 set sale_status = case

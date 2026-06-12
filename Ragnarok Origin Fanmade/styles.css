@@ -5323,24 +5323,57 @@ html, body {
 }
 
 .theme-option {
-  aspect-ratio: 1;
-  border-radius: 8px;
+  aspect-ratio: 2 / 3;
+  border-radius: 10px;
   cursor: pointer;
   border: 2px solid transparent;
   transition: all 0.2s;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: bold;
   text-align: center;
-  padding: 5px;
+  padding: 6px 4px;
   position: relative;
   overflow: hidden;
+  min-height: 80px;
+  background-size: cover !important;
+  background-position: center top !important;
+  background-repeat: no-repeat !important;
 }
 
 .theme-option:hover {
   transform: scale(1.05);
+}
+
+/* Label overlay at bottom of theme option */
+.theme-option > span,
+.theme-option:not(:empty) {
+  position: relative;
+  z-index: 2;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  backdrop-filter: blur(2px);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Text node label inside theme-option (no wrapper span) */
+.theme-option::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+  z-index: 1;
+  border-radius: 0 0 8px 8px;
+  pointer-events: none;
 }
 
 .theme-option.active {
@@ -5430,3 +5463,257 @@ html, body {
   font-size: 12px;
   opacity: 0.6;
 }
+
+
+/* ===== PREMIUM CARD BACKGROUNDS (PIXEL ART THEMES) ===== */
+
+/* --- Base: card with pixel art background --- */
+.listing-card[class*="theme-pixel-"],
+.my-listing-card[class*="theme-pixel-"] {
+  position: relative;
+  overflow: hidden;
+  border-color: transparent !important;
+}
+
+.listing-card[class*="theme-pixel-"]::before,
+.my-listing-card[class*="theme-pixel-"]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  z-index: 0;
+  border-radius: inherit;
+  opacity: 0.92;
+}
+
+/* Overlay to keep text readable */
+.listing-card[class*="theme-pixel-"]::after,
+.my-listing-card[class*="theme-pixel-"]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.08) 0%,
+    rgba(0, 0, 0, 0.35) 55%,
+    rgba(0, 0, 0, 0.72) 100%
+  );
+  z-index: 1;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* All children above the overlay */
+.listing-card[class*="theme-pixel-"] > *,
+.my-listing-card[class*="theme-pixel-"] > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Text color overrides for dark backgrounds */
+.listing-card[class*="theme-pixel-"] h3,
+.listing-card[class*="theme-pixel-"] p,
+.listing-card[class*="theme-pixel-"] strong,
+.listing-card[class*="theme-pixel-"] .price-row strong,
+.my-listing-card[class*="theme-pixel-"] h3,
+.my-listing-card[class*="theme-pixel-"] p,
+.my-listing-card[class*="theme-pixel-"] strong {
+  color: #ffffff !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+.listing-card[class*="theme-pixel-"] .listing-meta span,
+.my-listing-card[class*="theme-pixel-"] .listing-meta span {
+  background: rgba(0, 0, 0, 0.45) !important;
+  color: #fff !important;
+  border-color: rgba(255,255,255,0.2) !important;
+}
+
+/* --- Premium badge glow for themed cards --- */
+.listing-card[class*="theme-pixel-"] {
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.18), 0 16px 40px rgba(0,0,0,0.35) !important;
+  transition: box-shadow 0.3s ease, transform 0.2s ease !important;
+}
+
+.listing-card[class*="theme-pixel-"]:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.35), 0 24px 50px rgba(0,0,0,0.45) !important;
+}
+
+/* --- Individual themes --- */
+
+/* 1. ทุ่งหญ้า (Grass) */
+.theme-pixel-grass::before {
+  background-image: url('assets/card-bg/theme-pixel-grass.png');
+}
+.theme-pixel-grass {
+  box-shadow: 0 0 0 2px rgba(126, 200, 80, 0.5), 0 16px 40px rgba(90, 171, 58, 0.3) !important;
+}
+.theme-pixel-grass:hover {
+  box-shadow: 0 0 0 2px rgba(126, 200, 80, 0.8), 0 24px 50px rgba(90, 171, 58, 0.5) !important;
+}
+
+/* 2. ท้องฟ้า (Sky) */
+.theme-pixel-sky::before {
+  background-image: url('assets/card-bg/theme-pixel-sky.png');
+}
+.theme-pixel-sky {
+  box-shadow: 0 0 0 2px rgba(78, 192, 202, 0.5), 0 16px 40px rgba(42, 157, 143, 0.3) !important;
+}
+.theme-pixel-sky:hover {
+  box-shadow: 0 0 0 2px rgba(78, 192, 202, 0.8), 0 24px 50px rgba(42, 157, 143, 0.5) !important;
+}
+
+/* 3. ทองพิกเซล (Gold) */
+.theme-pixel-gold::before {
+  background-image: url('assets/card-bg/theme-pixel-gold.png');
+}
+.theme-pixel-gold {
+  box-shadow: 0 0 0 2px rgba(241, 196, 15, 0.6), 0 16px 40px rgba(230, 126, 34, 0.35) !important;
+}
+.theme-pixel-gold:hover {
+  box-shadow: 0 0 0 2px rgba(241, 196, 15, 0.9), 0 24px 50px rgba(230, 126, 34, 0.55) !important;
+}
+
+/* 4. คืนดาว (Night) */
+.theme-pixel-night::before {
+  background-image: url('assets/card-bg/theme-pixel-night.png');
+}
+.theme-pixel-night {
+  box-shadow: 0 0 0 2px rgba(106, 13, 173, 0.5), 0 16px 40px rgba(26, 26, 46, 0.5) !important;
+}
+.theme-pixel-night:hover {
+  box-shadow: 0 0 0 2px rgba(150, 50, 220, 0.8), 0 24px 50px rgba(106, 13, 173, 0.6) !important;
+}
+
+/* 5. ชมพูพิกเซล (Pink) */
+.theme-pixel-pink::before {
+  background-image: url('assets/card-bg/theme-pixel-pink.png');
+}
+.theme-pixel-pink {
+  box-shadow: 0 0 0 2px rgba(255, 133, 162, 0.5), 0 16px 40px rgba(255, 133, 162, 0.3) !important;
+}
+.theme-pixel-pink:hover {
+  box-shadow: 0 0 0 2px rgba(255, 133, 162, 0.85), 0 24px 50px rgba(255, 133, 162, 0.5) !important;
+}
+
+/* --- Premium badge on themed cards --- */
+.listing-card[class*="theme-pixel-"] .item-media::after {
+  content: '✨ Premium';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.6);
+  color: #f0ad24;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 3px 7px;
+  border-radius: 20px;
+  border: 1px solid rgba(240, 173, 36, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* --- Theme picker preview thumbnails --- */
+.theme-option[data-theme="theme-pixel-grass"] {
+  background-image: url('assets/card-bg/theme-pixel-grass.png') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  color: #fff !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+.theme-option[data-theme="theme-pixel-sky"] {
+  background-image: url('assets/card-bg/theme-pixel-sky.png') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  color: #fff !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+.theme-option[data-theme="theme-pixel-gold"] {
+  background-image: url('assets/card-bg/theme-pixel-gold.png') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  color: #fff !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+.theme-option[data-theme="theme-pixel-night"] {
+  background-image: url('assets/card-bg/theme-pixel-night.png') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  color: #fff !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+.theme-option[data-theme="theme-pixel-pink"] {
+  background-image: url('assets/card-bg/theme-pixel-pink.png') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  color: #fff !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+/* --- Premium section label in post form --- */
+.post-field .premium-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f0ad24;
+  margin-bottom: 6px;
+}
+
+.post-field .premium-label::before {
+  content: '✨';
+}
+
+/* --- Theme picker in post form - improved --- */
+#cardBackgroundField {
+  background: rgba(240, 173, 36, 0.05);
+  border: 1px solid rgba(240, 173, 36, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 12px;
+}
+
+#cardBackgroundField > span {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f0ad24;
+  margin-bottom: 4px;
+}
+
+#cardBackgroundField > span::before {
+  content: '✨ ';
+}
+
+/* --- Modal theme picker improvements --- */
+.modal-content .theme-picker-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.theme-option {
+  aspect-ratio: 2/3;
+  min-height: 80px;
+}
+
+/* --- My listings card with theme --- */
+.my-listing-card[class*="theme-pixel-"] {
+  min-height: 200px;
+}
+
+.my-listing-card[class*="theme-pixel-"] img {
+  position: relative;
+  z-index: 2;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* ===== END PREMIUM CARD BACKGROUNDS ===== */

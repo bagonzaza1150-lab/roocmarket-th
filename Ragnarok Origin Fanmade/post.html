@@ -228,16 +228,16 @@
               </div>
 
               <div class="post-field" id="cardBackgroundField" hidden>
-                <span>ปรับแต่งพื้นหลัง (Premium)</span>
+                <span>✨ ปรับแต่งพื้นหลังการ์ด (Premium)</span>
+                <p style="font-size: 12px; color: var(--muted); margin: 4px 0 0;">เลือกพื้นหลัง pixel art สำหรับการ์ดประกาศของคุณ ผู้ซื้อจะเห็นในหน้าแรก</p>
                 <div class="theme-picker-grid" id="themePickerInline">
-                  <div class="theme-option active" data-theme="default" style="background: var(--paper)">ปกติ</div>
-                  <div class="theme-option locked" data-theme="theme-pixel-grass" style="background: #7ec850">ทุ่งหญ้า</div>
-                  <div class="theme-option locked" data-theme="theme-pixel-sky" style="background: #4ec0ca">ท้องฟ้า</div>
-                  <div class="theme-option locked" data-theme="theme-pixel-gold" style="background: #f1c40f">ทองพิกเซล</div>
-                  <div class="theme-option locked" data-theme="theme-pixel-night" style="background: #1a1a2e">คืนดาว</div>
-                  <div class="theme-option locked" data-theme="theme-pixel-pink" style="background: #ff85a2">ชมพูพิกเซล</div>
+                  <div class="theme-option active" data-theme="default" style="background: var(--paper); border: 2px solid var(--line);">ปกติ</div>
+                  <div class="theme-option" data-theme="theme-pixel-grass">ทุ่งหญ้า</div>
+                  <div class="theme-option" data-theme="theme-pixel-sky">ท้องฟ้า</div>
+                  <div class="theme-option" data-theme="theme-pixel-gold">ทองพิกเซล</div>
+                  <div class="theme-option" data-theme="theme-pixel-night">คืนดาว</div>
+                  <div class="theme-option" data-theme="theme-pixel-pink">ชมพูพิกเซล</div>
                 </div>
-                <p style="font-size: 12px; color: #f0ad24; margin-top: 8px;">🔒 ธีมอื่นๆ เปิดให้ Premium เท่านั้น</p>
               </div>
             </div>
 
@@ -977,11 +977,22 @@
 
           if (error && /listing_type|schema cache|column/i.test(error.message || "")) {
             if (activeListingType === "buy" || activeListingType === "service") {
-              throw new Error("ฐานข้อมูลยังไม่ได้อัปเดตสำหรับประกาศรับซื้อ/รับจ้างลงดัน กรุณารันไฟล์ supabase-dungeon-services-migration.sql ใน Supabase SQL Editor ก่อน");
+              throw new Error("ฟ้านข้อมูลยังไม่ได้อัปเดตสำหรับประกาศรับซื้อ/รับจ้างลงดัน กรุณารันไฟล์ supabase-dungeon-services-migration.sql ใน Supabase SQL Editor ก่อน");
             }
             delete listingPayload.listing_type;
             const fallbackResult = await supabaseClient.from("marketplace_listings").insert(listingPayload);
             error = fallbackResult.error;
+          }
+
+          // Fallback: if card_background column doesn’t exist yet, retry without it
+          if (error && /card_background|schema cache/i.test(error.message || "")) {
+            delete listingPayload.card_background;
+            const fallbackResult = await supabaseClient.from("marketplace_listings").insert(listingPayload);
+            error = fallbackResult.error;
+            if (!error) {
+              setPostMessage("เผยแพร่ประกาศเรียบร้อย (ยังไม่ได้รัน supabase-card-bg-migration.sql พื้นหลังจะยังไม่แสดง)");
+              return;
+            }
           }
 
           if (error) throw error;
@@ -1076,16 +1087,6 @@
         const cardBackgroundField = document.getElementById('cardBackgroundField');
         if (cardBackgroundField) {
           cardBackgroundField.hidden = !isPremium;
-          if (isPremium) {
-            document.querySelectorAll('#themePickerInline .theme-option.locked').forEach(opt => {
-              opt.classList.remove('locked');
-              opt.onclick = () => {
-                document.querySelectorAll('#themePickerInline .theme-option').forEach(o => o.classList.remove('active'));
-                opt.classList.add('active');
-                syncPreview();
-              };
-            });
-          }
         }
       }
       if (canUseSupabase) {
