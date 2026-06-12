@@ -903,7 +903,8 @@
         setPostMessage("กำลังเผยแพร่ประกาศ...");
 
         try {
-          const isPremiumSeller = await getPremiumStatus(currentSession);
+          const premiumStatus = await getPremiumStatus(currentSession);
+          const isPremiumSeller = premiumStatus && premiumStatus.active;
           const listingLimit = isPremiumSeller ? 5 : 2;
           const listingTypeLabel = activeListingType === "buy" ? "ประกาศรับซื้อ" : activeListingType === "service" ? "ประกาศรับจ้างลงดัน" : "ประกาศขาย";
           const quota = await getListingQuota(currentSession, activeListingType);
