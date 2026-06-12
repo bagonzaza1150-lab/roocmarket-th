@@ -4914,31 +4914,18 @@ h1 {
     margin-left: 0 !important;
     max-width: 100% !important;
     width: 100% !important;
-    padding: 6px 12px !important;
+    padding: 8px 12px;
     order: 2;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-  }
-  
-  .live-content-wrapper {
-    width: 100% !important;
-    overflow: hidden !important;
-    min-width: 0 !important;
-  }
-
-  .live-content {
-    white-space: nowrap !important;
-    width: max-content !important;
   }
   .filter-row {
     flex-wrap: nowrap !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch;
-    padding: 8px 0 !important;
-    width: 100% !important;
-    margin-left: 0 !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+    padding: 8px 0;
+    width: calc(100% + 32px);
+    margin-left: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
     scrollbar-width: none;
   }
   .filter-row::-webkit-scrollbar {
@@ -4956,138 +4943,5 @@ h1 {
   }
   .filter-divider {
     display: none;
-  }
-}
-
-/* ============================================================
-   MOBILE SCALE FIX (แก้ไขเฉพาะหน้าจอมือถือ)
-   เพิ่มไว้ท้ายสุดเพื่อ Overwrite เฉพาะจุดที่ล้นบนมือถือเท่านั้น
-   ============================================================ */
-@media (max-width: 480px) {
-  /* กฎเหล็กป้องกันหน้าจอยืดล้นอย่างเด็ดขาด (ลบกฎเหมาเข่งออกเพื่อกู้คืนเมนู) */
-  html, body {
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-    position: relative !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-  
-  /* จัดการเมนูและ Header บนมือถือ (ย้ายไปคุมใน index.html บางส่วนแล้ว) */
-  .nav {
-    display: flex !important;
-    justify-content: space-between !important;
-    padding: 0 10px !important;
-  }
-  
-  .nav-links {
-    display: none !important;
-  }
-  
-  .brand strong {
-    font-size: 14px !important;
-  }
-  
-  /* แก้ไขแถบประกาศสีส้มที่ยาวจนยืดหน้าจอ */
-  .announcement-marquee {
-    white-space: normal !important; /* ยอมให้ตัดบรรทัดได้ถ้า Marquee ไม่ทำงาน */
-    padding: 8px 12px !important;
-    border-radius: 12px !important;
-    line-height: 1.4 !important;
-    text-align: center !important;
-  }
-  
-  .announcement-marquee span {
-    animation: none !important; /* ปิดแอนิเมชันที่อาจทำให้คำนวณความกว้างผิด */
-    min-width: 0 !important;
-    padding: 0 !important;
-  }
-  
-  /* ป้องกัน sold-scroller ยืดหน้าจอ */
-  .sold-scroller {
-    width: 100% !important;
-    overflow: hidden !important;
-    padding: 10px 0 !important;
-  }
-  
-  .sold-track {
-    display: flex !important;
-    width: max-content !important;
-  }
-
-  /* ปรับสเกลส่วนหมวดหมู่ให้เรียง 1 คอลัมน์ (แก้ปัญหาล้นขวาง) */
-  .category-row {
-    grid-template-columns: 1fr !important;
-    gap: 10px !important;
-  }
-
-  /* ปรับสเกลตัวกรองให้เล็กลงและพอดีหน้าจอ */
-  .filters {
-    padding: 10px !important;
-    margin: 0 !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-    border-radius: 14px !important;
-  }
-
-  .filters h2 {
-    font-size: 18px !important;
-    margin-bottom: 12px !important;
-  }
-
-  .filters label {
-    font-size: 12px !important;
-    margin-bottom: 8px !important;
-  }
-
-  .filters select {
-    height: 38px !important;
-    font-size: 12px !important;
-    padding: 0 8px !important;
-    width: 100% !important;
-  }
-
-  /* ปรับสเกลส่วนค้นหาให้พอดีมือถือ */
-  .search-card {
-    grid-template-columns: 1fr !important;
-    padding: 8px !important;
-    gap: 6px !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-  }
-
-  .search-input {
-    height: 40px !important;
-  }
-
-  /* ปรับสเกลปุ่มตัวกรองไม่ให้ล้น */
-  .market-tabs {
-    flex-wrap: wrap !important;
-    gap: 4px !important;
-  }
-
-  .market-tabs button {
-    flex: 1 1 auto !important;
-    min-width: 70px !important;
-    padding: 5px 8px !important;
-    font-size: 11px !important;
-    height: 32px !important;
-    border-radius: 6px !important;
-  }
-
-  /* ปรับสเกลส่วน Support (Donate/Middleman) */
-  .support-card, .donate-goal-card {
-    padding: 12px !important;
-  }
-
-  .support-qr {
-    width: 130px !important;
-    height: 130px !important;
-    margin: 10px auto !important;
-  }
-
-  .donate-goal-stats strong {
-    font-size: 16px !important;
   }
 }
