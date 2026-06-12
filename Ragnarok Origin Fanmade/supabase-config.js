@@ -82,15 +82,12 @@ window.ROOC_SUPABASE = {
     if (!container) return;
 
     const icons = [
-      "assets/category-icons/accessories-a.png",
-      "assets/category-icons/fashion-c.png",
-      "assets/category-icons/mvp-c.png",
-      "assets/site-icons/rooc-icon-32.png"
+      "assets/category-icons/accessories-a.png" // ใช้ไอคอนใบไม้ (accessories-a.png มีลักษณะคล้ายใบไม้/เครื่องประดับธรรมชาติ)
     ];
 
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 12; i++) {
       const item = document.createElement("img");
-      item.src = icons[Math.floor(Math.random() * icons.length)];
+      item.src = icons[0];
       item.className = "floating-item";
       
       const size = Math.random() * 20 + 20;
