@@ -56,6 +56,7 @@
 
 * {
   box-sizing: border-box;
+  min-width: 0;
 }
 
 html {
@@ -4833,6 +4834,356 @@ h1 {
   .live-activity-container {
     margin-left: 0;
     max-width: 100%;
+    width: 100%;
+  }
+}
+
+
+/* =====================================================
+   MOBILE RESPONSIVE FIX — ป้องกัน UI เกินหน้าจอ
+   ===================================================== */
+
+/* ป้องกัน horizontal scroll ทั่วทั้งหน้า */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* ===== NAVBAR ===== */
+@media (max-width: 860px) {
+  /* ซ่อนปุ่ม "ลงประกาศ" ใน nav-actions เพราะมีอยู่ใน nav-links แล้ว */
+  .nav-actions > .btn-primary {
+    display: none;
+  }
+
+  .nav-actions {
+    gap: 8px;
+  }
+
+  /* user-menu-trigger ไม่ให้กว้างเกิน */
+  .user-menu-trigger {
+    max-width: 160px;
+  }
+}
+
+@media (max-width: 560px) {
+  /* ปรับ nav ให้แน่ใจว่าไม่ล้น */
+  .nav {
+    padding: 10px 0;
+    gap: 8px;
+  }
+
+  /* nav-links เลื่อนได้แนวนอน */
+  .nav-links {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+    flex-wrap: nowrap;
+  }
+  .nav-links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-actions {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 6px;
+    width: 100%;
+  }
+  .nav-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* ลดขนาดปุ่มใน nav-actions บนมือถือ */
+  .nav-actions .btn {
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 13px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* theme switch ไม่ให้หดตัว */
+  .theme-switch {
+    flex-shrink: 0;
+  }
+}
+
+/* ===== HERO SEARCH CARD ===== */
+@media (max-width: 560px) {
+  .search-card {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .search-card > .btn {
+    width: 100%;
+  }
+}
+
+/* ===== SELL FORM (my-listings.html) ===== */
+@media (max-width: 860px) {
+  .sell-form {
+    grid-template-columns: 1fr 1fr;
+  }
+  .sell-form .btn {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .sell-form {
+    grid-template-columns: 1fr;
+  }
+  .sell-form .btn {
+    grid-column: 1;
+    width: 100%;
+  }
+}
+
+/* ===== LISTING QUOTA (my-listings.html) ===== */
+@media (max-width: 860px) {
+  .listing-quota {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ===== CATEGORY PICKER (post.html) ===== */
+@media (max-width: 560px) {
+  .category-picker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ===== LIVE ACTIVITY CONTAINER ===== */
+@media (max-width: 860px) {
+  .live-activity-container {
+    margin-left: 0;
+    max-width: 100%;
+  }
+}
+
+/* ===== ADMIN UPLOAD ROW ===== */
+@media (max-width: 860px) {
+  .admin-upload-row {
+    grid-template-columns: 1fr;
+  }
+  .admin-multi-upload {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== STORE PAGE ===== */
+@media (max-width: 560px) {
+  .store-header {
+    padding: 32px 0 24px;
+  }
+
+  .store-info h1 {
+    font-size: 1.8rem;
+  }
+
+  .store-stats {
+    gap: 0.75rem;
+  }
+
+  .stat-card {
+    min-width: 110px;
+    padding: 12px 14px;
+  }
+
+  .stat-value {
+    font-size: 1.4rem;
+  }
+}
+
+/* ===== FOOTER ===== */
+@media (max-width: 560px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 24px 0;
+  }
+}
+
+/* ===== DASHBOARD ACTIONS ===== */
+@media (max-width: 560px) {
+  .dashboard-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .dashboard-actions .btn {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+/* ===== SECTION HEAD ===== */
+@media (max-width: 560px) {
+  .section-head {
+    gap: 10px;
+  }
+  .section-head h2 {
+    font-size: 20px;
+  }
+}
+
+/* ===== PANEL HEAD ===== */
+@media (max-width: 560px) {
+  .panel-head h2 {
+    font-size: 20px;
+  }
+}
+
+/* ===== POST HEAD / ADMIN HEAD ===== */
+@media (max-width: 560px) {
+  .post-head h2,
+  .admin-head h1 {
+    font-size: 28px;
+  }
+}
+
+/* ===== TRUST ROW ===== */
+@media (max-width: 400px) {
+  .trust-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== LISTING PAGINATION ===== */
+@media (max-width: 400px) {
+  .listing-pagination {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .listing-pagination div {
+    justify-content: center;
+  }
+}
+
+/* ===== IMAGE MODAL ===== */
+@media (max-width: 560px) {
+  .image-modal {
+    padding: 10px;
+  }
+  .image-modal-card {
+    padding: 12px;
+    border-radius: 14px;
+  }
+  .image-modal-head {
+    gap: 12px;
+    padding-right: 44px;
+  }
+  .image-modal-head h2 {
+    font-size: 18px;
+  }
+  .image-modal-view {
+    min-height: min(50vh, 300px);
+  }
+  .image-modal-view img {
+    max-height: min(50vh, 300px);
+  }
+}
+
+/* ===== CONTACT MODAL ===== */
+@media (max-width: 560px) {
+  .contact-modal {
+    padding: 12px;
+  }
+  .contact-modal-card {
+    padding: 18px;
+    border-radius: 14px;
+  }
+  .contact-modal-card h2 {
+    font-size: 22px;
+  }
+}
+
+/* ===== MAILBOX PANEL ===== */
+@media (max-width: 400px) {
+  .mailbox-panel {
+    width: calc(100vw - 16px);
+    right: -8px;
+  }
+}
+
+/* ===== USER MENU PANEL ===== */
+@media (max-width: 400px) {
+  .user-menu-panel {
+    right: 0;
+    min-width: 160px;
+  }
+}
+
+/* ===== FILTER ROW ===== */
+@media (max-width: 560px) {
+  .filter-row {
+    gap: 8px;
+    padding: 6px 0;
+  }
+}
+
+/* ===== MARKET TABS ===== */
+@media (max-width: 560px) {
+  .market-tabs {
+    gap: 6px;
+  }
+  .market-tabs button {
+    padding: 0 10px;
+    font-size: 12px;
+    min-height: 34px;
+  }
+}
+
+/* ===== LISTING CARD ===== */
+@media (max-width: 560px) {
+  .listing-card {
+    min-height: unset;
+  }
+}
+
+/* ===== HERO H1 ===== */
+@media (max-width: 400px) {
+  h1 {
+    font-size: 30px;
+  }
+}
+
+/* ===== PREMIUM SEARCH BOX ===== */
+@media (max-width: 560px) {
+  .premium-search-box {
+    grid-template-columns: 1fr;
+  }
+  .premium-search-box .btn {
+    width: 100%;
+  }
+}
+
+/* ===== PREMIUM SEARCH RESULT ===== */
+@media (max-width: 560px) {
+  .premium-search-result {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+  .premium-search-result img {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* ===== STORE STATS WRAP ===== */
+@media (max-width: 400px) {
+  .store-stats {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .stat-card {
+    min-width: unset;
     width: 100%;
   }
 }
