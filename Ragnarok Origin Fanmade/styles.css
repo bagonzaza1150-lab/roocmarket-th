@@ -4974,23 +4974,19 @@ h1 {
     padding: 0 !important;
   }
   
-  /* จัดการเมนูและ Header บนมือถือให้ไม่ล้นและไม่หาย */
+  /* จัดการเมนูและ Header บนมือถือ (ย้ายไปคุมใน index.html บางส่วนแล้ว) */
   .nav {
-    grid-template-columns: 1fr auto !important;
-    gap: 10px !important;
+    display: flex !important;
+    justify-content: space-between !important;
     padding: 0 10px !important;
   }
   
   .nav-links {
-    display: none !important; /* ซ่อนลิงก์เมนูหลักบนมือถือเพื่อเพิ่มพื้นที่ */
+    display: none !important;
   }
   
   .brand strong {
     font-size: 14px !important;
-  }
-  
-  .user-menu-trigger span {
-    max-width: 80px !important; /* จำกัดความกว้างชื่อผู้ใช้ไม่ให้ดันจอ */
   }
   
   /* แก้ไขแถบประกาศสีส้มที่ยาวจนยืดหน้าจอ */

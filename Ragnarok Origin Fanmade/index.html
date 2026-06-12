@@ -12,6 +12,58 @@
     <link rel="icon" type="image/png" sizes="192x192" href="assets/site-icons/rooc-icon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/site-icons/rooc-icon-180.png" />
     <link rel="stylesheet" href="styles.css" />
+    <style>
+      /* Force Fix for Mobile Layout */
+      @media (max-width: 480px) {
+        html, body {
+          width: 100% !important;
+          max-width: 100% !important;
+          overflow-x: hidden !important;
+          position: relative !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        .site-header {
+          width: 100% !important;
+          overflow: hidden !important;
+        }
+        .nav {
+          display: flex !important;
+          justify-content: space-between !important;
+          align-items: center !important;
+          padding: 0 12px !important;
+          min-height: 64px !important;
+          width: 100% !important;
+          box-sizing: border-box !important;
+        }
+        .nav-links {
+          display: none !important;
+        }
+        .brand {
+          flex-shrink: 1 !important;
+          min-width: 0 !important;
+        }
+        .brand span strong {
+          font-size: 14px !important;
+          white-space: nowrap !important;
+        }
+        .nav-actions {
+          flex-shrink: 0 !important;
+          gap: 6px !important;
+        }
+        .user-menu-trigger span {
+          display: none !important; /* ซ่อนชื่อผู้ใช้บนมือถือเพื่อเพิ่มพื้นที่ให้เมนูอื่น */
+        }
+        .btn-primary {
+          padding: 0 10px !important;
+          font-size: 12px !important;
+          min-height: 36px !important;
+        }
+        .auth-link {
+          display: none !important; /* ซ่อนปุ่มเข้าสู่ระบบถ้ามีปุ่มลงประกาศแล้ว */
+        }
+      }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js?v=20260609-hero-sponsor"></script>
   </head>
