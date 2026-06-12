@@ -2031,11 +2031,13 @@
         const colors = getChartColors(isDark);
 
         const data = period === "daily" ? visitorDailyData : visitorMonthlyData;
-        const labels = data.map((row) =>
-          period === "daily" ? formatThaiDate(row.stat_date) : formatThaiMonth(row.stat_month)
-        );
-        const visitorsData = data.map((row) => Number(row.unique_visitors || 0));
-        const viewsData = data.map((row) => Number(row.total_views || 0));
+        const labels = data.map((row) => {
+          // พยายามหาค่าวันที่จากหลายๆ คอลัมน์ที่อาจเป็นไปได้
+          const dateVal = row.stat_date || row.stat_month || row.date || row.month || Object.values(row)[0];
+          return period === "daily" ? formatThaiDate(dateVal) : formatThaiMonth(dateVal);
+        });
+        const visitorsData = data.map((row) => Number(row.unique_visitors || row.visitors || 0));
+        const viewsData = data.map((row) => Number(row.total_views || row.views || 0));
 
         if (visitorChart) {
           visitorChart.destroy();
