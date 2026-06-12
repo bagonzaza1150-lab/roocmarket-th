@@ -4743,7 +4743,17 @@ h1 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  animation: slide-in-right 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  opacity: 1;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.live-content.fade-out {
+  opacity: 0;
+  transform: translateY(-5px);
+}
+
+.live-content.fade-in {
+  animation: slide-in-up 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
 .live-content strong {
@@ -4763,9 +4773,9 @@ h1 {
   100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(79, 172, 254, 0); }
 }
 
-@keyframes slide-in-right {
-  from { opacity: 0; transform: translateX(20px); }
-  to { opacity: 1; transform: translateX(0); }
+@keyframes slide-in-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Unified Filter Row */
@@ -4779,23 +4789,34 @@ h1 {
 .filter-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  padding-bottom: 5px;
-  scrollbar-width: none; /* Firefox */
-}
-
-.filter-row::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  gap: 12px;
+  flex-wrap: wrap; /* เปลี่ยนเป็น wrap เพื่อให้พอดีกับหน้าจอ */
+  padding: 5px 0;
+  margin-top: 10px;
 }
 
 .filter-divider {
   width: 1px;
-  height: 20px;
+  height: 24px;
   background: rgba(255, 255, 255, 0.1);
   margin: 0 5px;
   flex-shrink: 0;
+}
+
+@media (max-width: 1024px) {
+  .filter-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 10px 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .filter-row::-webkit-scrollbar {
+    display: none;
+  }
+  .filter-divider {
+    display: none; /* ซ่อนเส้นแบ่งบนมือถือเพื่อเพิ่มพื้นที่ */
+  }
 }
 
 .market-tabs {

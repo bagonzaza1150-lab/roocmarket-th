@@ -1718,13 +1718,23 @@ async function initLiveActivityFeed() {
   function showNextActivity() {
     if (activities.length === 0) return;
     
-    // รีเซ็ตแอนิเมชันโดยการเอา class ออกแล้วใส่ใหม่
-    feedContent.style.animation = 'none';
-    feedContent.offsetHeight; // trigger reflow
-    feedContent.style.animation = null;
+    // 1. ค่อยๆ เลือนข้อความเก่าออก
+    feedContent.classList.add('fade-out');
     
-    feedContent.innerHTML = activities[currentIndex];
-    currentIndex = (currentIndex + 1) % activities.length;
+    setTimeout(() => {
+      // 2. เปลี่ยนข้อความและเตรียมแอนิเมชันใหม่
+      feedContent.innerHTML = activities[currentIndex];
+      feedContent.classList.remove('fade-out');
+      feedContent.classList.add('fade-in');
+      
+      // 3. เตรียมพร้อมสำหรับรอบถัดไป
+      currentIndex = (currentIndex + 1) % activities.length;
+      
+      // ลบ class fade-in หลังจากแอนิเมชันจบเพื่อให้ทำซ้ำได้
+      setTimeout(() => {
+        feedContent.classList.remove('fade-in');
+      }, 600);
+    }, 400); // รอให้ Fade Out จบก่อน
   }
 
   // Fetch initially
