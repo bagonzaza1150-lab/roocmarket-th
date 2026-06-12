@@ -524,9 +524,10 @@
               ? `${listing.description || ""} · รองรับ Middleman`
               : listing.description || "";
 
+            const isVip = listing.seller_is_premium;
             return `
-              <article class="listing-card">
-                <div class="${mediaClass}"${galleryData}>
+	              <article class="listing-card ${isVip ? "vip-listing" : ""}">
+	                <div class="${mediaClass}"${galleryData}>
                   <img src="${escapeHtml(listingImages[0])}" alt="" />
                   ${listing.category === "account" && listingImages.length > 1 ? `
                     <div class="account-gallery-count">${listingImages.length} รูป</div>
