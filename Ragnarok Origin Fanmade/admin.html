@@ -1975,33 +1975,41 @@
         if (!dateStr) return "-";
         const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
           "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
-        // รองรับทั้ง Date object และ string
-        const d = new Date(dateStr);
-        if (isNaN(d.getTime())) {
-          // Fallback สำหรับรูปแบบ YYYY-MM-DD
-          const parts = String(dateStr).split("-");
-          if (parts.length >= 2) {
-            const m = parseInt(parts[1]) - 1;
-            const y = parseInt(parts[0]);
-            return (months[m] || "-") + " " + (y + 543).toString().slice(2);
-          }
-          return dateStr;
+        
+        // ลอง parse ด้วยวิธีต่างๆ
+        let d = new Date(dateStr);
+        
+        // ถ้าเป็นรูปแบบ YYYY-MM-DD บาง Browser อาจมีปัญหาเรื่อง Timezone/Format
+        // ให้ลองจัดการ String โดยตรง
+        const dateMatch = String(dateStr).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (dateMatch) {
+          const y = parseInt(dateMatch[1]);
+          const m = parseInt(dateMatch[2]) - 1;
+          return (months[m] || "-") + " " + (y + 543).toString().slice(2);
         }
-        return months[d.getMonth()] + " " + (d.getFullYear() + 543).toString().slice(2);
+
+        if (!isNaN(d.getTime())) {
+          return months[d.getMonth()] + " " + (d.getFullYear() + 543).toString().slice(2);
+        }
+        
+        return dateStr;
       }
 
       function formatThaiDate(dateStr) {
         if (!dateStr) return "-";
-        const d = new Date(dateStr);
-        if (isNaN(d.getTime())) {
-          // Fallback สำหรับรูปแบบ YYYY-MM-DD
-          const parts = String(dateStr).split("-");
-          if (parts.length >= 3) {
-            return parseInt(parts[2]) + "/" + parseInt(parts[1]);
-          }
-          return dateStr;
+        
+        // ลองจัดการ String รูปแบบ YYYY-MM-DD โดยตรง (ปลอดภัยที่สุดสำหรับ Chart Labels)
+        const dateMatch = String(dateStr).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (dateMatch) {
+          return parseInt(dateMatch[3]) + "/" + parseInt(dateMatch[2]);
         }
-        return d.getDate() + "/" + (d.getMonth() + 1);
+
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) {
+          return d.getDate() + "/" + (d.getMonth() + 1);
+        }
+        
+        return dateStr;
       }
 
       function getChartColors(isDark) {
