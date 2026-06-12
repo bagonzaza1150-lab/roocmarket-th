@@ -5499,7 +5499,7 @@ html, body {
   opacity: 0.92;
 }
 
-/* Overlay to keep text readable */
+/* Overlay to keep text readable - Darkened for better contrast */
 .listing-card[class*="theme-pixel-"]::after,
 .my-listing-card[class*="theme-pixel-"]::after {
   content: '';
@@ -5507,9 +5507,9 @@ html, body {
   inset: 0;
   background: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0.08) 0%,
-    rgba(0, 0, 0, 0.35) 55%,
-    rgba(0, 0, 0, 0.72) 100%
+    rgba(0, 0, 0, 0.15) 0%,
+    rgba(0, 0, 0, 0.55) 55%,
+    rgba(0, 0, 0, 0.85) 100%
   );
   z-index: 1;
   border-radius: inherit;
