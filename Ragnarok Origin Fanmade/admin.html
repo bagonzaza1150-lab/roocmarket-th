@@ -503,62 +503,21 @@
                   <span>ข้อความบนปุ่ม</span>
                   <input id="heroSponsorButtonLabel" type="text" placeholder="ดูรายละเอียด" />
                 </label>
-                <div class="admin-multi-upload">
-                  <div class="admin-upload-row">
-                    <div class="admin-upload-inputs">
-                      <input id="heroSponsorImageUrl" type="hidden" />
-                      <input id="heroSponsorImagePath" type="hidden" />
-                      <label class="upload-drop" for="heroSponsorImage">
-                        <input id="heroSponsorImage" type="file" accept="image/*" />
-                        <span>รูปที่ 1</span>
-                      </label>
-                      <input id="heroSponsorButtonUrl" type="url" class="admin-url-input" placeholder="ลิงก์รูปที่ 1" />
-                    </div>
-                    <div class="auto-image-box admin-image-preview">
-                      <img id="heroSponsorPreview" src="assets/hero-rooc.png" alt="" />
-                    </div>
-                  </div>
-                  <div class="admin-upload-row">
-                    <div class="admin-upload-inputs">
-                      <input id="heroSponsorImageUrl2" type="hidden" />
-                      <input id="heroSponsorImagePath2" type="hidden" />
-                      <label class="upload-drop" for="heroSponsorImage2">
-                        <input id="heroSponsorImage2" type="file" accept="image/*" />
-                        <span>รูปที่ 2</span>
-                      </label>
-                      <input id="heroSponsorButtonUrl2" type="url" class="admin-url-input" placeholder="ลิงก์รูปที่ 2" />
-                    </div>
-                    <div class="auto-image-box admin-image-preview">
-                      <img id="heroSponsorPreview2" src="assets/hero-rooc.png" alt="" />
-                    </div>
-                  </div>
-                  <div class="admin-upload-row">
-                    <div class="admin-upload-inputs">
-                      <input id="heroSponsorImageUrl3" type="hidden" />
-                      <input id="heroSponsorImagePath3" type="hidden" />
-                      <label class="upload-drop" for="heroSponsorImage3">
-                        <input id="heroSponsorImage3" type="file" accept="image/*" />
-                        <span>รูปที่ 3</span>
-                      </label>
-                      <input id="heroSponsorButtonUrl3" type="url" class="admin-url-input" placeholder="ลิงก์รูปที่ 3" />
-                    </div>
-                    <div class="auto-image-box admin-image-preview">
-                      <img id="heroSponsorPreview3" src="assets/hero-rooc.png" alt="" />
-                    </div>
-                  </div>
-                  <div class="admin-upload-row">
-                    <div class="admin-upload-inputs">
-                      <input id="heroSponsorImageUrl4" type="hidden" />
-                      <input id="heroSponsorImagePath4" type="hidden" />
-                      <label class="upload-drop" for="heroSponsorImage4">
-                        <input id="heroSponsorImage4" type="file" accept="image/*" />
-                        <span>รูปที่ 4</span>
-                      </label>
-                      <input id="heroSponsorButtonUrl4" type="url" class="admin-url-input" placeholder="ลิงก์รูปที่ 4" />
-                    </div>
-                    <div class="auto-image-box admin-image-preview">
-                      <img id="heroSponsorPreview4" src="assets/hero-rooc.png" alt="" />
-                    </div>
+                <label class="post-field">
+                  <span>ลิงก์ปลายทาง</span>
+                  <input id="heroSponsorButtonUrl" type="url" placeholder="https://..." />
+                </label>
+                <input id="heroSponsorImageUrl" type="hidden" />
+                <input id="heroSponsorImagePath" type="hidden" />
+                <div class="admin-upload-row">
+                  <label class="upload-drop" for="heroSponsorImage">
+                    <input id="heroSponsorImage" type="file" accept="image/*" />
+                    <span>อัปโหลดรูป Hero Sponsor</span>
+                    <small>แนะนำ 1200×520 หรือ 21:9</small>
+                  </label>
+                  <div class="auto-image-box admin-image-preview hero-sponsor-admin-preview">
+                    <img id="heroSponsorPreview" src="assets/hero-rooc.png" alt="" />
+                    <small>ตัวอย่างรูปโฆษณา</small>
                   </div>
                 </div>
               </div>
@@ -779,25 +738,10 @@
         heroSponsorText: document.querySelector("#heroSponsorText"),
         heroSponsorButtonLabel: document.querySelector("#heroSponsorButtonLabel"),
         heroSponsorButtonUrl: document.querySelector("#heroSponsorButtonUrl"),
-        heroSponsorButtonUrl2: document.querySelector("#heroSponsorButtonUrl2"),
-        heroSponsorButtonUrl3: document.querySelector("#heroSponsorButtonUrl3"),
-        heroSponsorButtonUrl4: document.querySelector("#heroSponsorButtonUrl4"),
         heroSponsorImageUrl: document.querySelector("#heroSponsorImageUrl"),
         heroSponsorImagePath: document.querySelector("#heroSponsorImagePath"),
         heroSponsorImage: document.querySelector("#heroSponsorImage"),
-        heroSponsorPreview: document.querySelector("#heroSponsorPreview"),
-        heroSponsorImageUrl2: document.querySelector("#heroSponsorImageUrl2"),
-        heroSponsorImagePath2: document.querySelector("#heroSponsorImagePath2"),
-        heroSponsorImage2: document.querySelector("#heroSponsorImage2"),
-        heroSponsorPreview2: document.querySelector("#heroSponsorPreview2"),
-        heroSponsorImageUrl3: document.querySelector("#heroSponsorImageUrl3"),
-        heroSponsorImagePath3: document.querySelector("#heroSponsorImagePath3"),
-        heroSponsorImage3: document.querySelector("#heroSponsorImage3"),
-        heroSponsorPreview3: document.querySelector("#heroSponsorPreview3"),
-        heroSponsorImageUrl4: document.querySelector("#heroSponsorImageUrl4"),
-        heroSponsorImagePath4: document.querySelector("#heroSponsorImagePath4"),
-        heroSponsorImage4: document.querySelector("#heroSponsorImage4"),
-        heroSponsorPreview4: document.querySelector("#heroSponsorPreview4")
+        heroSponsorPreview: document.querySelector("#heroSponsorPreview")
       };
 
       const fields = {
@@ -1611,17 +1555,8 @@
           hero_sponsor_text: supportFields.heroSponsorText.value.trim(),
           hero_sponsor_button_label: supportFields.heroSponsorButtonLabel.value.trim(),
           hero_sponsor_button_url: supportFields.heroSponsorButtonUrl.value.trim(),
-          hero_sponsor_button_url_2: supportFields.heroSponsorButtonUrl2.value.trim(),
-          hero_sponsor_button_url_3: supportFields.heroSponsorButtonUrl3.value.trim(),
-          hero_sponsor_button_url_4: supportFields.heroSponsorButtonUrl4.value.trim(),
           hero_sponsor_image_url: supportFields.heroSponsorImageUrl.value,
-          hero_sponsor_image_path: supportFields.heroSponsorImagePath.value,
-          hero_sponsor_image_url_2: supportFields.heroSponsorImageUrl2.value,
-          hero_sponsor_image_path_2: supportFields.heroSponsorImagePath2.value,
-          hero_sponsor_image_url_3: supportFields.heroSponsorImageUrl3.value,
-          hero_sponsor_image_path_3: supportFields.heroSponsorImagePath3.value,
-          hero_sponsor_image_url_4: supportFields.heroSponsorImageUrl4.value,
-          hero_sponsor_image_path_4: supportFields.heroSponsorImagePath4.value
+          hero_sponsor_image_path: supportFields.heroSponsorImagePath.value
         };
       }
 
@@ -1657,21 +1592,9 @@
         supportFields.heroSponsorText.value = settings.hero_sponsor_text || "";
         supportFields.heroSponsorButtonLabel.value = settings.hero_sponsor_button_label || "";
         supportFields.heroSponsorButtonUrl.value = settings.hero_sponsor_button_url || "";
-        supportFields.heroSponsorButtonUrl2.value = settings.hero_sponsor_button_url_2 || "";
-        supportFields.heroSponsorButtonUrl3.value = settings.hero_sponsor_button_url_3 || "";
-        supportFields.heroSponsorButtonUrl4.value = settings.hero_sponsor_button_url_4 || "";
         supportFields.heroSponsorImageUrl.value = settings.hero_sponsor_image_url || "";
         supportFields.heroSponsorImagePath.value = settings.hero_sponsor_image_path || "";
         supportFields.heroSponsorPreview.src = settings.hero_sponsor_image_url || "assets/hero-rooc.png";
-        supportFields.heroSponsorImageUrl2.value = settings.hero_sponsor_image_url_2 || "";
-        supportFields.heroSponsorImagePath2.value = settings.hero_sponsor_image_path_2 || "";
-        supportFields.heroSponsorPreview2.src = settings.hero_sponsor_image_url_2 || "assets/hero-rooc.png";
-        supportFields.heroSponsorImageUrl3.value = settings.hero_sponsor_image_url_3 || "";
-        supportFields.heroSponsorImagePath3.value = settings.hero_sponsor_image_path_3 || "";
-        supportFields.heroSponsorPreview3.src = settings.hero_sponsor_image_url_3 || "assets/hero-rooc.png";
-        supportFields.heroSponsorImageUrl4.value = settings.hero_sponsor_image_url_4 || "";
-        supportFields.heroSponsorImagePath4.value = settings.hero_sponsor_image_path_4 || "";
-        supportFields.heroSponsorPreview4.src = settings.hero_sponsor_image_url_4 || "assets/hero-rooc.png";
       }
 
       async function loadSupportSettings() {
@@ -1709,28 +1632,10 @@
           }
 
           if (supportFields.heroSponsorImage.files?.[0]) {
-            const uploaded = await uploadSupportImage(supportFields.heroSponsorImage.files[0], "hero-sponsor-1");
+            const uploaded = await uploadSupportImage(supportFields.heroSponsorImage.files[0], "hero-sponsor");
             supportFields.heroSponsorImageUrl.value = uploaded.imageUrl;
             supportFields.heroSponsorImagePath.value = uploaded.imagePath;
             supportFields.heroSponsorPreview.src = uploaded.imageUrl;
-          }
-          if (supportFields.heroSponsorImage2.files?.[0]) {
-            const uploaded = await uploadSupportImage(supportFields.heroSponsorImage2.files[0], "hero-sponsor-2");
-            supportFields.heroSponsorImageUrl2.value = uploaded.imageUrl;
-            supportFields.heroSponsorImagePath2.value = uploaded.imagePath;
-            supportFields.heroSponsorPreview2.src = uploaded.imageUrl;
-          }
-          if (supportFields.heroSponsorImage3.files?.[0]) {
-            const uploaded = await uploadSupportImage(supportFields.heroSponsorImage3.files[0], "hero-sponsor-3");
-            supportFields.heroSponsorImageUrl3.value = uploaded.imageUrl;
-            supportFields.heroSponsorImagePath3.value = uploaded.imagePath;
-            supportFields.heroSponsorPreview3.src = uploaded.imageUrl;
-          }
-          if (supportFields.heroSponsorImage4.files?.[0]) {
-            const uploaded = await uploadSupportImage(supportFields.heroSponsorImage4.files[0], "hero-sponsor-4");
-            supportFields.heroSponsorImageUrl4.value = uploaded.imageUrl;
-            supportFields.heroSponsorImagePath4.value = uploaded.imagePath;
-            supportFields.heroSponsorPreview4.src = uploaded.imageUrl;
           }
 
           const { error } = await supabaseClient
@@ -1745,9 +1650,6 @@
           supportFields.donateQrImage.value = "";
           supportFields.middlemanQrImage.value = "";
           supportFields.heroSponsorImage.value = "";
-          supportFields.heroSponsorImage2.value = "";
-          supportFields.heroSponsorImage3.value = "";
-          supportFields.heroSponsorImage4.value = "";
           setMessage(supportSettingsMessage, "บันทึกแถบข้อความเรียบร้อย");
         } catch (error) {
           setMessage(supportSettingsMessage, error.message || "บันทึกไม่สำเร็จ", true);
@@ -1928,18 +1830,6 @@
         const file = supportFields.heroSponsorImage.files && supportFields.heroSponsorImage.files[0];
         if (file) supportFields.heroSponsorPreview.src = URL.createObjectURL(file);
       });
-      supportFields.heroSponsorImage2.addEventListener("change", () => {
-        const file = supportFields.heroSponsorImage2.files && supportFields.heroSponsorImage2.files[0];
-        if (file) supportFields.heroSponsorPreview2.src = URL.createObjectURL(file);
-      });
-      supportFields.heroSponsorImage3.addEventListener("change", () => {
-        const file = supportFields.heroSponsorImage3.files && supportFields.heroSponsorImage3.files[0];
-        if (file) supportFields.heroSponsorPreview3.src = URL.createObjectURL(file);
-      });
-      supportFields.heroSponsorImage4.addEventListener("change", () => {
-        const file = supportFields.heroSponsorImage4.files && supportFields.heroSponsorImage4.files[0];
-        if (file) supportFields.heroSponsorPreview4.src = URL.createObjectURL(file);
-      });
       adminItems.addEventListener("click", (event) => {
         const editId = event.target.dataset.edit;
         const deleteId = event.target.dataset.delete;
@@ -2082,14 +1972,35 @@
       let currentChartPeriod = "daily";
 
       function formatThaiMonth(dateStr) {
+        if (!dateStr) return "-";
         const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
           "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+        // รองรับทั้ง Date object และ string
         const d = new Date(dateStr);
+        if (isNaN(d.getTime())) {
+          // Fallback สำหรับรูปแบบ YYYY-MM-DD
+          const parts = String(dateStr).split("-");
+          if (parts.length >= 2) {
+            const m = parseInt(parts[1]) - 1;
+            const y = parseInt(parts[0]);
+            return (months[m] || "-") + " " + (y + 543).toString().slice(2);
+          }
+          return dateStr;
+        }
         return months[d.getMonth()] + " " + (d.getFullYear() + 543).toString().slice(2);
       }
 
       function formatThaiDate(dateStr) {
+        if (!dateStr) return "-";
         const d = new Date(dateStr);
+        if (isNaN(d.getTime())) {
+          // Fallback สำหรับรูปแบบ YYYY-MM-DD
+          const parts = String(dateStr).split("-");
+          if (parts.length >= 3) {
+            return parseInt(parts[2]) + "/" + parseInt(parts[1]);
+          }
+          return dateStr;
+        }
         return d.getDate() + "/" + (d.getMonth() + 1);
       }
 
