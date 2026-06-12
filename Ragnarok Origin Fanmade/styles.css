@@ -4790,9 +4790,22 @@ h1 {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-wrap: wrap; /* เปลี่ยนเป็น wrap เพื่อให้พอดีกับหน้าจอ */
+  flex-wrap: wrap;
   padding: 5px 0;
   margin-top: 10px;
+  width: 100%;
+}
+
+.filter-row .market-tabs {
+  display: flex;
+  flex: 1; /* ให้ขยายเต็มพื้นที่ */
+  gap: 8px;
+}
+
+.filter-row .market-tabs button {
+  flex: 1; /* ให้ปุ่มขยายเท่าๆ กัน */
+  white-space: nowrap;
+  justify-content: center;
 }
 
 .filter-divider {
