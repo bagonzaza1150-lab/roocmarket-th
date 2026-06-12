@@ -1718,19 +1718,20 @@ async function initLiveActivityFeed() {
   function showNextActivity() {
     if (activities.length === 0) return;
     
-    feedContent.style.opacity = '0';
-    setTimeout(() => {
-      feedContent.innerHTML = activities[currentIndex];
-      feedContent.style.opacity = '1';
-      currentIndex = (currentIndex + 1) % activities.length;
-    }, 500);
+    // รีเซ็ตแอนิเมชันโดยการเอา class ออกแล้วใส่ใหม่
+    feedContent.style.animation = 'none';
+    feedContent.offsetHeight; // trigger reflow
+    feedContent.style.animation = null;
+    
+    feedContent.innerHTML = activities[currentIndex];
+    currentIndex = (currentIndex + 1) % activities.length;
   }
 
   // Fetch initially
   await fetchActivities();
 
-  // Rotate every 7 seconds
-  setInterval(showNextActivity, 7000);
+  // Rotate every 5 seconds (Fast & Active)
+  setInterval(showNextActivity, 5000);
 
   // Refresh data every 5 minutes
   setInterval(fetchActivities, 5 * 60 * 1000);
