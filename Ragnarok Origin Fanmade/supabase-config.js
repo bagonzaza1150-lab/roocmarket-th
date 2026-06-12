@@ -614,7 +614,7 @@ window.ROOC_SUPABASE = {
         : "";
       const badges = [
                 `<span class="${listingType === "buy" ? "buy" : listingType === "service" ? "verified" : "fast"} shine">${listingType === "buy" ? "รับซื้อ" : listingType === "service" ? "รับจ้าง" : "ขาย"}</span>`,
-        `<span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
+        `<span class="shine">${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
         listing.ready_today ? 
           '<span class="fast pulse">Fast Deal</span>' : "",
         listing.category === "mvp" ? 
@@ -1275,10 +1275,10 @@ window.ROOC_SUPABASE = {
           const sellerName = listing.seller_name || "ผู้ขาย ROOC";
           const sellerAvatar = listing.seller_avatar_url || "assets/category-icons/account-b.png";
           const badges = [
-            `<span class="${listingType === "buy" ? "buy" : listingType === "service" ? "verified" : "fast"}">${listingType === "buy" ? "รับซื้อ" : listingType === "service" ? "รับจ้าง" : "ขาย"}</span>`,
-            `<span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
-            listing.ready_today ? '<span class="fast">Fast Deal</span>' : "",
-            listing.category === "mvp" ? '<span class="mvp">MVP</span>' : ""
+            `<span class="${listingType === "buy" ? "buy" : listingType === "service" ? "verified" : "fast"} shine">${listingType === "buy" ? "รับซื้อ" : listingType === "service" ? "รับจ้าง" : "ขาย"}</span>`,
+            `<span class="shine">${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
+            listing.ready_today ? '<span class="fast pulse">Fast Deal</span>' : "",
+            listing.category === "mvp" ? '<span class="mvp shine">MVP</span>' : ""
           ].filter(Boolean).join("");
           const description = listing.description || "";
           const descriptionParts = getDescriptionParts(description);
