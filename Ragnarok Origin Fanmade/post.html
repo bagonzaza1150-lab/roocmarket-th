@@ -1071,6 +1071,12 @@
 
       // Global function for theme selection (used by inline onclick)
       window.selectTheme = function(el) {
+        if (el.classList.contains('locked')) {
+          if (confirm('🔒 ฟีเจอร์นี้สำหรับ Premium เท่านั้น คุณต้องการดูรายละเอียดการอัปเกรดใช่หรือไม่?')) {
+            window.location.href = 'premium.html';
+          }
+          return;
+        }
         console.log('Theme selected:', el.dataset.theme);
         document.querySelectorAll('#themePickerInline .theme-option').forEach(o => o.classList.remove('active'));
         el.classList.add('active');
@@ -1079,17 +1085,31 @@
         }
       };
 
-      // Show theme picker only for Premium users
+      // Show theme picker for everyone, but lock for non-premium
       async function syncPremiumUi(session) {
-        if (!session) return;
-        const premiumResult = await getPremiumStatus(session);
+        const premiumResult = session ? await getPremiumStatus(session) : null;
         const isPremium = premiumResult && premiumResult.active;
+        
         const cardBackgroundField = document.getElementById('cardBackgroundField');
         if (cardBackgroundField) {
-          cardBackgroundField.hidden = !isPremium;
+          cardBackgroundField.hidden = false; // Always show
+          
+          // Apply locked status to pixel themes for non-premium
+          const themeOptions = cardBackgroundField.querySelectorAll('.theme-option');
+          themeOptions.forEach(option => {
+            const themeId = option.dataset.theme;
+            if (themeId !== 'default' && !isPremium) {
+              option.classList.add('locked');
+            } else {
+              option.classList.remove('locked');
+            }
+          });
         }
       }
       if (canUseSupabase) {
+        // Initial call to show picker even if not logged in
+        syncPremiumUi(null);
+        
         supabaseClient.auth.getSession().then(({ data }) => syncPremiumUi(data.session));
         supabaseClient.auth.onAuthStateChange((_event, session) => syncPremiumUi(session));
       }

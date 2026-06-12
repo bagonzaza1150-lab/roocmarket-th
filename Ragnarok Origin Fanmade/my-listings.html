@@ -559,7 +559,12 @@
         let selectedTheme = currentBg;
         
         window.selectThemeInModal = function(el) {
-          if (el.classList.contains('locked')) return;
+          if (el.classList.contains('locked')) {
+            if (confirm('🔒 ฟีเจอร์นี้สำหรับ Premium เท่านั้น คุณต้องการดูรายละเอียดการอัปเกรดใช่หรือไม่?')) {
+              window.location.href = 'premium.html';
+            }
+            return;
+          }
           console.log('Modal theme selected:', el.dataset.theme);
           modal.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'));
           el.classList.add('active');
