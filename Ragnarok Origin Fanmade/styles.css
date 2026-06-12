@@ -4517,14 +4517,15 @@ h1 {
 
 .floating-item {
   position: absolute;
-  opacity: 0.12; /* เพิ่มความชัดเจน */
-  filter: grayscale(0.5) sepia(0.2); /* ให้มีสีใบไม้จางๆ */
+  opacity: 0.18; /* ปรับให้ชัดขึ้นเล็กน้อยสำหรับ Pixel Art */
+  pointer-events: none;
+  image-rendering: pixelated; /* ทำให้ Pixel Art ดูคมชัด */
   animation: float-around 25s linear infinite;
 }
 
 :root[data-theme="dark"] .floating-item {
-  opacity: 0.15;
-  filter: grayscale(0.5) sepia(0.2) brightness(0.8);
+  opacity: 0.1;
+  filter: brightness(0.7) saturate(0.6);
 }
 
 @keyframes float-around {

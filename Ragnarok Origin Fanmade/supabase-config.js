@@ -81,22 +81,29 @@ window.ROOC_SUPABASE = {
     const container = document.querySelector("#floatingElements");
     if (!container) return;
 
-    const icons = [
-      "assets/category-icons/accessories-a.png" // ใช้ไอคอนใบไม้ (accessories-a.png มีลักษณะคล้ายใบไม้/เครื่องประดับธรรมชาติ)
+    // รายการใบไม้ Pixel Art แบบต่างๆ
+    const leafImages = [
+      "assets/leaf-pixel-green.png",
+      "assets/leaf-pixel-orange.png",
+      "assets/leaf-pixel-yellow.png"
     ];
 
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 15; i++) {
       const item = document.createElement("img");
-      item.src = icons[0];
+      // สุ่มเลือกใบไม้จากรายการ
+      item.src = leafImages[Math.floor(Math.random() * leafImages.length)];
       item.className = "floating-item";
       
-      const size = Math.random() * 20 + 20;
+      // สุ่มขนาดให้ดูเป็นธรรมชาติ (Pixel Art ไม่ควรใหญ่เกินไปเพื่อให้ดูคมชัด)
+      const size = Math.random() * 25 + 25;
       item.style.width = `${size}px`;
+      item.style.height = "auto";
       item.style.left = `${Math.random() * 100}%`;
       item.style.top = `${Math.random() * 100}%`;
       
-      const duration = Math.random() * 20 + 20;
-      const delay = Math.random() * -20;
+      // ปรับแอนิเมชันให้พริ้วไหวและมีความเร็วต่างกัน
+      const duration = Math.random() * 20 + 30;
+      const delay = Math.random() * -40;
       item.style.animationDuration = `${duration}s`;
       item.style.animationDelay = `${delay}s`;
       
