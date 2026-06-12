@@ -77,6 +77,36 @@ window.ROOC_SUPABASE = {
       .replace(/'/g, "&#039;");
   }
 
+  function initFloatingElements() {
+    const container = document.querySelector("#floatingElements");
+    if (!container) return;
+
+    const icons = [
+      "assets/category-icons/accessories-a.png",
+      "assets/category-icons/fashion-c.png",
+      "assets/category-icons/mvp-c.png",
+      "assets/site-icons/rooc-icon-32.png"
+    ];
+
+    for (let i = 0; i < 15; i++) {
+      const item = document.createElement("img");
+      item.src = icons[Math.floor(Math.random() * icons.length)];
+      item.className = "floating-item";
+      
+      const size = Math.random() * 20 + 20;
+      item.style.width = `${size}px`;
+      item.style.left = `${Math.random() * 100}%`;
+      item.style.top = `${Math.random() * 100}%`;
+      
+      const duration = Math.random() * 20 + 20;
+      const delay = Math.random() * -20;
+      item.style.animationDuration = `${duration}s`;
+      item.style.animationDelay = `${delay}s`;
+      
+      container.appendChild(item);
+    }
+  }
+
   function initTheme() {
     const savedTheme = localStorage.getItem("theme");
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -553,6 +583,13 @@ window.ROOC_SUPABASE = {
     
     const cardsHtml = pageListings.map((listing, index) => {
       const title = listing.title || listing.item_name || "ประกาศขาย";
+      const sellerSoldCounts = soldListings.reduce((acc, item) => {
+        const uid = item.user_id;
+        if (uid) acc[uid] = (acc[uid] || 0) + 1;
+        return acc;
+      }, {});
+      const soldCount = sellerSoldCounts[listing.user_id] || 0;
+      const trustBadge = soldCount > 0 ? `<div class="seller-trust-badge"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"/></svg> ขายสำเร็จแล้ว ${soldCount} รายการ</div>` : "";
       const listingType = listing.listing_type || "sell";
       const isServiceListing = listingType === "service";
       const mediaClass = listing.category === "mvp" ? "item-media card-media" : listing.category === "account" ? "item-media account-listing-media" : "item-media";
@@ -594,6 +631,7 @@ window.ROOC_SUPABASE = {
               <span>${escapeHtml(sellerName)}</span>
             </a>
             ${listing.seller_is_premium ? '<strong title="Premium">♛</strong>' : ""}
+            ${trustBadge}
             ${listing.facebook_url ? `<a href="${escapeHtml(listing.facebook_url)}" target="_blank" rel="noopener" class="seller-facebook-link" title="เปิด Facebook ผู้ขาย" onclick="event.stopPropagation();">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
                 <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/>
@@ -1585,12 +1623,14 @@ window.ROOC_SUPABASE = {
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
       initTheme();
+      initFloatingElements();
       hydratePublicListings();
       hydrateAuthUi();
       trackPageView();
     });
   } else {
     initTheme();
+    initFloatingElements();
     hydratePublicListings();
     hydrateAuthUi();
     trackPageView();

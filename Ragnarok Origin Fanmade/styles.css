@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Mitr:wght@200;300;400;500;600;700&display=swap');
+
 :root {
   --bg: #f4f9fc;
   --paper: #ffffff;
@@ -47,8 +49,8 @@ body {
     radial-gradient(circle at 82% 8%, rgba(70, 182, 238, 0.18), transparent 24rem),
     linear-gradient(180deg, #f8fcff 0%, var(--bg) 45%, #eef6fb 100%);
   color: var(--ink);
-  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
-  letter-spacing: 0;
+  font-family: 'Mitr', sans-serif;
+  letter-spacing: -0.01em;
   transition: background 0.3s ease, color 0.3s ease;
 }
 
@@ -4460,3 +4462,63 @@ h1 {
 .listing-card:nth-child(10) { animation-delay: 1.0s; }
 .listing-card:nth-child(11) { animation-delay: 1.1s; }
 .listing-card:nth-child(12) { animation-delay: 1.2s; }
+
+/* Floating Background Elements */
+.floating-elements {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.floating-item {
+  position: absolute;
+  opacity: 0.05;
+  filter: grayscale(1);
+  animation: float-around 20s linear infinite;
+}
+
+:root[data-theme="dark"] .floating-item {
+  opacity: 0.08;
+  filter: grayscale(1) invert(1);
+}
+
+@keyframes float-around {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(10vw, 25vh) rotate(90deg);
+  }
+  50% {
+    transform: translate(5vw, 50vh) rotate(180deg);
+  }
+  75% {
+    transform: translate(-10vw, 75vh) rotate(270deg);
+  }
+  100% {
+    transform: translate(0, 100vh) rotate(360deg);
+  }
+}
+
+/* Seller Trust Badge Style */
+.seller-trust-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--green);
+  background: color-mix(in srgb, var(--green) 10%, transparent);
+  padding: 2px 8px;
+  border-radius: 99px;
+  margin-top: 4px;
+}
+
+:root[data-theme="dark"] .seller-trust-badge {
+  background: color-mix(in srgb, var(--green) 20%, transparent);
+}
