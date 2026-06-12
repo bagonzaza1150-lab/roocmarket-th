@@ -1158,10 +1158,11 @@ window.ROOC_SUPABASE = {
 
   async function getPremiumStatus(session) {
     if (!session || !supabaseClient) return false;
+    const discordId = getDiscordId(session);
     const { data, error } = await supabaseClient
       .from("marketplace_premium_users")
-      .select("active")
-      .eq("user_id", session.user.id)
+      .select("*")
+      .or(`user_id.eq.${session.user.id}${discordId ? `,discord_id.eq.${discordId}` : ""}`)
       .maybeSingle();
     if (error) return false;
     return data && (data.active === true || data.active === "true" || data.active === 1 || data.active === "1");

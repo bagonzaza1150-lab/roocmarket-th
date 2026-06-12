@@ -308,7 +308,7 @@
         const visibleListings = allListings.filter((listing) => listing.sale_status !== "deleted");
         currentListings = visibleListings;
         await loadOfferMailbox(visibleListings);
-        const isPremium = premiumResult && (premiumResult.active === true || premiumResult.active === "true" || premiumResult.active === 1 || premiumResult.active === "1");
+        const isPremium = premiumResult && premiumResult.active;
         const limit = isPremium ? 5 : 2;
         const oneHourAgo = Date.now() - 3600000;
         const sellHourlyUsed = allListings.filter((listing) => getListingType(listing) === "sell" && new Date(listing.created_at).getTime() >= oneHourAgo).length;
@@ -323,14 +323,23 @@
       }
 
       async function getPremiumStatus(session) {
-        if (!session) return false;
+        if (!session) return { active: false };
+        const discordId = getDiscordId(session);
+        
+        // ลองดึงข้อมูลด้วย user_id และ discord_id
         const { data, error } = await supabaseClient
           .from("marketplace_premium_users")
-          .select("active")
-          .eq("user_id", session.user.id)
+          .select("*")
+          .or(`user_id.eq.${session.user.id}${discordId ? `,discord_id.eq.${discordId}` : ""}`)
           .maybeSingle();
-        if (error) return false;
-        return data && (data.active === true || data.active === "true" || data.active === 1 || data.active === "1");
+
+        if (error) {
+          console.error("Premium Check Error:", error);
+          return { active: false, error: error.message };
+        }
+        
+        const isActive = data && (data.active === true || data.active === "true" || data.active === 1 || data.active === "1");
+        return { active: isActive, data: data };
       }
 
       async function toggleListing(id) {
@@ -475,7 +484,7 @@
         const listing = currentListings.find((entry) => entry.id === listingId);
         if (!listing) return;
         
-        const isPremium = premiumResult && (premiumResult.active === true || premiumResult.active === "true");
+        const isPremium = premiumResult && premiumResult.active;
         const themes = [
           { id: 'default', label: 'ปกติ', color: 'var(--paper)' },
           { id: 'marble', label: 'หินอ่อน', color: 'linear-gradient(135deg, #f5f7fa, #c3cfe2)' },
