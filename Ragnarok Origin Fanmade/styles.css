@@ -4741,10 +4741,44 @@ h1 {
   font-size: 13px;
   color: var(--text-muted);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   opacity: 1;
   transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* Container สำหรับควบคุมการเลื่อน */
+#liveActivityContent {
+  display: inline-block;
+  padding-left: 10px;
+}
+
+.live-activity-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px 16px;
+  border-radius: 50px;
+  margin-left: 20px;
+  width: 400px; /* กำหนดความกว้างตายตัวเพื่อให้ข้อความเลื่อนข้างใน */
+  overflow: hidden; /* บังคับให้ข้อความที่ยาวกว่าเลื่อนหายไปข้างๆ */
+  position: relative;
+  backdrop-filter: blur(4px);
+  transition: all 0.3s ease;
+}
+
+/* แอนิเมชันเลื่อนข้อความ */
+.marquee-scroll {
+  display: inline-block;
+  animation: marquee 10s linear infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 .live-content.fade-out {

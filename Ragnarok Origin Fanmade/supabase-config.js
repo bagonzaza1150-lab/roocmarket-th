@@ -1724,7 +1724,16 @@ async function initLiveActivityFeed() {
     
     setTimeout(() => {
       // 2. เปลี่ยนข้อความและเตรียมแอนิเมชันใหม่
-      feedContent.innerHTML = activities[currentIndex];
+      // สร้างเนื้อหาแบบเบิ้ล 2 ชุดเพื่อให้การเลื่อน Marquee ดูต่อเนื่อง
+      const content = activities[currentIndex];
+      feedContent.innerHTML = `<span class="marquee-content">${content} &nbsp;&nbsp;&nbsp; ${content}</span>`;
+      
+      // ตรวจสอบความยาวข้อความ ถ้าสั้นไม่ต้องเลื่อน ถ้ายาวให้ใส่ class เลื่อน
+      const contentSpan = feedContent.querySelector('.marquee-content');
+      if (contentSpan.offsetWidth > 300) {
+        contentSpan.classList.add('marquee-scroll');
+      }
+
       feedContent.classList.remove('fade-out');
       feedContent.classList.add('fade-in');
       
