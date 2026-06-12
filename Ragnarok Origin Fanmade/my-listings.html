@@ -244,7 +244,7 @@
                 ${renderOfferMailbox(listing.id)}
               </div>
               <div class="my-listing-actions">
-                <button class="btn btn-small btn-customize premium-only" type="button" data-customize="${escapeHtml(listing.id)}" title="Premium Feature">🎨 ปรับแต่ง</button>
+                <button class="btn btn-small btn-customize" type="button" data-customize="${escapeHtml(listing.id)}">🎨 ปรับแต่ง</button>
                 <button class="btn btn-small btn-light" type="button" data-edit-price="${escapeHtml(listing.id)}">แก้ราคา</button>
                 <button class="btn btn-small btn-light" type="button" data-toggle-offers="${escapeHtml(listing.id)}">${listing.offers_enabled ? "ปิดเสนอราคา" : "เปิดเสนอราคา"}</button>
                 <button class="btn btn-small" type="button" data-toggle="${escapeHtml(listing.id)}">${listing.active ? "ปิดประกาศ" : "เปิดประกาศ"}</button>
@@ -308,7 +308,7 @@
         const visibleListings = allListings.filter((listing) => listing.sale_status !== "deleted");
         currentListings = visibleListings;
         await loadOfferMailbox(visibleListings);
-        const isPremium = premiumResult && (premiumResult.active === true || premiumResult.active === "true");
+        const isPremium = premiumResult && (premiumResult.active === true || premiumResult.active === "true" || premiumResult.active === 1 || premiumResult.active === "1");
         const limit = isPremium ? 5 : 2;
         const oneHourAgo = Date.now() - 3600000;
         const sellHourlyUsed = allListings.filter((listing) => getListingType(listing) === "sell" && new Date(listing.created_at).getTime() >= oneHourAgo).length;
@@ -330,7 +330,7 @@
           .eq("user_id", session.user.id)
           .maybeSingle();
         if (error) return false;
-        return data && (data.active === true || data.active === "true");
+        return data && (data.active === true || data.active === "true" || data.active === 1 || data.active === "1");
       }
 
       async function toggleListing(id) {

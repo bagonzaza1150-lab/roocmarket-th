@@ -1075,7 +1075,7 @@
             .eq('user_id', data.session.user.id)
             .maybeSingle();
           
-          const isPremium = premiumData && (premiumData.active === true || premiumData.active === "true");
+          const isPremium = premiumData && (premiumData.active === true || premiumData.active === "true" || premiumData.active === 1 || premiumData.active === "1");
           const cardBackgroundField = document.getElementById('cardBackgroundField');
           if (cardBackgroundField) {
             cardBackgroundField.hidden = !isPremium;
@@ -1162,7 +1162,7 @@
           .eq("user_id", session.user.id)
           .maybeSingle();
         if (error) return false;
-        return data && (data.active === true || data.active === "true");
+        return data && (data.active === true || data.active === "true" || data.active === 1 || data.active === "1");
       }
 
       async function getBanStatus(session) {

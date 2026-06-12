@@ -1164,7 +1164,7 @@ window.ROOC_SUPABASE = {
       .eq("user_id", session.user.id)
       .maybeSingle();
     if (error) return false;
-    return data && (data.active === true || data.active === "true");
+    return data && (data.active === true || data.active === "true" || data.active === 1 || data.active === "1");
   }
 
   function isAdminSession(session) {
