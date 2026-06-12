@@ -667,13 +667,7 @@
           const selectedTheme = document.querySelector('#themePickerInline .theme-option.active')?.dataset.theme || 'default';
           let newClass = 'listing-card preview-card';
           
-          // Check if user is premium to show VIP border in preview
-          const cardBackgroundField = document.getElementById('cardBackgroundField');
-          const isPremiumPreview = cardBackgroundField && !cardBackgroundField.hidden;
-          
-          if (isPremiumPreview) {
-            newClass += " vip-listing";
-          }
+
           
           if (selectedTheme && selectedTheme !== 'default') {
             newClass += " " + selectedTheme;

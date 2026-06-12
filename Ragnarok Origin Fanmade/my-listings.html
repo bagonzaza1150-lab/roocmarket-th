@@ -225,9 +225,8 @@
         grid.innerHTML = listings.map((listing) => {
           const status = listingStatus(listing);
           const canMarkSold = listing.sale_status !== "sold";
-          const isVip = listing.seller_is_premium || listing.is_premium;
           return `
-            <article class="my-listing-card listing-card${isVip ? " vip-listing" : ""}${getListingType(listing) === "service" ? " service-my-listing-card" : ""}${listing.card_background && listing.card_background !== 'default' ? " " + listing.card_background : ""}" data-id="${escapeHtml(listing.id)}" data-active="${listing.active ? "true" : "false"}" data-status="${escapeHtml(listing.sale_status || "active")}">
+            <article class="my-listing-card listing-card${getListingType(listing) === "service" ? " service-my-listing-card" : ""}${listing.card_background && listing.card_background !== 'default' ? " " + listing.card_background : ""}" data-id="${escapeHtml(listing.id)}" data-active="${listing.active ? "true" : "false"}" data-status="${escapeHtml(listing.sale_status || "active")}">
               ${getListingType(listing) === "service" ? "" : `<img src="${escapeHtml(listing.image_url || "assets/category-icons/mvp-c.png")}" alt="" />`}
               <div>
                 <div class="listing-meta">
