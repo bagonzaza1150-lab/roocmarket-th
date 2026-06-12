@@ -4762,7 +4762,8 @@ h1 {
   padding: 6px 16px;
   border-radius: 50px;
   margin-left: 20px;
-  width: 400px;
+  width: 100%; /* เปลี่ยนเป็น 100% เพื่อให้ยืดหยุ่น */
+  max-width: 400px; /* แต่ไม่เกิน 400px */
   overflow: hidden;
   position: relative;
   backdrop-filter: blur(4px);
@@ -4892,12 +4893,29 @@ h1 {
 @media (max-width: 768px) {
   .section-head {
     flex-direction: column;
-    align-items: flex-start !important;
+    align-items: stretch !important; /* ให้ขยายเต็มความกว้าง */
     gap: 15px;
+  }
+  .section-head > div {
+    width: 100%;
   }
   .live-activity-container {
     margin-left: 0;
     max-width: 100%;
     width: 100%;
+    padding: 8px 12px;
+  }
+  .filter-row {
+    flex-wrap: nowrap; /* บนมือถือให้เลื่อนซ้ายขวาได้ */
+    overflow-x: auto;
+    padding: 10px 0;
+    width: 100%;
+  }
+  .filter-row .market-tabs {
+    flex: none; /* ปิด flex grow บนมือถือเพื่อให้ปุ่มไม่เบียดกัน */
+  }
+  .filter-row .market-tabs button {
+    flex: none;
+    padding: 8px 16px;
   }
 }
