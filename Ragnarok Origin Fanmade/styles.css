@@ -4975,6 +4975,20 @@ h1 {
     max-width: 100% !important;
     overflow-x: hidden !important;
     position: relative !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* ป้องกัน sold-scroller ยืดหน้าจอ */
+  .sold-scroller {
+    width: 100% !important;
+    overflow: hidden !important;
+    padding: 10px 0 !important;
+  }
+  
+  .sold-track {
+    display: flex !important;
+    width: max-content !important;
   }
 
   /* ปรับสเกลส่วนหมวดหมู่ให้เรียง 1 คอลัมน์ (แก้ปัญหาล้นขวาง) */
