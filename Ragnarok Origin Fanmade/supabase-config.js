@@ -1654,3 +1654,90 @@ window.ROOC_SUPABASE = {
     trackPageView();
   }
 })();
+
+/**
+ * Live Activity Feed Logic
+ */
+async function initLiveActivityFeed() {
+  const feedContainer = document.getElementById('liveActivityFeed');
+  const feedContent = document.getElementById('liveActivityContent');
+  if (!feedContainer || !feedContent) return;
+
+  const supabase = getSupabaseClient();
+  if (!supabase) return;
+
+  let activities = [];
+  let currentIndex = 0;
+
+  async function fetchActivities() {
+    try {
+      // 1. ดึงประกาศล่าสุด 5 รายการ
+      const { data: listings } = await supabase
+        .from('marketplace_listings')
+        .select('title, seller_name, server_name, listing_type')
+        .eq('active', true)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      // 2. ดึงการเสนอราคาล่าสุด 5 รายการ
+      const { data: offers } = await supabase
+        .from('marketplace_listing_offers')
+        .select('offer_price, marketplace_listings(title)')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      const newActivities = [];
+
+      if (listings) {
+        listings.forEach(l => {
+          const typeText = l.listing_type === 'buy' ? 'ประกาศรับซื้อ' : l.listing_type === 'service' ? 'รับจ้างลงดัน' : 'ลงขาย';
+          newActivities.push(`คุณ <strong>${l.seller_name || 'ผู้ใช้'}</strong> เพิ่ง${typeText} <span class="highlight">${l.title}</span> ใน ${l.server_name || 'ทั้งหมด'}`);
+        });
+      }
+
+      if (offers) {
+        offers.forEach(o => {
+          if (o.marketplace_listings) {
+            newActivities.push(`มีคนเสนอราคา <span class="highlight">฿${o.offer_price.toLocaleString()}</span> ให้กับ ${o.marketplace_listings.title}`);
+          }
+        });
+      }
+
+      // Shuffle activities
+      activities = newActivities.sort(() => Math.random() - 0.5);
+      
+      if (activities.length > 0) {
+        feedContainer.style.display = 'flex';
+        showNextActivity();
+      }
+    } catch (err) {
+      console.error('Error fetching activities:', err);
+    }
+  }
+
+  function showNextActivity() {
+    if (activities.length === 0) return;
+    
+    feedContent.style.opacity = '0';
+    setTimeout(() => {
+      feedContent.innerHTML = activities[currentIndex];
+      feedContent.style.opacity = '1';
+      currentIndex = (currentIndex + 1) % activities.length;
+    }, 500);
+  }
+
+  // Fetch initially
+  await fetchActivities();
+
+  // Rotate every 7 seconds
+  setInterval(showNextActivity, 7000);
+
+  // Refresh data every 5 minutes
+  setInterval(fetchActivities, 5 * 60 * 1000);
+}
+
+// เรียกใช้ initLiveActivityFeed เมื่อหน้าโหลดเสร็จ
+document.addEventListener('DOMContentLoaded', () => {
+  // ให้รอสักครู่เพื่อให้ระบบหลักทำงานเสร็จก่อน
+  setTimeout(initLiveActivityFeed, 2000);
+});
