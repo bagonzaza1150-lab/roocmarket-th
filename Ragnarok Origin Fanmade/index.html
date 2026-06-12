@@ -504,10 +504,12 @@
               : "";
             const rawPrice = Number(normalizePriceText(listing.price_text));
             const formattedPrice = Number.isFinite(rawPrice) && rawPrice > 0 ? rawPrice.toLocaleString("th-TH", { maximumFractionDigits: 2 }) : "0";
+            const listingType = listing.listing_type || "sell";
             const badges = [
+              `<span class="${listingType === "buy" ? "buy" : listingType === "service" ? "verified" : "fast"} shine">${listingType === "buy" ? "รับซื้อ" : listingType === "service" ? "รับจ้าง" : "ขาย"}</span>`,
               `<span>${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
-              listing.ready_today ? '<span class="fast">Fast Deal</span>' : "",
-              listing.category === "mvp" ? '<span class="mvp">MVP</span>' : ""
+              listing.ready_today ? '<span class="fast pulse">Fast Deal</span>' : "",
+              listing.category === "mvp" ? '<span class="mvp shine">MVP</span>' : ""
             ].filter(Boolean).join("");
             const description = listing.middleman
               ? `${listing.description || ""} · รองรับ Middleman`
