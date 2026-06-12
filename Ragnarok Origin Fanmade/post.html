@@ -232,11 +232,11 @@
                 <p style="font-size: 12px; color: var(--muted); margin: 4px 0 0;">เลือกพื้นหลัง pixel art สำหรับการ์ดประกาศของคุณ ผู้ซื้อจะเห็นในหน้าแรก</p>
                 <div class="theme-picker-grid" id="themePickerInline">
                   <div class="theme-option active" data-theme="default" style="background: var(--paper); border: 2px solid var(--line);">ปกติ</div>
-                  <div class="theme-option" data-theme="theme-pixel-grass">ทุ่งหญ้า</div>
-                  <div class="theme-option" data-theme="theme-pixel-sky">ท้องฟ้า</div>
-                  <div class="theme-option" data-theme="theme-pixel-gold">ทองพิกเซล</div>
-                  <div class="theme-option" data-theme="theme-pixel-night">คืนดาว</div>
-                  <div class="theme-option" data-theme="theme-pixel-pink">ชมพูพิกเซล</div>
+                  <div class="theme-option" data-theme="theme-pixel-grass" style="background-image: url('assets/card-bg/theme-pixel-grass.png');">ทุ่งหญ้า</div>
+                  <div class="theme-option" data-theme="theme-pixel-sky" style="background-image: url('assets/card-bg/theme-pixel-sky.png');">ท้องฟ้า</div>
+                  <div class="theme-option" data-theme="theme-pixel-gold" style="background-image: url('assets/card-bg/theme-pixel-gold.png');">ทองพิกเซล</div>
+                  <div class="theme-option" data-theme="theme-pixel-night" style="background-image: url('assets/card-bg/theme-pixel-night.png');">คืนดาว</div>
+                  <div class="theme-option" data-theme="theme-pixel-pink" style="background-image: url('assets/card-bg/theme-pixel-pink.png');">ชมพูพิกเซล</div>
                 </div>
               </div>
             </div>
@@ -1069,15 +1069,19 @@
         field.addEventListener("change", syncPreview);
       });
 
-      // Theme picker event listeners
-      const themeOptions = document.querySelectorAll('#themePickerInline .theme-option:not(.locked)');
-      themeOptions.forEach(option => {
-        option.addEventListener('click', () => {
-          document.querySelectorAll('#themePickerInline .theme-option').forEach(o => o.classList.remove('active'));
-          option.classList.add('active');
-          syncPreview();
+      // Theme picker event listeners - attach to all theme options
+      function attachThemeListeners() {
+        const themeOptions = document.querySelectorAll('#themePickerInline .theme-option');
+        themeOptions.forEach(option => {
+          option.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelectorAll('#themePickerInline .theme-option').forEach(o => o.classList.remove('active'));
+            this.classList.add('active');
+            syncPreview();
+          });
         });
-      });
+      }
+      attachThemeListeners();
 
       // Show theme picker only for Premium users
       async function syncPremiumUi(session) {
