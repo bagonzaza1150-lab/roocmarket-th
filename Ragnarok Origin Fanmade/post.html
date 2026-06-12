@@ -231,12 +231,12 @@
                 <span>✨ ปรับแต่งพื้นหลังการ์ด (Premium)</span>
                 <p style="font-size: 12px; color: var(--muted); margin: 4px 0 0;">เลือกพื้นหลัง pixel art สำหรับการ์ดประกาศของคุณ ผู้ซื้อจะเห็นในหน้าแรก</p>
                 <div class="theme-picker-grid" id="themePickerInline">
-                  <div class="theme-option active" data-theme="default" style="background: var(--paper); border: 2px solid var(--line);">ปกติ</div>
-                  <div class="theme-option" data-theme="theme-pixel-grass" style="background-image: url('assets/card-bg/theme-pixel-grass.png');">ทุ่งหญ้า</div>
-                  <div class="theme-option" data-theme="theme-pixel-sky" style="background-image: url('assets/card-bg/theme-pixel-sky.png');">ท้องฟ้า</div>
-                  <div class="theme-option" data-theme="theme-pixel-gold" style="background-image: url('assets/card-bg/theme-pixel-gold.png');">ทองพิกเซล</div>
-                  <div class="theme-option" data-theme="theme-pixel-night" style="background-image: url('assets/card-bg/theme-pixel-night.png');">คืนดาว</div>
-                  <div class="theme-option" data-theme="theme-pixel-pink" style="background-image: url('assets/card-bg/theme-pixel-pink.png');">ชมพูพิกเซล</div>
+                  <button type="button" class="theme-option active" data-theme="default" style="background: var(--paper); border: 2px solid var(--line);">ปกติ</button>
+                  <button type="button" class="theme-option" data-theme="theme-pixel-grass" style="background-image: url('assets/card-bg/theme-pixel-grass.png');">ทุ่งหญ้า</button>
+                  <button type="button" class="theme-option" data-theme="theme-pixel-sky" style="background-image: url('assets/card-bg/theme-pixel-sky.png');">ท้องฟ้า</button>
+                  <button type="button" class="theme-option" data-theme="theme-pixel-gold" style="background-image: url('assets/card-bg/theme-pixel-gold.png');">ทองพิกเซล</button>
+                  <button type="button" class="theme-option" data-theme="theme-pixel-night" style="background-image: url('assets/card-bg/theme-pixel-night.png');">คืนดาว</button>
+                  <button type="button" class="theme-option" data-theme="theme-pixel-pink" style="background-image: url('assets/card-bg/theme-pixel-pink.png');">ชมพูพิกเซล</button>
                 </div>
               </div>
             </div>
@@ -1073,8 +1073,13 @@
       function attachThemeListeners() {
         const themeOptions = document.querySelectorAll('#themePickerInline .theme-option');
         themeOptions.forEach(option => {
+          option.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+          });
           option.addEventListener('click', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             document.querySelectorAll('#themePickerInline .theme-option').forEach(o => o.classList.remove('active'));
             this.classList.add('active');
             syncPreview();

@@ -509,15 +509,26 @@
         const themeHTML = themes.map(theme => {
           const isActive = currentBg === theme.id;
           const isLocked = !isPremium && theme.id !== 'default';
-          const bgStyle = theme.isDefault 
-            ? `background: var(--paper); border: 2px solid var(--line);`
-            : `background: ${theme.color};`;
+          let bgStyle = '';
+          if (theme.isDefault) {
+            bgStyle = `background: var(--paper); border: 2px solid var(--line);`;
+          } else if (theme.id === 'theme-pixel-grass') {
+            bgStyle = `background-image: url('assets/card-bg/theme-pixel-grass.png');`;
+          } else if (theme.id === 'theme-pixel-sky') {
+            bgStyle = `background-image: url('assets/card-bg/theme-pixel-sky.png');`;
+          } else if (theme.id === 'theme-pixel-gold') {
+            bgStyle = `background-image: url('assets/card-bg/theme-pixel-gold.png');`;
+          } else if (theme.id === 'theme-pixel-night') {
+            bgStyle = `background-image: url('assets/card-bg/theme-pixel-night.png');`;
+          } else if (theme.id === 'theme-pixel-pink') {
+            bgStyle = `background-image: url('assets/card-bg/theme-pixel-pink.png');`;
+          }
           return `
-            <div class="theme-option${isActive ? ' active' : ''}${isLocked ? ' locked' : ''}" 
+            <button type="button" class="theme-option${isActive ? ' active' : ''}${isLocked ? ' locked' : ''}" 
                  style="${bgStyle}" 
                  data-theme="${theme.id}">
               ${theme.label}
-            </div>
+            </button>
           `;
         }).join('');
         
@@ -547,10 +558,16 @@
         let selectedTheme = currentBg;
         
         modal.querySelectorAll('.theme-option:not(.locked)').forEach(option => {
-          option.addEventListener('click', () => {
+          option.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+          });
+          option.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             modal.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'));
-            option.classList.add('active');
-            selectedTheme = option.dataset.theme;
+            this.classList.add('active');
+            selectedTheme = this.dataset.theme;
           });
         });
         
