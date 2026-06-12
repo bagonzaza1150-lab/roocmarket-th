@@ -1690,16 +1690,15 @@ async function initLiveActivityFeed() {
 
       if (listings) {
         listings.forEach(l => {
-          const typeText = l.listing_type === 'buy' ? 'รับซื้อ' : l.listing_type === 'service' ? 'รับจ้าง' : 'ลงขาย';
-          // เน้นเฉพาะข้อมูลสำคัญ: ใคร ทำอะไร ไอเทมอะไร เซิร์ฟไหน
-          newActivities.push(`คุณ <strong>${l.seller_name || 'ผู้ใช้'}</strong> ${typeText} <span class="highlight">${l.title}</span> @ ${l.server_name || 'Global'}`);
+          const typeText = l.listing_type === 'buy' ? 'ประกาศรับซื้อ' : l.listing_type === 'service' ? 'รับจ้างลงดัน' : 'ลงขาย';
+          newActivities.push(`คุณ <strong>${l.seller_name || 'ผู้ใช้'}</strong> เพิ่ง${typeText} <span class="highlight">${l.title}</span> ใน ${l.server_name || 'ทั้งหมด'}`);
         });
       }
 
       if (offers) {
         offers.forEach(o => {
           if (o.marketplace_listings) {
-            newActivities.push(`เสนอราคา <span class="highlight">฿${o.offer_price.toLocaleString()}</span> สำหรับ ${o.marketplace_listings.title}`);
+            newActivities.push(`มีคนเสนอราคา <span class="highlight">฿${o.offer_price.toLocaleString()}</span> ให้กับ ${o.marketplace_listings.title}`);
           }
         });
       }
@@ -1724,16 +1723,7 @@ async function initLiveActivityFeed() {
     
     setTimeout(() => {
       // 2. เปลี่ยนข้อความและเตรียมแอนิเมชันใหม่
-      // สร้างเนื้อหาแบบเบิ้ล 2 ชุดเพื่อให้การเลื่อน Marquee ดูต่อเนื่อง
-      const content = activities[currentIndex];
-      feedContent.innerHTML = `<span class="marquee-content">${content} &nbsp;&nbsp;&nbsp; ${content}</span>`;
-      
-      // ตรวจสอบความยาวข้อความ ถ้าสั้นไม่ต้องเลื่อน ถ้ายาวให้ใส่ class เลื่อน
-      const contentSpan = feedContent.querySelector('.marquee-content');
-      if (contentSpan.offsetWidth > 300) {
-        contentSpan.classList.add('marquee-scroll');
-      }
-
+      feedContent.innerHTML = activities[currentIndex];
       feedContent.classList.remove('fade-out');
       feedContent.classList.add('fade-in');
       

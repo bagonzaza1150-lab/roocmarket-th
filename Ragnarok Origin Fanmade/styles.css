@@ -1115,17 +1115,6 @@ h1 {
   margin-bottom: 16px;
 }
 
-.section-title-group {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  flex: 1;
-}
-
-.title-block {
-  flex-shrink: 0;
-}
-
 .panel-head h2,
 .section-head h2 {
   margin: 0;
@@ -4706,16 +4695,16 @@ h1 {
   background: color-mix(in srgb, var(--green) 20%, transparent);
 }
 
-/* --- Live Activity Feed --- */
+/* Live Activity Feed */
 .live-activity-container {
   display: flex;
   align-items: center;
+  gap: 12px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 6px 16px;
   border-radius: 50px;
   margin-left: 20px;
-  width: 100%;
   max-width: 400px;
   overflow: hidden;
   position: relative;
@@ -4723,16 +4712,9 @@ h1 {
   transition: all 0.3s ease;
 }
 
-.live-indicator {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(0, 0, 0, 0.15);
-  padding-right: 12px;
-  margin-right: 8px;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 2;
-  flex-shrink: 0;
+.live-activity-container:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .live-dot {
@@ -4740,7 +4722,9 @@ h1 {
   height: 8px;
   background: #4facfe;
   border-radius: 50%;
+  box-shadow: 0 0 10px #4facfe;
   animation: pulse-dot 2s infinite;
+  flex-shrink: 0;
 }
 
 .live-label {
@@ -4749,56 +4733,18 @@ h1 {
   text-transform: uppercase;
   color: #4facfe;
   letter-spacing: 1px;
-}
-
-.live-content-wrapper {
-  flex: 1;
-  overflow: hidden;
-  position: relative;
-  z-index: 1;
+  margin-right: 4px;
+  flex-shrink: 0;
 }
 
 .live-content {
   font-size: 13px;
-  color: var(--muted);
+  color: var(--text-muted);
   white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-#liveActivityContent {
-  display: inline-block;
-}
-
-.live-indicator {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(0, 0, 0, 0.2); /* พื้นหลังเข้มขึ้นเล็กน้อยเพื่อให้ดูแยกส่วน */
-  padding-right: 12px;
-  margin-right: 8px;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 2; /* ให้อยู่เหนือข้อความที่เลื่อน */
-  flex-shrink: 0;
-}
-
-.live-content-wrapper {
-  flex: 1;
   overflow: hidden;
-  position: relative;
-  z-index: 1;
-}
-
-/* แอนิเมชันเลื่อนข้อความ */
-.marquee-scroll {
-  display: inline-block;
-  animation: marquee 10s linear infinite;
-}
-
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  text-overflow: ellipsis;
+  opacity: 1;
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
 .live-content.fade-out {
@@ -4844,22 +4790,9 @@ h1 {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
+  flex-wrap: wrap; /* เปลี่ยนเป็น wrap เพื่อให้พอดีกับหน้าจอ */
   padding: 5px 0;
   margin-top: 10px;
-  width: 100%;
-}
-
-.filter-row .market-tabs {
-  display: flex;
-  flex: 1; /* ให้ขยายเต็มพื้นที่ */
-  gap: 8px;
-}
-
-.filter-row .market-tabs button {
-  flex: 1; /* ให้ปุ่มขยายเท่าๆ กัน */
-  white-space: nowrap;
-  justify-content: center;
 }
 
 .filter-divider {
@@ -4892,56 +4825,14 @@ h1 {
 }
 
 @media (max-width: 768px) {
-  .nav {
-    grid-template-columns: auto 1fr;
-    gap: 12px;
-  }
-  .nav-links {
-    display: none;
-  }
   .section-head {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 16px;
-  }
-  .section-title-group {
     flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    width: 100%;
+    align-items: flex-start !important;
+    gap: 15px;
   }
   .live-activity-container {
-    margin-left: 0 !important;
-    max-width: 100% !important;
-    width: 100% !important;
-    padding: 8px 12px;
-    order: 2;
-  }
-  .filter-row {
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch;
-    padding: 8px 0;
-    width: calc(100% + 32px);
-    margin-left: -16px;
-    padding-left: 16px;
-    padding-right: 16px;
-    scrollbar-width: none;
-  }
-  .filter-row::-webkit-scrollbar {
-    display: none;
-  }
-  .filter-row .market-tabs {
-    flex: none !important;
-    display: flex;
-    gap: 8px;
-  }
-  .filter-row .market-tabs button {
-    flex: none !important;
-    min-width: max-content;
-    padding: 8px 16px;
-  }
-  .filter-divider {
-    display: none;
+    margin-left: 0;
+    max-width: 100%;
+    width: 100%;
   }
 }
