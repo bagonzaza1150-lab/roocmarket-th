@@ -5325,7 +5325,7 @@ html, body {
 .theme-option {
   aspect-ratio: 2 / 3;
   border-radius: 10px;
-  cursor: pointer;
+  cursor: pointer !important;
   border: 2px solid transparent;
   transition: all 0.2s;
   display: flex;
@@ -5341,8 +5341,11 @@ html, body {
   background-size: cover !important;
   background-position: center top !important;
   background-repeat: no-repeat !important;
-  pointer-events: auto;
-  z-index: 10;
+  pointer-events: auto !important;
+  z-index: 9999 !important;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 .theme-option:hover {

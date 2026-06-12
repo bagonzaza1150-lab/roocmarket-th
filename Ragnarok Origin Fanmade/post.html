@@ -231,12 +231,12 @@
                 <span>✨ ปรับแต่งพื้นหลังการ์ด (Premium)</span>
                 <p style="font-size: 12px; color: var(--muted); margin: 4px 0 0;">เลือกพื้นหลัง pixel art สำหรับการ์ดประกาศของคุณ ผู้ซื้อจะเห็นในหน้าแรก</p>
                 <div class="theme-picker-grid" id="themePickerInline">
-                  <button type="button" class="theme-option active" data-theme="default" style="background: var(--paper); border: 2px solid var(--line);">ปกติ</button>
-                  <button type="button" class="theme-option" data-theme="theme-pixel-grass" style="background-image: url('assets/card-bg/theme-pixel-grass.png');">ทุ่งหญ้า</button>
-                  <button type="button" class="theme-option" data-theme="theme-pixel-sky" style="background-image: url('assets/card-bg/theme-pixel-sky.png');">ท้องฟ้า</button>
-                  <button type="button" class="theme-option" data-theme="theme-pixel-gold" style="background-image: url('assets/card-bg/theme-pixel-gold.png');">ทองพิกเซล</button>
-                  <button type="button" class="theme-option" data-theme="theme-pixel-night" style="background-image: url('assets/card-bg/theme-pixel-night.png');">คืนดาว</button>
-                  <button type="button" class="theme-option" data-theme="theme-pixel-pink" style="background-image: url('assets/card-bg/theme-pixel-pink.png');">ชมพูพิกเซล</button>
+                  <button type="button" class="theme-option active" data-theme="default" onclick="selectTheme(this)" style="background: var(--paper); border: 2px solid var(--line);">ปกติ</button>
+                  <button type="button" class="theme-option" data-theme="theme-pixel-grass" onclick="selectTheme(this)" style="background-image: url('assets/card-bg/theme-pixel-grass.png');">ทุ่งหญ้า</button>
+                  <button type="button" class="theme-option" data-theme="theme-pixel-sky" onclick="selectTheme(this)" style="background-image: url('assets/card-bg/theme-pixel-sky.png');">ท้องฟ้า</button>
+                  <button type="button" class="theme-option" data-theme="theme-pixel-gold" onclick="selectTheme(this)" style="background-image: url('assets/card-bg/theme-pixel-gold.png');">ทองพิกเซล</button>
+                  <button type="button" class="theme-option" data-theme="theme-pixel-night" onclick="selectTheme(this)" style="background-image: url('assets/card-bg/theme-pixel-night.png');">คืนดาว</button>
+                  <button type="button" class="theme-option" data-theme="theme-pixel-pink" onclick="selectTheme(this)" style="background-image: url('assets/card-bg/theme-pixel-pink.png');">ชมพูพิกเซล</button>
                 </div>
               </div>
             </div>
@@ -1069,27 +1069,15 @@
         field.addEventListener("change", syncPreview);
       });
 
-      // Theme picker event listeners - attach to all theme options
-      function attachThemeListeners() {
-        const themePicker = document.getElementById('themePickerInline');
-        if (!themePicker) return;
-        
-        themePicker.addEventListener('click', function(e) {
-          const option = e.target.closest('.theme-option');
-          if (!option) return;
-          
-          e.preventDefault();
-          e.stopPropagation();
-          
-          document.querySelectorAll('#themePickerInline .theme-option').forEach(o => o.classList.remove('active'));
-          option.classList.add('active');
-          
-          if (typeof syncPreview === 'function') {
-            syncPreview();
-          }
-        });
-      }
-      attachThemeListeners();
+      // Global function for theme selection (used by inline onclick)
+      window.selectTheme = function(el) {
+        console.log('Theme selected:', el.dataset.theme);
+        document.querySelectorAll('#themePickerInline .theme-option').forEach(o => o.classList.remove('active'));
+        el.classList.add('active');
+        if (typeof syncPreview === 'function') {
+          syncPreview();
+        }
+      };
 
       // Show theme picker only for Premium users
       async function syncPremiumUi(session) {

@@ -526,7 +526,8 @@
           return `
             <button type="button" class="theme-option${isActive ? ' active' : ''}${isLocked ? ' locked' : ''}" 
                  style="${bgStyle}" 
-                 data-theme="${theme.id}">
+                 data-theme="${theme.id}"
+                 onclick="window.selectThemeInModal(this)">
               ${theme.label}
             </button>
           `;
@@ -557,20 +558,13 @@
         document.body.appendChild(modal);
         let selectedTheme = currentBg;
         
-        const modalPicker = modal.querySelector('.theme-picker-grid');
-        if (modalPicker) {
-          modalPicker.addEventListener('click', function(e) {
-            const option = e.target.closest('.theme-option:not(.locked)');
-            if (!option) return;
-            
-            e.preventDefault();
-            e.stopPropagation();
-            
-            modal.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'));
-            option.classList.add('active');
-            selectedTheme = option.dataset.theme;
-          });
-        }
+        window.selectThemeInModal = function(el) {
+          if (el.classList.contains('locked')) return;
+          console.log('Modal theme selected:', el.dataset.theme);
+          modal.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'));
+          el.classList.add('active');
+          selectedTheme = el.dataset.theme;
+        };
         
         modal.querySelector('#confirmTheme').addEventListener('click', async () => {
           if (!isPremium && selectedTheme !== 'default') {
