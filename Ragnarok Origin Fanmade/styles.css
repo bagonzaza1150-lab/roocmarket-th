@@ -1034,9 +1034,26 @@ h1 {
 .listing-card {
   border: 1px solid var(--line);
   border-radius: 18px;
-  background: color-mix(in srgb, var(--paper) 86%, transparent);
+  background: var(--paper);
   box-shadow: 0 16px 40px rgba(26, 83, 124, 0.08);
   transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+/* Ensure theme backgrounds are not overridden by default background */
+.listing-card[class*="theme-pixel-"] {
+  background-clip: padding-box;
+}
+
+[class*="theme-pixel-"] .price-row {
+  background: rgba(255, 255, 255, 0.1) !important;
+  padding: 10px !important;
+  border-radius: 12px !important;
+  margin-top: 10px !important;
+}
+
+[class*="theme-pixel-"] .btn-light {
+  background: rgba(255, 255, 255, 0.3) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
 }
 
 .category-row article {
@@ -5372,6 +5389,28 @@ html, body {
   pointer-events: none !important;
 }
 
+/* หากมีการใช้ Theme พื้นหลัง ให้พื้นหลังทับของ VIP โปร่งใสเพื่อให้เห็นลาย Theme */
+.vip-listing.theme-pixel-grass::after,
+.vip-listing.theme-pixel-sky::after,
+.vip-listing.theme-pixel-gold::after,
+.vip-listing.theme-pixel-night::after,
+.vip-listing.theme-pixel-pink::after {
+  background: transparent !important;
+}
+
+/* เพิ่มความชัดเจนให้กับตัวอักษรเมื่ออยู่ในการ์ด VIP ที่มีพื้นหลังเข้ม */
+.vip-listing.theme-pixel-night h3,
+.vip-listing.theme-pixel-night strong,
+.vip-listing.theme-pixel-night p,
+.vip-listing.theme-pixel-night span {
+  color: #fff !important;
+}
+
+.vip-listing[class*="theme-pixel-"] .price-row {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(4px);
+}
+
 /* เอาของเดิมออก */
 
 /* ปรับเนื้อหาภายในการ์ด VIP ให้แสดงผลถูกต้อง */
@@ -5404,6 +5443,34 @@ html, body {
 
 /* --- PREMIUM CARD THEMES --- */
 
+/* ทำให้ส่วนประกอบภายในโปร่งใสเมื่อใช้ Theme */
+[class*="theme-pixel-"] .item-media,
+[class*="theme-pixel-"] .card-media,
+[class*="theme-pixel-"] .account-listing-media {
+  background: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(4px);
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+[class*="theme-pixel-"] .listing-meta span {
+  background: rgba(255, 255, 255, 0.25) !important;
+  backdrop-filter: blur(4px);
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+[class*="theme-pixel-night"] .item-media,
+[class*="theme-pixel-night"] .card-media,
+[class*="theme-pixel-night"] .account-listing-media {
+  background: rgba(0, 0, 0, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[class*="theme-pixel-night"] .listing-meta span {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+}
+
 /* ลายหินอ่อน (Marble) */
 /* ลายทุ่งหญ้า (Pixel Grass) */
 .theme-pixel-grass { 
@@ -5412,62 +5479,70 @@ html, body {
     linear-gradient(45deg, #6eb740 25%, transparent 25%), 
     linear-gradient(-45deg, #6eb740 25%, transparent 25%),
     linear-gradient(45deg, transparent 75%, #6eb740 75%),
-    linear-gradient(-45deg, transparent 75%, #6eb740 75%) !important;
-  background-size: 20px 20px !important;
+    linear-gradient(-45deg, transparent 75%, #6eb740 75%),
+    linear-gradient(to bottom, rgba(255,255,255,0.2), transparent) !important;
+  background-size: 20px 20px, 20px 20px, 20px 20px, 20px 20px, 100% 100% !important;
   color: #1a3c0e !important; 
-  border: 3px solid #3e7a1f !important;
-  box-shadow: inset 0 0 40px rgba(0,0,0,0.1);
+  border: 4px solid #3e7a1f !important;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.1), 0 4px 0 #2d5a16 !important;
 }
-.theme-pixel-grass h3, .theme-pixel-grass strong, .theme-pixel-grass p { color: #1a3c0e !important; }
+.theme-pixel-grass h3, .theme-pixel-grass strong, .theme-pixel-grass p, .theme-pixel-grass span { color: #1a3c0e !important; }
 
 /* ลายท้องฟ้า (Pixel Sky) */
 .theme-pixel-sky { 
   background: #4ec0ca !important; 
   background-image: 
-    linear-gradient(to bottom, rgba(255,255,255,0.4) 0%, transparent 100%),
-    radial-gradient(circle at 20% 20%, #fff 2px, transparent 2px),
-    radial-gradient(circle at 80% 40%, #fff 3px, transparent 3px) !important;
-  background-size: 100% 100%, 40px 40px, 60px 60px !important;
+    linear-gradient(to bottom, #4ec0ca, #a5f3fc),
+    radial-gradient(circle at 20% 20%, #fff 4px, transparent 4px),
+    radial-gradient(circle at 80% 40%, #fff 6px, transparent 6px),
+    radial-gradient(circle at 40% 70%, #fff 3px, transparent 3px) !important;
+  background-size: 100% 100%, 60px 60px, 80px 80px, 50px 50px !important;
   color: #004d40 !important;
-  border: 3px solid #3a8d95 !important;
+  border: 4px solid #3a8d95 !important;
+  box-shadow: inset 0 0 20px rgba(255,255,255,0.3), 0 4px 0 #2a6d74 !important;
 }
-.theme-pixel-sky h3, .theme-pixel-sky strong, .theme-pixel-sky p { color: #004d40 !important; }
+.theme-pixel-sky h3, .theme-pixel-sky strong, .theme-pixel-sky p, .theme-pixel-sky span { color: #004d40 !important; }
 
 /* ลายทองพิกเซล (Pixel Gold) */
 .theme-pixel-gold { 
   background: #f1c40f !important;
   background-image: 
-    linear-gradient(0deg, rgba(0,0,0,0.1) 50%, transparent 50%),
-    linear-gradient(90deg, rgba(255,255,255,0.2) 0%, transparent 100%) !important;
-  background-size: 100% 8px, 100% 100% !important;
+    linear-gradient(0deg, rgba(0,0,0,0.05) 50%, transparent 50%),
+    linear-gradient(to right, rgba(255,255,255,0.3), transparent, rgba(255,255,255,0.3)) !important;
+  background-size: 100% 4px, 100% 100% !important;
   color: #4a3505 !important;
-  border: 3px solid #9a7d0a !important;
-  box-shadow: 0 0 15px rgba(241, 196, 15, 0.3);
+  border: 4px solid #9a7d0a !important;
+  box-shadow: inset 0 0 20px rgba(255,255,255,0.5), 0 4px 0 #735c08 !important;
 }
-.theme-pixel-gold h3, .theme-pixel-gold strong, .theme-pixel-gold p { color: #4a3505 !important; }
+.theme-pixel-gold h3, .theme-pixel-gold strong, .theme-pixel-gold p, .theme-pixel-gold span { color: #4a3505 !important; }
 
 /* ลายคืนดาว (Pixel Night) */
 .theme-pixel-night { 
   background: #1a1a2e !important;
   background-image: 
-    radial-gradient(rgba(255,255,255,0.8) 1px, transparent 1px),
-    radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px) !important;
-  background-size: 40px 40px, 25px 25px !important;
+    linear-gradient(to bottom, #1a1a2e, #16213e),
+    radial-gradient(white 1px, transparent 1px),
+    radial-gradient(white 1px, transparent 1px) !important;
+  background-size: 100% 100%, 30px 30px, 50px 50px !important;
+  background-position: 0 0, 0 0, 15px 15px !important;
   color: #e2e2e2 !important;
-  border: 3px solid #16213e !important;
+  border: 4px solid #0f0f1a !important;
+  box-shadow: inset 0 0 30px rgba(79, 172, 254, 0.2), 0 4px 0 #000 !important;
 }
-.theme-pixel-night h3, .theme-pixel-night strong, .theme-pixel-night p { color: #e2e2e2 !important; }
+.theme-pixel-night h3, .theme-pixel-night strong, .theme-pixel-night p, .theme-pixel-night span { color: #e2e2e2 !important; }
 
 /* ลายชมพูพิกเซล (Pixel Pink) */
 .theme-pixel-pink { 
   background: #ff85a2 !important;
   background-image: 
+    linear-gradient(to bottom, #ff85a2, #ffb7c5),
     linear-gradient(45deg, rgba(255,255,255,0.2) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.2) 75%, transparent 75%, transparent) !important;
-  background-size: 20px 20px !important;
+  background-size: 100% 100%, 20px 20px !important;
   color: #4a0e1c !important;
-  border: 3px solid #d63384 !important;
+  border: 4px solid #d63384 !important;
+  box-shadow: inset 0 0 20px rgba(255,255,255,0.4), 0 4px 0 #a02662 !important;
 }
-.theme-pixel-pink h3, .theme-pixel-pink strong, .theme-pixel-pink p { color: #4a0e1c !important; }
+.theme-pixel-pink h3, .theme-pixel-pink strong, .theme-pixel-pink p, .theme-pixel-pink span { color: #4a0e1c !important; }
 
 /* --- UI FOR THEME PICKER --- */
 .theme-picker-grid {
