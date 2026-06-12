@@ -322,24 +322,34 @@
         setMessage(visibleListings.length ? `พบ ${visibleListings.length} ประกาศ · ขาย ${sellActiveUsed}/${limit} · รับซื้อ ${buyActiveUsed}/${limit} · รับจ้าง ${serviceActiveUsed}/${limit}` : `ยังไม่มีประกาศที่แสดง · ขาย ${sellHourlyUsed}/${limit} · รับซื้อ ${buyHourlyUsed}/${limit} · รับจ้าง ${serviceHourlyUsed}/${limit}`);
       }
 
-      async function getPremiumStatus(session) {
-        if (!session) return { active: false };
-        const discordId = getDiscordId(session);
-        
-        // ลองดึงข้อมูลด้วย user_id และ discord_id
-        const { data, error } = await supabaseClient
-          .from("marketplace_premium_users")
-          .select("*")
-          .or(`user_id.eq.${session.user.id}${discordId ? `,discord_id.eq.${discordId}` : ""}`)
-          .maybeSingle();
+      function getDiscordId(session) {
+        const identity = session?.user?.identities?.find((entry) => entry.provider === "discord");
+        return identity?.identity_data?.sub || identity?.id || "";
+      }
 
-        if (error) {
-          console.error("Premium Check Error:", error);
-          return { active: false, error: error.message };
+      async function getPremiumStatus(session) {
+        try {
+          if (!session) return { active: false };
+          const discordId = getDiscordId(session);
+          
+          // ลองดึงข้อมูลด้วย user_id และ discord_id
+          const { data, error } = await supabaseClient
+            .from("marketplace_premium_users")
+            .select("*")
+            .or(`user_id.eq.${session.user.id}${discordId ? `,discord_id.eq.${discordId}` : ""}`)
+            .maybeSingle();
+
+          if (error) {
+            console.error("Premium Check Error:", error);
+            return { active: false };
+          }
+          
+          const isActive = data && (data.active === true || data.active === "true" || data.active === 1 || data.active === "1");
+          return { active: !!isActive, data: data };
+        } catch (e) {
+          console.error("Critical Premium Check Error:", e);
+          return { active: false };
         }
-        
-        const isActive = data && (data.active === true || data.active === "true" || data.active === 1 || data.active === "1");
-        return { active: isActive, data: data };
       }
 
       async function toggleListing(id) {
