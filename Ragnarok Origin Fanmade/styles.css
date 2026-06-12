@@ -5325,10 +5325,10 @@ html, body {
 .vip-listing::before {
   content: '' !important;
   position: absolute !important;
-  /* ใช้เทคนิค aspect-ratio เพื่อให้เป็นสี่เหลี่ยมจัตุรัสที่หมุนได้สมบูรณ์ */
+  /* ขยายขนาดให้ใหญ่มากๆ (400%) เพื่อให้แสงกวาดผ่านขอบบน-ล่างของการ์ดที่ยาวได้ครบ */
   top: 50% !important;
   left: 50% !important;
-  width: 150% !important;
+  width: 400% !important;
   aspect-ratio: 1 / 1 !important;
   background: conic-gradient(
     from 0deg,
@@ -5337,13 +5337,14 @@ html, body {
     #4ecdc4,
     #f0ad24
   ) !important;
-  /* จุดหมุนกึ่งกลาง */
-  animation: vip-spin 4s linear infinite !important;
+  /* จุดหมุนกึ่งกลางเป๊ะๆ */
+  animation: vip-spin-v3 3s linear infinite !important;
   z-index: -2 !important;
   pointer-events: none !important;
+  transform-origin: center !important;
 }
 
-@keyframes vip-spin {
+@keyframes vip-spin-v3 {
   0% {
     transform: translate(-50%, -50%) rotate(0deg);
   }
