@@ -5187,3 +5187,75 @@ html, body {
     width: 100%;
   }
 }
+
+
+/* =====================================================
+   ADDITIONAL MOBILE FIXES (V2)
+   ===================================================== */
+
+@media (max-width: 560px) {
+  /* 1. แยกราคากับปุ่มติดต่อคนละบรรทัด */
+  .listing-card .price-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+  
+  .listing-card .price-display {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  
+  .listing-card .listing-card-actions {
+    width: 100% !important;
+    flex-direction: row !important; /* ปุ่ม "ติดต่อ" กับ "Facebook" อยู่บรรทัดเดียวกันแต่แยกจากราคา */
+  }
+
+  /* 2. แก้ไขช่อง Live ตกจอ */
+  .live-activity-container {
+    margin-left: 0 !important;
+    margin-top: 10px !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 3. โปรไฟล์ที่ Login โดนบีบรูปให้แคบ */
+  .user-menu-trigger {
+    flex-shrink: 0 !important;
+    min-width: max-content !important;
+  }
+  
+  .user-menu-trigger img {
+    flex-shrink: 0 !important; /* ป้องกันรูปโดนบีบ */
+    width: 30px !important;
+    height: 30px !important;
+    object-fit: cover !important;
+  }
+  
+  /* จัดการ nav-actions ให้ scroll ได้ถ้าปุ่มเยอะเกิน */
+  .nav-actions {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    gap: 8px !important;
+    padding-bottom: 4px !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  /* ซ่อน scrollbar ของ nav-actions */
+  .nav-actions::-webkit-scrollbar {
+    display: none !important;
+  }
+}
+
+/* เพิ่มเติมสำหรับหน้าจอเล็กมาก */
+@media (max-width: 380px) {
+  .user-menu-trigger span {
+    display: none !important; /* ซ่อนชื่อถ้าจอเล็กมาก เหลือแต่รูปกับไอคอน */
+  }
+  
+  .user-menu-trigger {
+    padding: 5px 8px !important;
+  }
+}
