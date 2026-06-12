@@ -1730,7 +1730,8 @@ async function initLiveActivityFeed() {
       
       // ตรวจสอบความยาวข้อความ ถ้าสั้นไม่ต้องเลื่อน ถ้ายาวให้ใส่ class เลื่อน
       const contentSpan = feedContent.querySelector('.marquee-content');
-      if (contentSpan.offsetWidth > 300) {
+      const containerWidth = feedContent.offsetWidth || 300;
+      if (contentSpan.offsetWidth > containerWidth) {
         contentSpan.classList.add('marquee-scroll');
       }
 
@@ -1757,8 +1758,7 @@ async function initLiveActivityFeed() {
   setInterval(fetchActivities, 5 * 60 * 1000);
 }
 
-// เรียกใช้ initLiveActivityFeed เมื่อหน้าโหลดเสร็จ
-document.addEventListener('DOMContentLoaded', () => {
-  // ให้รอสักครู่เพื่อให้ระบบหลักทำงานเสร็จก่อน
-  setTimeout(initLiveActivityFeed, 2000);
-});
+  // เรียกใช้ initLiveActivityFeed เมื่อหน้าโหลดเสร็จ
+  document.addEventListener('DOMContentLoaded', () => {
+    initLiveActivityFeed();
+  });

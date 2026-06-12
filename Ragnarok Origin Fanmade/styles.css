@@ -4914,18 +4914,31 @@ h1 {
     margin-left: 0 !important;
     max-width: 100% !important;
     width: 100% !important;
-    padding: 8px 12px;
+    padding: 6px 12px !important;
     order: 2;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+  
+  .live-content-wrapper {
+    width: 100% !important;
+    overflow: hidden !important;
+    min-width: 0 !important;
+  }
+
+  .live-content {
+    white-space: nowrap !important;
+    width: max-content !important;
   }
   .filter-row {
     flex-wrap: nowrap !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch;
-    padding: 8px 0;
-    width: calc(100% + 32px);
-    margin-left: -16px;
-    padding-left: 16px;
-    padding-right: 16px;
+    padding: 8px 0 !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
     scrollbar-width: none;
   }
   .filter-row::-webkit-scrollbar {
@@ -4951,10 +4964,17 @@ h1 {
    เพิ่มไว้ท้ายสุดเพื่อ Overwrite เฉพาะจุดที่ล้นบนมือถือเท่านั้น
    ============================================================ */
 @media (max-width: 480px) {
-  /* บังคับไม่ให้หน้าจอกว้างเกินมือถือ */
-  html, body {
+  /* กฎเหล็กป้องกันหน้าจอยืดล้นอย่างเด็ดขาด */
+  * {
     max-width: 100vw !important;
+    box-sizing: border-box !important;
+  }
+
+  html, body {
+    width: 100% !important;
+    max-width: 100% !important;
     overflow-x: hidden !important;
+    position: relative !important;
   }
 
   /* ปรับสเกลส่วนหมวดหมู่ให้เรียง 1 คอลัมน์ (แก้ปัญหาล้นขวาง) */
