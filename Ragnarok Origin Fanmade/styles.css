@@ -5325,11 +5325,11 @@ html, body {
 .vip-listing::before {
   content: '' !important;
   position: absolute !important;
+  /* ใช้เทคนิค aspect-ratio เพื่อให้เป็นสี่เหลี่ยมจัตุรัสที่หมุนได้สมบูรณ์ */
   top: 50% !important;
   left: 50% !important;
-  /* ใช้ขนาดที่ใหญ่กว่าการ์ดมากๆ (300%) เพื่อให้ครอบคลุมมุมเมื่อหมุน */
-  width: 300% !important;
-  height: 300% !important;
+  width: 150% !important;
+  aspect-ratio: 1 / 1 !important;
   background: conic-gradient(
     from 0deg,
     #f0ad24,
@@ -5337,18 +5337,17 @@ html, body {
     #4ecdc4,
     #f0ad24
   ) !important;
-  /* ปรับจุดหมุนให้อยู่กึ่งกลาง และหมุนจากกึ่งกลาง */
-  transform: translate(-50%, -50%) rotate(0deg) !important;
-  animation: vip-rotate-v2 4s linear infinite !important;
+  /* จุดหมุนกึ่งกลาง */
+  animation: vip-spin 4s linear infinite !important;
   z-index: -2 !important;
   pointer-events: none !important;
 }
 
-@keyframes vip-rotate-v2 {
-  from {
+@keyframes vip-spin {
+  0% {
     transform: translate(-50%, -50%) rotate(0deg);
   }
-  to {
+  100% {
     transform: translate(-50%, -50%) rotate(360deg);
   }
 }
@@ -5357,12 +5356,10 @@ html, body {
 .vip-listing::after {
   content: '' !important;
   position: absolute !important;
-  top: 2px !important;    /* ความหนาของขอบ */
-  left: 2px !important;
-  right: 2px !important;
-  bottom: 2px !important;
+  /* ขยับเข้ามา 3px เพื่อสร้างความหนาของขอบ */
+  inset: 3px !important;
   background: var(--paper) !important;
-  border-radius: 15px !important; /* ปรับให้เข้ากับ card-radius (16px) */
+  border-radius: 13px !important; /* ปรับให้เข้ากับ card-radius */
   z-index: -1 !important;
   pointer-events: none !important;
 }
