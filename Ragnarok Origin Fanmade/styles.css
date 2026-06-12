@@ -5394,3 +5394,117 @@ html, body {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.05); }
 }
+
+/* --- PREMIUM CARD THEMES --- */
+
+/* ลายหินอ่อน (Marble) */
+.theme-marble {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
+  color: #2d3436 !important;
+}
+.theme-marble h3, .theme-marble .price-display strong {
+  color: #2d3436 !important;
+}
+
+/* ลายอวกาศ (Space/Dark Nebula) */
+.theme-space {
+  background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%) !important;
+  background-image: 
+    radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
+    radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),
+    radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 40px) !important;
+  background-size: 550px 550px, 350px 350px, 250px 250px !important;
+  background-position: 0 0, 40px 60px, 130px 270px !important;
+}
+
+/* ลายทองหรูหรา (Luxury Gold) */
+.theme-gold {
+  background: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c) !important;
+  color: #4a3505 !important;
+}
+.theme-gold h3, .theme-gold .price-display strong, .theme-gold p {
+  color: #4a3505 !important;
+}
+
+/* ลายนีออนม่วง (Cyberpunk Purple) */
+.theme-neon {
+  background: #0d0221 !important;
+  border: 1px solid #5d00ff !important;
+  box-shadow: inset 0 0 20px rgba(93, 0, 255, 0.2) !important;
+}
+
+/* ลายพระอาทิตย์ตก (Sunset) */
+.theme-sunset {
+  background: linear-gradient(to bottom, #ff5e62, #ff9966) !important;
+}
+
+/* --- UI FOR THEME PICKER --- */
+.theme-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.theme-option {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  padding: 5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-option:hover {
+  transform: scale(1.05);
+}
+
+.theme-option.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 10px var(--primary-glow);
+}
+
+.theme-option.locked::after {
+  content: '🔒';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 20px;
+  background: rgba(0,0,0,0.4);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-customize {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-customize:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-customize.premium-only {
+  border-color: #f0ad24;
+  color: #f0ad24;
+}

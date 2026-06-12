@@ -628,7 +628,7 @@ window.ROOC_SUPABASE = {
       const descriptionParts = getDescriptionParts(description);
 
       return `
-        <article class="listing-card${isServiceListing ? " service-listing-card" : ""}${listing.seller_is_premium ? " vip-listing" : ""}">
+        <article class="listing-card${isServiceListing ? " service-listing-card" : ""}${listing.seller_is_premium ? " vip-listing" : ""}${listing.card_background && listing.card_background !== 'default' ? " theme-" + listing.card_background : ""}">
           ${isServiceListing ? "" : `<div class="${mediaClass}"${galleryData}>
             <img src="${escapeHtml(listingImages[0])}" alt="" loading="lazy" decoding="async" />
             ${listing.category === "account" && listingImages.length > 1 ? `
@@ -1284,7 +1284,7 @@ window.ROOC_SUPABASE = {
           const descriptionParts = getDescriptionParts(description);
 
           return `
-            <article class="listing-card${isServiceListing ? " service-listing-card" : ""}${listing.seller_is_premium ? " vip-listing" : ""}">
+            <article class="listing-card${isServiceListing ? " service-listing-card" : ""}${listing.seller_is_premium ? " vip-listing" : ""}${listing.card_background && listing.card_background !== 'default' ? " theme-" + listing.card_background : ""}">
               ${isServiceListing ? "" : `<div class="item-media">
                 <img src="${escapeHtml(listingImages[0])}" alt="" loading="lazy" />
               </div>`}

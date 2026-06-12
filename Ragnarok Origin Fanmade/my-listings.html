@@ -225,7 +225,7 @@
           const status = listingStatus(listing);
           const canMarkSold = listing.sale_status !== "sold";
           return `
-            <article class="my-listing-card${getListingType(listing) === "service" ? " service-my-listing-card" : ""}" data-id="${escapeHtml(listing.id)}" data-active="${listing.active ? "true" : "false"}" data-status="${escapeHtml(listing.sale_status || "active")}">
+            <article class="my-listing-card${getListingType(listing) === "service" ? " service-my-listing-card" : ""}${listing.card_background && listing.card_background !== 'default' ? " theme-" + listing.card_background : ""}" data-id="${escapeHtml(listing.id)}" data-active="${listing.active ? "true" : "false"}" data-status="${escapeHtml(listing.sale_status || "active")}">
               ${getListingType(listing) === "service" ? "" : `<img src="${escapeHtml(listing.image_url || "assets/category-icons/mvp-c.png")}" alt="" />`}
               <div>
                 <div class="listing-meta">
@@ -243,6 +243,7 @@
                 ${renderOfferMailbox(listing.id)}
               </div>
               <div class="my-listing-actions">
+                <button class="btn btn-small btn-customize premium-only" type="button" data-customize="${escapeHtml(listing.id)}" title="Premium Feature">🎨 ปรับแต่ง</button>
                 <button class="btn btn-small btn-light" type="button" data-edit-price="${escapeHtml(listing.id)}">แก้ราคา</button>
                 <button class="btn btn-small btn-light" type="button" data-toggle-offers="${escapeHtml(listing.id)}">${listing.offers_enabled ? "ปิดเสนอราคา" : "เปิดเสนอราคา"}</button>
                 <button class="btn btn-small" type="button" data-toggle="${escapeHtml(listing.id)}">${listing.active ? "ปิดประกาศ" : "เปิดประกาศ"}</button>
@@ -469,6 +470,76 @@
         if (currentSession) await loadMyListings();
       }
 
+      async function showThemePickerModal(listingId) {
+        const listing = currentListings.find((entry) => entry.id === listingId);
+        if (!listing) return;
+        
+        const isPremium = Boolean(premiumResult);
+        const themes = [
+          { id: 'default', label: 'ปกติ', color: 'var(--paper)' },
+          { id: 'marble', label: 'หินอ่อน', color: 'linear-gradient(135deg, #f5f7fa, #c3cfe2)' },
+          { id: 'space', label: 'อวกาศ', color: '#1b2735' },
+          { id: 'gold', label: 'ทองหรูหรา', color: 'linear-gradient(135deg, #bf953f, #fcf6ba)' },
+          { id: 'neon', label: 'นีออนม่วง', color: '#0d0221' },
+          { id: 'sunset', label: 'พระอาทิตย์ตก', color: 'linear-gradient(to bottom, #ff5e62, #ff9966)' }
+        ];
+        
+        const themeHTML = themes.map(theme => `
+          <div class="theme-option${!isPremium && theme.id !== 'default' ? ' locked' : ''}${listing.card_background === theme.id ? ' active' : ''}" 
+               style="background: ${theme.color}" 
+               data-theme="${theme.id}"
+               ${!isPremium && theme.id !== 'default' ? 'disabled' : ''}>
+            ${theme.label}
+          </div>
+        `).join('');
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+          <div class="modal-content">
+            <h3>เลือกพื้นหลังการ์ด</h3>
+            <div class="theme-picker-grid">${themeHTML}</div>
+            ${!isPremium ? '<p style="color: #f0ad24; font-size: 12px; margin-top: 10px;">🔒 ฟีเจอร์นี้เปิดให้ Premium เท่านั้น</p>' : ''}
+            <div style="margin-top: 15px; display: flex; gap: 8px;">
+              <button class="btn btn-light" onclick="this.closest('.modal').remove()">ยกเลิก</button>
+              <button class="btn btn-primary" id="confirmTheme">บันทึก</button>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(modal);
+        let selectedTheme = listing.card_background || 'default';
+        
+        modal.querySelectorAll('.theme-option:not(.locked)').forEach(option => {
+          option.addEventListener('click', () => {
+            modal.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'));
+            option.classList.add('active');
+            selectedTheme = option.dataset.theme;
+          });
+        });
+        
+        modal.querySelector('#confirmTheme').addEventListener('click', async () => {
+          if (!isPremium && selectedTheme !== 'default') {
+            setMessage('ฟีเจอร์นี้เปิดให้ Premium เท่านั้น', true);
+            return;
+          }
+          
+          setMessage('กำลังบันทึกพื้นหลัง...');
+          const { error } = await supabaseClient
+            .from('marketplace_listings')
+            .update({ card_background: selectedTheme })
+            .eq('id', listingId);
+          
+          if (error) {
+            setMessage(error.message, true);
+          } else {
+            setMessage('บันทึกพื้นหลังเรียบร้อย');
+            await loadMyListings();
+          }
+          modal.remove();
+        });
+      }
+
       refreshButton.addEventListener("click", loadMyListings);
       grid.addEventListener("click", (event) => {
         const toggleId = event.target.dataset.toggle;
@@ -476,11 +547,13 @@
         const toggleOffersId = event.target.dataset.toggleOffers;
         const soldId = event.target.dataset.sold;
         const deleteId = event.target.dataset.delete;
+        const customizeId = event.target.dataset.customize;
         if (editPriceId) editListingPrice(editPriceId);
         if (toggleOffersId) toggleOffers(toggleOffersId);
         if (toggleId) toggleListing(toggleId);
         if (soldId) markListingSold(soldId);
         if (deleteId) deleteListing(deleteId);
+        if (customizeId) showThemePickerModal(customizeId);
       });
 
       if (canUseSupabase) {
