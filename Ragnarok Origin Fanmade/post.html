@@ -226,6 +226,19 @@
                 <label><input id="readyCheck" type="checkbox" /> พร้อมเทรดวันนี้</label>
                 <label><input id="offersEnabledCheck" type="checkbox" /> เปิดรับเสนอราคา</label>
               </div>
+
+              <div class="post-field" id="cardBackgroundField" hidden>
+                <span>ปรับแต่งพื้นหลัง (Premium)</span>
+                <div class="theme-picker-grid" id="themePickerInline">
+                  <div class="theme-option active" data-theme="default" style="background: var(--paper)">ปกติ</div>
+                  <div class="theme-option locked" data-theme="marble" style="background: linear-gradient(135deg, #f5f7fa, #c3cfe2)">หินอ่อน</div>
+                  <div class="theme-option locked" data-theme="space" style="background: #1b2735">อวกาศ</div>
+                  <div class="theme-option locked" data-theme="gold" style="background: linear-gradient(135deg, #bf953f, #fcf6ba)">ทองหรูหรา</div>
+                  <div class="theme-option locked" data-theme="neon" style="background: #0d0221">นีออนม่วง</div>
+                  <div class="theme-option locked" data-theme="sunset" style="background: linear-gradient(to bottom, #ff5e62, #ff9966)">พระอาทิตย์ตก</div>
+                </div>
+                <p style="font-size: 12px; color: #f0ad24; margin-top: 8px;">🔒 ธีมอื่นๆ เปิดให้ Premium เท่านั้น</p>
+              </div>
             </div>
 
             <div class="post-actions">
@@ -647,6 +660,17 @@
         previewCategory.className = activeCategory === "mvp" ? "mvp" : "";
         setPreviewImage(image, group.mediaClass);
         previewMedia.classList.toggle("is-hidden", activeListingType === "service");
+        
+        // Update preview card theme
+        const previewCard = document.querySelector('.preview-card');
+        if (previewCard) {
+          const selectedTheme = document.querySelector('#themePickerInline .theme-option.active')?.dataset.theme || 'default';
+          let newClass = 'listing-card preview-card';
+          if (selectedTheme && selectedTheme !== 'default') {
+            newClass += " theme-" + selectedTheme;
+          }
+          previewCard.className = newClass;
+        }
       }
 
       function populateItems(category) {
@@ -913,6 +937,7 @@
             imagePaths = uploaded.imagePaths;
           }
 
+          const selectedTheme = document.querySelector('#themePickerInline .theme-option.active')?.dataset.theme || 'default';
           const listingPayload = {
             listing_type: activeListingType,
             category: activeCategory,
@@ -928,6 +953,7 @@
             seller_avatar_url: getDiscordAvatarUrl(currentSession),
             seller_discord_id: getDiscordId(currentSession),
             seller_is_premium: isPremiumSeller,
+            card_background: isPremiumSeller ? selectedTheme : 'default',
             price_text: priceText,
             server_name: listingServer.value,
             contact: listingContact.value.trim() || getDiscordProfileUrl(currentSession),
@@ -1028,6 +1054,34 @@
         field.addEventListener("input", syncPreview);
         field.addEventListener("change", syncPreview);
       });
+
+      // Theme picker event listeners
+      const themeOptions = document.querySelectorAll('#themePickerInline .theme-option:not(.locked)');
+      themeOptions.forEach(option => {
+        option.addEventListener('click', () => {
+          document.querySelectorAll('#themePickerInline .theme-option').forEach(o => o.classList.remove('active'));
+          option.classList.add('active');
+          syncPreview();
+        });
+      });
+
+      // Show theme picker only for Premium users
+      if (canUseSupabase) {
+        supabaseClient.auth.getSession().then(async ({ data }) => {
+          if (!data.session) return;
+          const { data: premiumData } = await supabaseClient
+            .from('marketplace_premium_users')
+            .select('active')
+            .eq('user_id', data.session.user.id)
+            .eq('active', true)
+            .maybeSingle();
+          
+          const cardBackgroundField = document.getElementById('cardBackgroundField');
+          if (cardBackgroundField) {
+            cardBackgroundField.hidden = !premiumData?.active;
+          }
+        });
+      }
 
       postForm.addEventListener("submit", publishListing);
 

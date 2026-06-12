@@ -111,6 +111,7 @@
       const quotaPlan = document.querySelector("#quotaPlan");
       let currentSession = null;
       let currentListings = [];
+      let premiumResult = null;
       let offerMailbox = new Map();
 
       function escapeHtml(value) {
@@ -286,7 +287,7 @@
       async function loadMyListings() {
         if (!currentSession) return;
         setMessage("กำลังโหลดประกาศ...");
-        const [premiumResult, listingsResult] = await Promise.all([
+        const [premium, listingsResult] = await Promise.all([
           getPremiumStatus(currentSession),
           supabaseClient
           .from("marketplace_listings")
@@ -294,6 +295,7 @@
           .eq("user_id", currentSession.user.id)
           .order("created_at", { ascending: false })
         ]);
+        premiumResult = premium;
 
         const { data, error } = listingsResult;
 
@@ -474,7 +476,7 @@
         const listing = currentListings.find((entry) => entry.id === listingId);
         if (!listing) return;
         
-        const isPremium = Boolean(premiumResult);
+        const isPremium = premiumResult && premiumResult.active;
         const themes = [
           { id: 'default', label: 'ปกติ', color: 'var(--paper)' },
           { id: 'marble', label: 'หินอ่อน', color: 'linear-gradient(135deg, #f5f7fa, #c3cfe2)' },
