@@ -88,24 +88,30 @@ window.ROOC_SUPABASE = {
       "assets/leaf-pixel-yellow.png"
     ];
 
-    for (let i = 0; i < 15; i++) {
+    const count = 20; // เพิ่มจำนวนใบไม้เล็กน้อยเพื่อให้ดูเต็มขึ้น
+
+    for (let i = 0; i < count; i++) {
       const item = document.createElement("img");
-      // สุ่มเลือกใบไม้จากรายการ
       item.src = leafImages[Math.floor(Math.random() * leafImages.length)];
       item.className = "floating-item";
       
-      // สุ่มขนาดให้ดูเป็นธรรมชาติ (Pixel Art ไม่ควรใหญ่เกินไปเพื่อให้ดูคมชัด)
-      const size = Math.random() * 25 + 25;
+      // ปรับขนาดให้ใหญ่ขึ้นเห็นชัดเจน (40px - 70px)
+      const size = Math.random() * 30 + 40;
       item.style.width = `${size}px`;
       item.style.height = "auto";
+      
+      // สุ่มตำแหน่งเริ่มต้น (กระจายทั่วหน้าจอ)
       item.style.left = `${Math.random() * 100}%`;
       item.style.top = `${Math.random() * 100}%`;
       
-      // ปรับแอนิเมชันให้พริ้วไหวและมีความเร็วต่างกัน
-      const duration = Math.random() * 20 + 30;
-      const delay = Math.random() * -40;
+      // สุ่มความเร็วและจังหวะการร่วง
+      const duration = Math.random() * 15 + 20; // 20s - 35s
+      const delay = Math.random() * -35; // สุ่มให้เริ่มไม่พร้อมกัน
       item.style.animationDuration = `${duration}s`;
       item.style.animationDelay = `${delay}s`;
+      
+      // สุ่มความเร็วในการแกว่ง (ใช้คุณสมบัติ CSS variable ถ้าต้องการปรับแต่งเพิ่ม)
+      item.style.opacity = "0"; // เริ่มต้นที่ 0 (CSS จะจัดการเฟดอินเอง)
       
       container.appendChild(item);
     }

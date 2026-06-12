@@ -4528,22 +4528,39 @@ h1 {
   filter: brightness(0.7) saturate(0.6);
 }
 
-@keyframes float-around {
+@keyframes leaf-falling {
   0% {
-    transform: translate(0, 0) rotate(0deg);
+    transform: translateY(-10vh) translateX(0) rotate(0deg) rotateY(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.18;
   }
   25% {
-    transform: translate(10vw, 25vh) rotate(90deg);
+    transform: translateY(20vh) translateX(30px) rotate(45deg) rotateY(180deg);
   }
   50% {
-    transform: translate(5vw, 50vh) rotate(180deg);
+    transform: translateY(50vh) translateX(-30px) rotate(135deg) rotateY(0deg);
   }
   75% {
-    transform: translate(-10vw, 75vh) rotate(270deg);
+    transform: translateY(80vh) translateX(30px) rotate(225deg) rotateY(180deg);
+  }
+  90% {
+    opacity: 0.18;
   }
   100% {
-    transform: translate(0, 100vh) rotate(360deg);
+    transform: translateY(110vh) translateX(0) rotate(360deg) rotateY(0deg);
+    opacity: 0;
   }
+}
+
+.floating-item {
+  position: absolute;
+  opacity: 0; /* เริ่มต้นที่ 0 แล้วค่อยเฟดอินในแอนิเมชัน */
+  pointer-events: none;
+  image-rendering: pixelated;
+  animation: leaf-falling 20s linear infinite;
+  will-change: transform, opacity;
 }
 
 /* Seller Trust Badge Style */
