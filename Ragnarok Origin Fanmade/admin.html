@@ -164,9 +164,20 @@
                     <button class="visitor-chart-tab is-active" data-chart-period="daily" type="button">รายวัน (30 วัน)</button>
                     <button class="visitor-chart-tab" data-chart-period="monthly" type="button">รายเดือน (12 เดือน)</button>
                   </div>
-                  <div class="visitor-chart-canvas-wrap">
-                    <canvas id="visitorChart"></canvas>
-                  </div>
+            <div class="visitor-charts-grid">
+              <div class="visitor-chart-container">
+                <h4 class="chart-title">ผู้เข้าชม (Unique Visitors)</h4>
+                <div class="visitor-chart-canvas-wrap">
+                  <canvas id="visitorsChart"></canvas>
+                </div>
+              </div>
+              <div class="visitor-chart-container">
+                <h4 class="chart-title">ยอดวิว (Pageviews)</h4>
+                <div class="visitor-chart-canvas-wrap">
+                  <canvas id="viewsChart"></canvas>
+                </div>
+              </div>
+            </div>
                 </div>
               </div>
 
@@ -1966,7 +1977,8 @@
       // Visitor Stats Dashboard
       // =====================================================
 
-      let visitorChart = null;
+      let visitorsChart = null;
+      let viewsChart = null;
       let visitorDailyData = [];
       let visitorMonthlyData = [];
       let currentChartPeriod = "daily";
@@ -1975,200 +1987,112 @@
         if (!dateStr) return "-";
         const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
           "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
-        
-        // ลอง parse ด้วยวิธีต่างๆ
         let d = new Date(dateStr);
-        
-        // ถ้าเป็นรูปแบบ YYYY-MM-DD บาง Browser อาจมีปัญหาเรื่อง Timezone/Format
-        // ให้ลองจัดการ String โดยตรง
         const dateMatch = String(dateStr).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
         if (dateMatch) {
           const y = parseInt(dateMatch[1]);
           const m = parseInt(dateMatch[2]) - 1;
           return (months[m] || "-") + " " + (y + 543).toString().slice(2);
         }
-
         if (!isNaN(d.getTime())) {
           return months[d.getMonth()] + " " + (d.getFullYear() + 543).toString().slice(2);
         }
-        
         return dateStr;
       }
 
       function formatThaiDate(dateStr) {
         if (!dateStr) return "-";
-        
-        // ลองจัดการ String รูปแบบ YYYY-MM-DD โดยตรง (ปลอดภัยที่สุดสำหรับ Chart Labels)
         const dateMatch = String(dateStr).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
         if (dateMatch) {
           return parseInt(dateMatch[3]) + "/" + parseInt(dateMatch[2]);
         }
-
         const d = new Date(dateStr);
         if (!isNaN(d.getTime())) {
           return d.getDate() + "/" + (d.getMonth() + 1);
         }
-        
         return dateStr;
       }
 
       function getChartColors(isDark) {
         return {
-          visitors: isDark ? "rgba(85, 184, 255, 0.85)" : "rgba(23, 125, 220, 0.85)",
-          views: isDark ? "rgba(69, 214, 149, 0.65)" : "rgba(24, 166, 106, 0.65)",
-          visitorsLine: isDark ? "#55b8ff" : "#177ddc",
-          viewsLine: isDark ? "#45d695" : "#18a66a",
-          grid: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)",
+          visitors: isDark ? "rgba(85, 184, 255, 0.8)" : "rgba(23, 125, 220, 0.8)",
+          views: isDark ? "rgba(69, 214, 149, 0.8)" : "rgba(24, 166, 106, 0.8)",
+          grid: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
           text: isDark ? "#9fb3c8" : "#637386"
         };
       }
 
       function renderVisitorChart(period) {
-        const canvas = document.getElementById("visitorChart");
-        if (!canvas) return;
+        const visitorsCanvas = document.getElementById("visitorsChart");
+        const viewsCanvas = document.getElementById("viewsChart");
+        if (!visitorsCanvas || !viewsCanvas) return;
 
         const isDark = document.documentElement.dataset.theme === "dark";
         const colors = getChartColors(isDark);
 
         const data = period === "daily" ? visitorDailyData : visitorMonthlyData;
         const labels = data.map((row) => {
-          // พยายามหาค่าวันที่จากหลายๆ คอลัมน์ที่อาจเป็นไปได้
           const dateVal = row.stat_date || row.stat_month || row.date || row.month || Object.values(row)[0];
           return period === "daily" ? formatThaiDate(dateVal) : formatThaiMonth(dateVal);
         });
         const visitorsData = data.map((row) => Number(row.unique_visitors || row.visitors || 0));
         const viewsData = data.map((row) => Number(row.total_views || row.views || 0));
 
-        if (visitorChart) {
-          visitorChart.destroy();
-          visitorChart = null;
-        }
+        if (visitorsChart) visitorsChart.destroy();
+        if (viewsChart) viewsChart.destroy();
 
-        if (!data.length) {
-          canvas.closest(".visitor-chart-canvas-wrap").innerHTML =
-            '<div class="visitor-chart-empty">ยังไม่มีข้อมูลสถิติในช่วงนี้</div>';
-          return;
-        }
-
-        visitorChart = new Chart(canvas, {
-          type: "line",
-          data: {
-            labels,
-            datasets: [
-              {
-                label: "ผู้เข้าชม (Unique Visitors)",
-                data: visitorsData,
-                backgroundColor: colors.visitors.replace("0.85", "0.1"),
-                borderColor: colors.visitorsLine,
-                borderWidth: 3,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                pointBackgroundColor: colors.visitorsLine,
-                fill: true,
-                tension: 0.4,
-                yAxisID: "y"
-              },
-              {
-                label: "Pageviews (ยอดวิว)",
-                data: viewsData,
-                backgroundColor: colors.viewsLine.replace("1", "0.1"),
-                borderColor: colors.viewsLine,
-                borderWidth: 2,
-                borderDash: [5, 5],
-                pointRadius: 0,
-                pointHoverRadius: 4,
-                fill: false,
-                tension: 0.4,
-                yAxisID: "y1"
-              }
-            ]
+        const commonOptions = {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: isDark ? "#101b2a" : "#fff",
+              titleColor: isDark ? "#f4f9ff" : "#102033",
+              bodyColor: isDark ? "#9fb3c8" : "#637386",
+              borderColor: isDark ? "#263a50" : "#dce8ef",
+              borderWidth: 1
+            }
           },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: "index", intersect: false },
-            plugins: {
-              legend: {
-                position: "top",
-                align: "end",
-                labels: {
-                  color: colors.text,
-                  font: { size: 12, weight: "600" },
-                  usePointStyle: true,
-                  padding: 20
-                }
-              },
-              tooltip: {
-                backgroundColor: isDark ? "rgba(16, 27, 42, 0.95)" : "rgba(255, 255, 255, 0.95)",
-                titleColor: isDark ? "#f4f9ff" : "#102033",
-                bodyColor: isDark ? "#9fb3c8" : "#637386",
-                borderColor: isDark ? "#263a50" : "#dce8ef",
-                borderWidth: 1,
-                padding: 12,
-                boxPadding: 6,
-                usePointStyle: true,
-                callbacks: {
-                  label: function(context) {
-                    let label = context.dataset.label || "";
-                    if (label) label += ": ";
-                    if (context.parsed.y !== null) {
-                      label += context.parsed.y.toLocaleString();
-                    }
-                    return label;
-                  }
-                }
-              }
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: colors.text, font: { size: 10 }, maxTicksLimit: 8 }
             },
-            scales: {
-              x: {
-                grid: { display: false },
-                ticks: {
-                  color: colors.text,
-                  font: { size: 11 },
-                  maxTicksLimit: period === "daily" ? 10 : 12,
-                  padding: 10
-                }
-              },
-              y: {
-                type: "linear",
-                display: true,
-                position: "left",
-                beginAtZero: true,
-                grid: { color: colors.grid, drawBorder: false },
-                ticks: {
-                  color: colors.visitorsLine,
-                  font: { size: 11, weight: "600" },
-                  precision: 0,
-                  padding: 8
-                },
-                title: {
-                  display: true,
-                  text: "จำนวนคนเข้าชม",
-                  color: colors.visitorsLine,
-                  font: { size: 10, weight: "bold" }
-                }
-              },
-              y1: {
-                type: "linear",
-                display: true,
-                position: "right",
-                beginAtZero: true,
-                grid: { drawOnChartArea: false },
-                ticks: {
-                  color: colors.viewsLine,
-                  font: { size: 11, weight: "600" },
-                  precision: 0,
-                  padding: 8
-                },
-                title: {
-                  display: true,
-                  text: "จำนวนยอดวิว",
-                  color: colors.viewsLine,
-                  font: { size: 10, weight: "bold" }
-                }
-              }
+            y: {
+              beginAtZero: true,
+              grid: { color: colors.grid, drawBorder: false },
+              ticks: { color: colors.text, font: { size: 10 }, precision: 0 }
             }
           }
+        };
+
+        visitorsChart = new Chart(visitorsCanvas, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [{
+              label: "ผู้เข้าชม",
+              data: visitorsData,
+              backgroundColor: colors.visitors,
+              borderRadius: 4
+            }]
+          },
+          options: commonOptions
+        });
+
+        viewsChart = new Chart(viewsCanvas, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [{
+              label: "ยอดวิว",
+              data: viewsData,
+              backgroundColor: colors.views,
+              borderRadius: 4
+            }]
+          },
+          options: commonOptions
         });
       }
 
