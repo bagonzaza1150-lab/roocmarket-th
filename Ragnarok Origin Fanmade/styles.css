@@ -3857,6 +3857,50 @@ h1 {
   }
 }
 
+@media (max-width: 768px) {
+  .filters {
+    padding: 14px;
+  }
+
+  .filters label {
+    margin-bottom: 12px;
+  }
+
+  .filters select {
+    font-size: 14px;
+  }
+
+  .search-card {
+    grid-template-columns: 1fr;
+    max-width: 100%;
+    gap: 10px;
+  }
+
+  .search-card label {
+    font-size: 11px;
+  }
+
+  .search-card select,
+  .search-card button {
+    width: 100%;
+  }
+
+  .section-head {
+    flex-wrap: wrap;
+  }
+
+  .listing-tools {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .section-head select {
+    width: 100%;
+    min-width: auto;
+    margin: 0;
+  }
+}
+
 @media (max-width: 560px) {
   .shell {
     width: min(100% - 22px, 1180px);
@@ -3924,6 +3968,143 @@ h1 {
   .user-menu-trigger {
     justify-content: center;
     max-width: 190px;
+  }
+
+  .filters {
+    padding: 12px;
+  }
+
+  .filters label {
+    margin-bottom: 10px;
+    font-size: 11px;
+  }
+
+  .filters select {
+    height: 40px;
+    font-size: 13px;
+    padding: 0 10px;
+  }
+
+  .check-list label {
+    font-size: 12px;
+    min-height: 24px;
+  }
+
+  .search-card {
+    grid-template-columns: 1fr;
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .search-input {
+    height: 40px;
+    padding: 0 10px;
+  }
+
+  .search-input svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .search-input input {
+    font-size: 13px;
+  }
+
+  .search-card label {
+    font-size: 10px;
+    margin-bottom: 4px;
+  }
+
+  .search-card select {
+    height: 40px;
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  .search-card button {
+    width: 100%;
+    min-height: 40px;
+    font-size: 13px;
+  }
+
+  .trust-row {
+    grid-template-columns: 1fr;
+    max-width: 100%;
+    gap: 10px;
+  }
+
+  .trust-row div {
+    padding: 12px;
+  }
+
+  .trust-row strong {
+    font-size: 20px;
+  }
+
+  .trust-row span {
+    font-size: 11px;
+  }
+
+  .section-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .section-title-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .listing-tools {
+    width: 100%;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .listing-tools select {
+    width: 100%;
+  }
+
+  .section-head select {
+    width: 100%;
+    min-width: auto;
+    height: 40px;
+    font-size: 13px;
+  }
+
+  .refresh-listings-button {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+  }
+
+  .refresh-listings-button svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .panel-head h2,
+  .section-head h2 {
+    font-size: 20px;
+  }
+
+  .support-card {
+    padding: 14px;
+  }
+
+  .support-card h3 {
+    font-size: 18px;
+  }
+
+  .donate-goal-card {
+    padding: 14px;
+  }
+
+  .donate-goal-card h3 {
+    font-size: 18px;
   }
 
   .user-menu-panel,
