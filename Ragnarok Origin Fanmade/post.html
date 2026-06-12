@@ -1071,19 +1071,22 @@
 
       // Theme picker event listeners - attach to all theme options
       function attachThemeListeners() {
-        const themeOptions = document.querySelectorAll('#themePickerInline .theme-option');
-        themeOptions.forEach(option => {
-          option.addEventListener('mousedown', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-          });
-          option.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            document.querySelectorAll('#themePickerInline .theme-option').forEach(o => o.classList.remove('active'));
-            this.classList.add('active');
+        const themePicker = document.getElementById('themePickerInline');
+        if (!themePicker) return;
+        
+        themePicker.addEventListener('click', function(e) {
+          const option = e.target.closest('.theme-option');
+          if (!option) return;
+          
+          e.preventDefault();
+          e.stopPropagation();
+          
+          document.querySelectorAll('#themePickerInline .theme-option').forEach(o => o.classList.remove('active'));
+          option.classList.add('active');
+          
+          if (typeof syncPreview === 'function') {
             syncPreview();
-          });
+          }
         });
       }
       attachThemeListeners();

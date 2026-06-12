@@ -557,19 +557,20 @@
         document.body.appendChild(modal);
         let selectedTheme = currentBg;
         
-        modal.querySelectorAll('.theme-option:not(.locked)').forEach(option => {
-          option.addEventListener('mousedown', function(e) {
+        const modalPicker = modal.querySelector('.theme-picker-grid');
+        if (modalPicker) {
+          modalPicker.addEventListener('click', function(e) {
+            const option = e.target.closest('.theme-option:not(.locked)');
+            if (!option) return;
+            
             e.preventDefault();
             e.stopPropagation();
-          });
-          option.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
+            
             modal.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'));
-            this.classList.add('active');
-            selectedTheme = this.dataset.theme;
+            option.classList.add('active');
+            selectedTheme = option.dataset.theme;
           });
-        });
+        }
         
         modal.querySelector('#confirmTheme').addEventListener('click', async () => {
           if (!isPremium && selectedTheme !== 'default') {

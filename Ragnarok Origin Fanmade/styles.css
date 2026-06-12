@@ -5379,8 +5379,14 @@ html, body {
 }
 
 .theme-option.active {
-  border-color: var(--primary);
-  box-shadow: 0 0 10px var(--primary-glow);
+  border-color: #f0ad24 !important;
+  box-shadow: 0 0 15px rgba(240, 173, 36, 0.6) !important;
+  transform: scale(1.08);
+  outline: 2px solid #f0ad24;
+}
+
+.theme-option * {
+  pointer-events: none;
 }
 
 .theme-option.locked::after {
