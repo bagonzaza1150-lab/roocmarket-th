@@ -5259,3 +5259,45 @@ html, body {
     padding: 5px 8px !important;
   }
 }
+
+
+/* =====================================================
+   ADDITIONAL MOBILE FIXES (V3)
+   ===================================================== */
+
+@media (max-width: 560px) {
+  /* 1. เอาราคาให้ชิดซ้ายมือ */
+  .listing-card .price-display {
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+  
+  .listing-card .price-row {
+    align-items: flex-start !important;
+  }
+
+  /* 2. แก้ไขช่อง Live ที่แสดงข้อมูลหลุดจอ */
+  .live-activity-container {
+    margin: 10px 0 !important;
+    width: calc(100% - 4px) !important; /* กันขอบเล็กน้อย */
+    box-sizing: border-box !important;
+    display: flex !important;
+    overflow: hidden !important; /* กันข้อความยาวล้น */
+  }
+  
+  .live-content {
+    flex: 1 !important;
+    min-width: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  
+  /* จัดการ shell ให้ไม่ล้น */
+  .shell {
+    width: calc(100% - 20px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: 0 !important;
+  }
+}
