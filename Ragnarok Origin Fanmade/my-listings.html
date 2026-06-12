@@ -225,8 +225,9 @@
         grid.innerHTML = listings.map((listing) => {
           const status = listingStatus(listing);
           const canMarkSold = listing.sale_status !== "sold";
+          const isVip = listing.seller_is_premium || listing.is_premium;
           return `
-            <article class="my-listing-card${getListingType(listing) === "service" ? " service-my-listing-card" : ""}${listing.card_background && listing.card_background !== 'default' ? " theme-" + listing.card_background : ""}" data-id="${escapeHtml(listing.id)}" data-active="${listing.active ? "true" : "false"}" data-status="${escapeHtml(listing.sale_status || "active")}">
+            <article class="my-listing-card listing-card${isVip ? " vip-listing" : ""}${getListingType(listing) === "service" ? " service-my-listing-card" : ""}${listing.card_background && listing.card_background !== 'default' ? " " + listing.card_background : ""}" data-id="${escapeHtml(listing.id)}" data-active="${listing.active ? "true" : "false"}" data-status="${escapeHtml(listing.sale_status || "active")}">
               ${getListingType(listing) === "service" ? "" : `<img src="${escapeHtml(listing.image_url || "assets/category-icons/mvp-c.png")}" alt="" />`}
               <div>
                 <div class="listing-meta">
@@ -497,11 +498,11 @@
         const isPremium = premiumResult && premiumResult.active;
         const themes = [
           { id: 'default', label: 'ปกติ', color: 'var(--paper)' },
-          { id: 'marble', label: 'หินอ่อน', color: 'linear-gradient(135deg, #f5f7fa, #c3cfe2)' },
-          { id: 'space', label: 'อวกาศ', color: '#1b2735' },
-          { id: 'gold', label: 'ทองหรูหรา', color: 'linear-gradient(135deg, #bf953f, #fcf6ba)' },
-          { id: 'neon', label: 'นีออนม่วง', color: '#0d0221' },
-          { id: 'sunset', label: 'พระอาทิตย์ตก', color: 'linear-gradient(to bottom, #ff5e62, #ff9966)' }
+          { id: 'theme-pixel-grass', label: 'ทุ่งหญ้า', color: '#7ec850' },
+          { id: 'theme-pixel-sky', label: 'ท้องฟ้า', color: '#4ec0ca' },
+          { id: 'theme-pixel-gold', label: 'ทองพิกเซล', color: '#f1c40f' },
+          { id: 'theme-pixel-night', label: 'คืนดาว', color: '#1a1a2e' },
+          { id: 'theme-pixel-pink', label: 'ชมพูพิกเซล', color: '#ff85a2' }
         ];
         
         const themeHTML = themes.map(theme => `

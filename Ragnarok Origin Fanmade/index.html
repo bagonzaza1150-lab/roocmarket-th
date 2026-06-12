@@ -524,9 +524,9 @@
               ? `${listing.description || ""} · รองรับ Middleman`
               : listing.description || "";
 
-            const isVip = listing.seller_is_premium;
+            const isVip = listing.seller_is_premium || listing.is_premium;
             return `
-		              <article class="listing-card ${isVip ? "vip-listing" : ""}${listing.card_background && listing.card_background !== 'default' ? " theme-" + listing.card_background : ""}">
+			              <article class="listing-card ${isVip ? "vip-listing" : ""}${listing.card_background && listing.card_background !== 'default' ? " " + listing.card_background : ""}">
 	                <div class="${mediaClass}"${galleryData}>
                   <img src="${escapeHtml(listingImages[0])}" alt="" />
                   ${listing.category === "account" && listingImages.length > 1 ? `

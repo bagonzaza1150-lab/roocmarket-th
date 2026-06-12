@@ -5194,21 +5194,22 @@ html, body {
    ===================================================== */
 
 @media (max-width: 560px) {
-  /* 1. แยกราคากับปุ่มติดต่อคนละบรรทัด */
+  /* 1. แยกราคากับปุ่มติดต่อคนละบรรทัด และชิดซ้าย */
   .listing-card .price-row {
     flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 12px !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    padding-top: 10px !important;
   }
   
   .listing-card .price-display {
     width: 100% !important;
-    justify-content: center !important;
+    justify-content: flex-start !important;
   }
   
   .listing-card .listing-card-actions {
     width: 100% !important;
-    flex-direction: row !important; /* ปุ่ม "ติดต่อ" กับ "Facebook" อยู่บรรทัดเดียวกันแต่แยกจากราคา */
+    flex-direction: row !important;
   }
 
   /* 2. แก้ไขช่อง Live ตกจอ */
@@ -5218,6 +5219,12 @@ html, body {
     max-width: 100% !important;
     width: 100% !important;
     box-sizing: border-box !important;
+    overflow: hidden;
+  }
+  .live-content {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   /* 3. โปรไฟล์ที่ Login โดนบีบรูปให้แคบ */
@@ -5398,45 +5405,69 @@ html, body {
 /* --- PREMIUM CARD THEMES --- */
 
 /* ลายหินอ่อน (Marble) */
-.theme-marble {
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
-  color: #2d3436 !important;
-}
-.theme-marble h3, .theme-marble .price-display strong {
-  color: #2d3436 !important;
-}
-
-/* ลายอวกาศ (Space/Dark Nebula) */
-.theme-space {
-  background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%) !important;
+/* ลายทุ่งหญ้า (Pixel Grass) */
+.theme-pixel-grass { 
+  background: #7ec850 !important; 
   background-image: 
-    radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
-    radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),
-    radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 40px) !important;
-  background-size: 550px 550px, 350px 350px, 250px 250px !important;
-  background-position: 0 0, 40px 60px, 130px 270px !important;
+    linear-gradient(45deg, #6eb740 25%, transparent 25%), 
+    linear-gradient(-45deg, #6eb740 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #6eb740 75%),
+    linear-gradient(-45deg, transparent 75%, #6eb740 75%) !important;
+  background-size: 20px 20px !important;
+  color: #1a3c0e !important; 
+  border: 3px solid #3e7a1f !important;
+  box-shadow: inset 0 0 40px rgba(0,0,0,0.1);
 }
+.theme-pixel-grass h3, .theme-pixel-grass strong, .theme-pixel-grass p { color: #1a3c0e !important; }
 
-/* ลายทองหรูหรา (Luxury Gold) */
-.theme-gold {
-  background: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c) !important;
+/* ลายท้องฟ้า (Pixel Sky) */
+.theme-pixel-sky { 
+  background: #4ec0ca !important; 
+  background-image: 
+    linear-gradient(to bottom, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(circle at 20% 20%, #fff 2px, transparent 2px),
+    radial-gradient(circle at 80% 40%, #fff 3px, transparent 3px) !important;
+  background-size: 100% 100%, 40px 40px, 60px 60px !important;
+  color: #004d40 !important;
+  border: 3px solid #3a8d95 !important;
+}
+.theme-pixel-sky h3, .theme-pixel-sky strong, .theme-pixel-sky p { color: #004d40 !important; }
+
+/* ลายทองพิกเซล (Pixel Gold) */
+.theme-pixel-gold { 
+  background: #f1c40f !important;
+  background-image: 
+    linear-gradient(0deg, rgba(0,0,0,0.1) 50%, transparent 50%),
+    linear-gradient(90deg, rgba(255,255,255,0.2) 0%, transparent 100%) !important;
+  background-size: 100% 8px, 100% 100% !important;
   color: #4a3505 !important;
+  border: 3px solid #9a7d0a !important;
+  box-shadow: 0 0 15px rgba(241, 196, 15, 0.3);
 }
-.theme-gold h3, .theme-gold .price-display strong, .theme-gold p {
-  color: #4a3505 !important;
-}
+.theme-pixel-gold h3, .theme-pixel-gold strong, .theme-pixel-gold p { color: #4a3505 !important; }
 
-/* ลายนีออนม่วง (Cyberpunk Purple) */
-.theme-neon {
-  background: #0d0221 !important;
-  border: 1px solid #5d00ff !important;
-  box-shadow: inset 0 0 20px rgba(93, 0, 255, 0.2) !important;
+/* ลายคืนดาว (Pixel Night) */
+.theme-pixel-night { 
+  background: #1a1a2e !important;
+  background-image: 
+    radial-gradient(rgba(255,255,255,0.8) 1px, transparent 1px),
+    radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px) !important;
+  background-size: 40px 40px, 25px 25px !important;
+  color: #e2e2e2 !important;
+  border: 3px solid #16213e !important;
 }
+.theme-pixel-night h3, .theme-pixel-night strong, .theme-pixel-night p { color: #e2e2e2 !important; }
 
-/* ลายพระอาทิตย์ตก (Sunset) */
-.theme-sunset {
-  background: linear-gradient(to bottom, #ff5e62, #ff9966) !important;
+/* ลายชมพูพิกเซล (Pixel Pink) */
+.theme-pixel-pink { 
+  background: #ff85a2 !important;
+  background-image: 
+    linear-gradient(45deg, rgba(255,255,255,0.2) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.2) 75%, transparent 75%, transparent) !important;
+  background-size: 20px 20px !important;
+  color: #4a0e1c !important;
+  border: 3px solid #d63384 !important;
 }
+.theme-pixel-pink h3, .theme-pixel-pink strong, .theme-pixel-pink p { color: #4a0e1c !important; }
 
 /* --- UI FOR THEME PICKER --- */
 .theme-picker-grid {

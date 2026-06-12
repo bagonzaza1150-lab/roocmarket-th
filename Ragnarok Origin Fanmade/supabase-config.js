@@ -42,6 +42,7 @@ window.ROOC_SUPABASE = {
     "active",
     "sale_status",
     "expires_at",
+    "card_background",
     "created_at",
     "updated_at"
   ].join(",");
@@ -628,7 +629,7 @@ window.ROOC_SUPABASE = {
       const descriptionParts = getDescriptionParts(description);
 
       return `
-        <article class="listing-card${isServiceListing ? " service-listing-card" : ""}${listing.seller_is_premium ? " vip-listing" : ""}${listing.card_background && listing.card_background !== 'default' ? " theme-" + listing.card_background : ""}">
+        <article class="listing-card${isServiceListing ? " service-listing-card" : ""}${(listing.seller_is_premium || listing.is_premium) ? " vip-listing" : ""}${listing.card_background && listing.card_background !== 'default' ? " " + listing.card_background : ""}">
           ${isServiceListing ? "" : `<div class="${mediaClass}"${galleryData}>
             <img src="${escapeHtml(listingImages[0])}" alt="" loading="lazy" decoding="async" />
             ${listing.category === "account" && listingImages.length > 1 ? `
@@ -1249,6 +1250,7 @@ window.ROOC_SUPABASE = {
         "facebook_url",
         "active",
         "sale_status",
+        "card_background",
         "created_at"
       ].join(",");
       
@@ -1284,7 +1286,7 @@ window.ROOC_SUPABASE = {
           const descriptionParts = getDescriptionParts(description);
 
           return `
-            <article class="listing-card${isServiceListing ? " service-listing-card" : ""}${listing.seller_is_premium ? " vip-listing" : ""}${listing.card_background && listing.card_background !== 'default' ? " theme-" + listing.card_background : ""}">
+            <article class="listing-card${isServiceListing ? " service-listing-card" : ""}${(listing.seller_is_premium || listing.is_premium) ? " vip-listing" : ""}${listing.card_background && listing.card_background !== 'default' ? " " + listing.card_background : ""}">
               ${isServiceListing ? "" : `<div class="item-media">
                 <img src="${escapeHtml(listingImages[0])}" alt="" loading="lazy" />
               </div>`}

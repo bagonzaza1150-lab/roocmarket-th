@@ -231,11 +231,11 @@
                 <span>ปรับแต่งพื้นหลัง (Premium)</span>
                 <div class="theme-picker-grid" id="themePickerInline">
                   <div class="theme-option active" data-theme="default" style="background: var(--paper)">ปกติ</div>
-                  <div class="theme-option locked" data-theme="marble" style="background: linear-gradient(135deg, #f5f7fa, #c3cfe2)">หินอ่อน</div>
-                  <div class="theme-option locked" data-theme="space" style="background: #1b2735">อวกาศ</div>
-                  <div class="theme-option locked" data-theme="gold" style="background: linear-gradient(135deg, #bf953f, #fcf6ba)">ทองหรูหรา</div>
-                  <div class="theme-option locked" data-theme="neon" style="background: #0d0221">นีออนม่วง</div>
-                  <div class="theme-option locked" data-theme="sunset" style="background: linear-gradient(to bottom, #ff5e62, #ff9966)">พระอาทิตย์ตก</div>
+                  <div class="theme-option locked" data-theme="theme-pixel-grass" style="background: #7ec850">ทุ่งหญ้า</div>
+                  <div class="theme-option locked" data-theme="theme-pixel-sky" style="background: #4ec0ca">ท้องฟ้า</div>
+                  <div class="theme-option locked" data-theme="theme-pixel-gold" style="background: #f1c40f">ทองพิกเซล</div>
+                  <div class="theme-option locked" data-theme="theme-pixel-night" style="background: #1a1a2e">คืนดาว</div>
+                  <div class="theme-option locked" data-theme="theme-pixel-pink" style="background: #ff85a2">ชมพูพิกเซล</div>
                 </div>
                 <p style="font-size: 12px; color: #f0ad24; margin-top: 8px;">🔒 ธีมอื่นๆ เปิดให้ Premium เท่านั้น</p>
               </div>
@@ -666,8 +666,17 @@
         if (previewCard) {
           const selectedTheme = document.querySelector('#themePickerInline .theme-option.active')?.dataset.theme || 'default';
           let newClass = 'listing-card preview-card';
+          
+          // Check if user is premium to show VIP border in preview
+          const cardBackgroundField = document.getElementById('cardBackgroundField');
+          const isPremiumPreview = cardBackgroundField && !cardBackgroundField.hidden;
+          
+          if (isPremiumPreview) {
+            newClass += " vip-listing";
+          }
+          
           if (selectedTheme && selectedTheme !== 'default') {
-            newClass += " theme-" + selectedTheme;
+            newClass += " " + selectedTheme;
           }
           previewCard.className = newClass;
         }
@@ -1066,16 +1075,28 @@
       });
 
       // Show theme picker only for Premium users
-      if (canUseSupabase) {
-        supabaseClient.auth.getSession().then(async ({ data }) => {
-          if (!data.session) return;
-          const premiumResult = await getPremiumStatus(data.session);
-          const isPremium = premiumResult && premiumResult.active;
-          const cardBackgroundField = document.getElementById('cardBackgroundField');
-          if (cardBackgroundField) {
-            cardBackgroundField.hidden = !isPremium;
+      async function syncPremiumUi(session) {
+        if (!session) return;
+        const premiumResult = await getPremiumStatus(session);
+        const isPremium = premiumResult && premiumResult.active;
+        const cardBackgroundField = document.getElementById('cardBackgroundField');
+        if (cardBackgroundField) {
+          cardBackgroundField.hidden = !isPremium;
+          if (isPremium) {
+            document.querySelectorAll('#themePickerInline .theme-option.locked').forEach(opt => {
+              opt.classList.remove('locked');
+              opt.onclick = () => {
+                document.querySelectorAll('#themePickerInline .theme-option').forEach(o => o.classList.remove('active'));
+                opt.classList.add('active');
+                syncPreview();
+              };
+            });
           }
-        });
+        }
+      }
+      if (canUseSupabase) {
+        supabaseClient.auth.getSession().then(({ data }) => syncPremiumUi(data.session));
+        supabaseClient.auth.onAuthStateChange((_event, session) => syncPremiumUi(session));
       }
 
       postForm.addEventListener("submit", publishListing);
