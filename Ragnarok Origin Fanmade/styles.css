@@ -5301,3 +5301,87 @@ html, body {
     padding: 0 !important;
   }
 }
+
+
+/* =====================================================
+   VIP LISTING EFFECT — ROTATING BORDER
+   ===================================================== */
+
+/* 
+   วิธีใช้งาน: เพิ่ม class "vip-listing" เข้าไปที่ <div class="listing-card">
+   ตัวอย่าง: <div class="listing-card vip-listing">
+*/
+
+.vip-listing {
+  position: relative !important;
+  overflow: hidden !important;
+  border: none !important; /* ซ่อนขอบเดิม */
+  background: var(--paper) !important;
+  z-index: 1;
+}
+
+/* สร้างขอบหมุน */
+.vip-listing::before {
+  content: '' !important;
+  position: absolute !important;
+  top: -50% !important;
+  left: -50% !important;
+  width: 200% !important;
+  height: 200% !important;
+  background: conic-gradient(
+    from 0deg,
+    #f0ad24,
+    #ff6b6b,
+    #4ecdc4,
+    #f0ad24
+  ) !important;
+  animation: vip-rotate 4s linear infinite !important;
+  z-index: -2 !important;
+  pointer-events: none !important;
+}
+
+/* สร้างพื้นหลังทับเพื่อให้เหลือแค่ขอบ */
+.vip-listing::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 3px !important;    /* ความหนาของขอบ */
+  left: 3px !important;
+  right: 3px !important;
+  bottom: 3px !important;
+  background: var(--paper) !important;
+  border-radius: 13px !important; /* ปรับให้เข้ากับ border-radius ของ card */
+  z-index: -1 !important;
+  pointer-events: none !important;
+}
+
+@keyframes vip-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* ปรับเนื้อหาภายในการ์ด VIP ให้แสดงผลถูกต้อง */
+.vip-listing > * {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* เพิ่ม Badge VIP อัตโนมัติ (ถ้าต้องการ) */
+.vip-listing .listing-card-head::before {
+  content: '⭐ VIP' !important;
+  display: inline-block !important;
+  background: linear-gradient(135deg, #f0ad24, #ffb84d) !important;
+  color: #0f1419 !important;
+  padding: 2px 8px !important;
+  border-radius: 4px !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  margin-bottom: 8px !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 2px 8px rgba(240, 173, 36, 0.3) !important;
+  vertical-align: middle !important;
+  margin-right: 8px !important;
+}
