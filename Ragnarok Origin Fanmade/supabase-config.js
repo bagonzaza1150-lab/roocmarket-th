@@ -635,16 +635,19 @@ window.ROOC_SUPABASE = {
           <p class="listing-description" data-short="${escapeHtml(descriptionParts.shortText)}" data-full="${escapeHtml(descriptionParts.fullText)}">${escapeHtml(descriptionParts.shortText)}</p>
           ${descriptionParts.truncated ? '<button class="description-toggle" type="button" data-description-toggle aria-expanded="false" onclick="event.stopPropagation(); window.toggleListingDescription?.(this)">ดูเพิ่มเติม</button>' : ""}
           <div class="price-row">
-            <strong>฿ ${formatListingPrice(listing.price_text)}</strong>
-            <span class="listing-card-actions">
+            <div class="price-display">
+              <span>฿</span>
+              <strong>${formatListingPrice(listing.price_text)}</strong>
+            </div>
+            <div class="listing-card-actions">
               ${listing.facebook_url ? `<a href="${escapeHtml(listing.facebook_url)}" target="_blank" rel="noopener" class="seller-facebook-btn" title="เปิด Facebook ผู้ขาย" onclick="event.stopPropagation();">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
                   <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/>
                 </svg>
               </a>` : ""}
               ${listing.offers_enabled ? `<button class="btn btn-small btn-light offer-button" type="button" data-offer-listing-id="${escapeHtml(listing.id)}" data-offer-title="${escapeHtml(title)}" data-offer-price="${escapeHtml(listing.price_text)}">เสนอราคา</button>` : ""}
               <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">${listingType === "buy" ? "ติดต่อผู้รับซื้อ" : listingType === "service" ? "ติดต่อผู้รับจ้าง" : "ติดต่อผู้ขาย"}</button>
-            </span>
+            </div>
           </div>
         </article>
       `;

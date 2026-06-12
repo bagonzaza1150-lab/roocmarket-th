@@ -1476,7 +1476,7 @@ h1 {
   overflow: hidden;
   color: var(--muted);
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 400; /* ลดความหนาชื่อผู้ใช้ */
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1669,7 +1669,7 @@ h1 {
   color: var(--blue);
   padding: 0 9px;
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 400; /* ลดความหนา Tag */
 }
 
 .listing-meta .verified {
@@ -1747,31 +1747,63 @@ h1 {
 
 .price-row {
   display: flex;
+  flex-direction: column; /* เปลี่ยนเป็นแนวตั้งเพื่อกันปุ่มล้น */
   margin-top: auto;
-  justify-content: space-between;
   gap: 12px;
-  align-items: flex-end;
+  align-items: stretch;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.price-display {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.price-display span {
+  font-size: 18px;
+  color: var(--gold);
+  font-weight: 400;
+}
+
+.price-display strong {
+  font-size: 24px;
+  color: var(--gold);
+  font-weight: 500;
 }
 
 .listing-card-actions {
-  display: grid;
-  flex: 0 0 112px;
-  justify-content: flex-end;
+  display: flex;
   gap: 8px;
+  align-items: center;
+  width: 100%;
 }
 
 .listing-card-actions .btn {
-  min-height: 36px;
-  padding-inline: 12px;
-  white-space: nowrap;
+  flex: 1;
+  min-height: 40px;
+  padding-inline: 8px;
+  font-size: 13px;
+  font-weight: 400;
 }
 
-.price-row strong {
-  display: grid;
-  min-height: 56px;
-  align-content: end;
-  color: #d89000;
-  font-size: 21px;
+.seller-facebook-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #1877f2;
+  color: #fff !important;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.seller-facebook-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3);
 }
 
 .contact-modal[hidden] {
