@@ -1408,8 +1408,8 @@ window.ROOC_SUPABASE = {
 	          }
 	          storeDiscordText.textContent = seller.discord_id || seller.seller_discord_id || seller.contact || "N/A";
 	          
-	          storeTotalListings.textContent = storeListings.filter(l => l.active).length;
-	          storeSoldItems.textContent = storeListings.filter(l => l.sale_status === "sold").length;
+		          storeTotalListings.textContent = storeListings.filter(l => l.active && l.sale_status !== 'sold').length;
+		          storeSoldItems.textContent = storeListings.filter(l => l.sale_status === "sold").length;
 	          
 	          if (isOwner) {
 	            // ดึงโควตาและ Mailbox สำหรับเจ้าของร้าน

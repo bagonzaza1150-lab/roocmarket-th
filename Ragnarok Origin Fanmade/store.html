@@ -420,14 +420,15 @@
         console.log("Refreshing store data for:", sellerId);
         if (app?.initStorePage && sellerId) {
           app.initStorePage(sellerId);
-        } else if (currentSession) {
+        } else if (currentSession && app?.initStorePage) {
           app.initStorePage(currentSession.user.id);
         }
       }
 
       window.showThemePickerModal = async function(listingId) {
+        const app = getApp();
         const listing = storeListings.find(l => l.id === listingId);
-        if (!listing) return;
+        if (!listing || !app) return;
         
         const isPremium = (await app.getPremiumStatus(currentSession)).active;
         const themes = [
@@ -515,23 +516,24 @@
       // Event Listeners
       document.addEventListener("click", (event) => {
         const target = event.target;
+        const app = getApp();
         
         // Management Actions
-        const editPriceId = target.dataset.editPrice;
-        const toggleId = target.dataset.toggle;
-        const toggleOffersId = target.dataset.toggleOffers;
-        const soldId = target.dataset.sold;
-        const deleteId = target.dataset.delete;
-        const customizeId = target.dataset.customize;
+        const editPriceBtn = target.closest("[data-edit-price]");
+        const toggleBtn = target.closest("[data-toggle]");
+        const toggleOffersBtn = target.closest("[data-toggle-offers]");
+        const soldBtn = target.closest("[data-sold]");
+        const deleteBtn = target.closest("[data-delete]");
+        const customizeBtn = target.closest("[data-customize]");
 
-        if (toggleId) toggleListing(toggleId);
-        if (editPriceId) editListingPrice(editPriceId);
-        if (toggleOffersId) toggleOffers(toggleOffersId);
-        if (soldId) markListingSold(soldId);
-        if (deleteId) deleteListing(deleteId);
-        if (customizeId) {
+        if (toggleBtn) toggleListing(toggleBtn.dataset.toggle);
+        if (editPriceBtn) editListingPrice(editPriceBtn.dataset.editPrice);
+        if (toggleOffersBtn) toggleOffers(toggleOffersBtn.dataset.toggleOffers);
+        if (soldBtn) markListingSold(soldBtn.dataset.sold);
+        if (deleteBtn) deleteListing(deleteBtn.dataset.delete);
+        if (customizeBtn) {
           if (typeof window.showThemePickerModal === 'function') {
-            window.showThemePickerModal(customizeId);
+            window.showThemePickerModal(customizeBtn.dataset.customize);
           } else {
             alert("ฟีเจอร์นี้กำลังปรับปรุง");
           }
@@ -539,7 +541,7 @@
 
         // Public Actions
         const contactButton = target.closest(".contact-seller-button");
-        if (contactButton) {
+        if (contactButton && app) {
           app.openSellerContact(
             contactButton.dataset.title,
             contactButton.dataset.contact,
@@ -550,7 +552,7 @@
         }
 
         const offerButton = target.closest(".offer-button");
-        if (offerButton) {
+        if (offerButton && app) {
           app.openOfferForm(
             offerButton.dataset.offerListingId,
             offerButton.dataset.offerTitle,
