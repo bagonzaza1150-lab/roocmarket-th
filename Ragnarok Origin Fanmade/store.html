@@ -600,21 +600,26 @@
           const isActive = currentBg === theme.id;
           const isLocked = !isPremium && theme.id !== 'default';
           
-          // สร้าง Overlay สำหรับกุญแจล็อคที่อยู่กึ่งกลางแน่นอน (บีบให้พอดีกับขอบรูปธีมเป๊ะๆ)
+          // สร้าง Overlay สำหรับกุญแจล็อคที่อยู่กึ่งกลางแน่นอน (ขยายให้คลุมทับ Border ทั้งหมด)
           const lockOverlay = isLocked ? `
-            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 5; border-radius: 11px;">
-              <span style="font-size: 42px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));">🔒</span>
+            <div style="position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 5; border-radius: 14px;">
+              <span style="font-size: 48px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));">🔒</span>
             </div>
           ` : '';
+
+          // กำหนด URL ของรูปธีม
+          const previewUrl = theme.id === 'default' 
+            ? 'https://ragnarokorigin.com/images/main/bg_main.jpg' 
+            : `https://roocmarket.com/assets/themes/${theme.id}.png`;
 
           return `
                   <button type="button"
                        class="theme-option ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}"
                        data-theme="${theme.id}"
-                       style="position: relative; height: 220px; aspect-ratio: 3/4; border-radius: 14px; border: 3px solid transparent; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; font-weight: 600; color: white; transition: all 0.3s; padding: 12px; font-size: 13px; background-size: cover; background-position: center; background-repeat: no-repeat; overflow: hidden; background-color: #1a1a1a; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"
+                       style="position: relative; height: 220px; aspect-ratio: 3/4; border-radius: 14px; border: 3px solid ${isActive ? '#f7b500' : 'transparent'}; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; font-weight: 600; color: white; transition: all 0.3s; padding: 0; font-size: 13px; background-image: url('${previewUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat; overflow: hidden; background-color: #1a1a1a; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"
                        onclick="window.selectThemeInModal(this)">
               ${lockOverlay}
-              <span style="background: transparent; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; letter-spacing: 0.5px; line-height: 1.4; text-shadow: 1px 1px 2px rgba(255,255,255,0.3); z-index: 6;">${theme.label}</span>
+              <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 8px; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; font-size: 13px; font-weight: 500; z-index: 6; width: 100%; text-align: center;">${theme.label}</div>
             </button>
           `;
         }).join('');
