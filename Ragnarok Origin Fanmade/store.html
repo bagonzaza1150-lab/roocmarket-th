@@ -600,10 +600,10 @@
           const isActive = currentBg === theme.id;
           const isLocked = !isPremium && theme.id !== 'default';
           
-          // สร้าง Overlay สำหรับกุญแจล็อคที่อยู่กึ่งกลางแน่นอน (ขยายให้คลุมทับ Border ทั้งหมด)
+          // สร้าง Overlay สำหรับกุญแจล็อคที่อยู่กึ่งกลางแน่นอน (ใช้ width/height 100% และจัดการตำแหน่งให้คลุมมิด)
           const lockOverlay = isLocked ? `
-            <div style="position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 5; border-radius: 14px;">
-              <span style="font-size: 48px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));">🔒</span>
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 10; border-radius: 0;">
+              <span style="font-size: 52px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));">🔒</span>
             </div>
           ` : '';
 
@@ -616,7 +616,7 @@
                   <button type="button"
                        class="theme-option ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}"
                        data-theme="${theme.id}"
-                       style="position: relative; height: 220px; aspect-ratio: 3/4; border-radius: 14px; border: 3px solid ${isActive ? '#f7b500' : 'transparent'}; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; font-weight: 600; color: white; transition: all 0.3s; padding: 0; font-size: 13px; background-image: url('${previewUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat; overflow: hidden; background-color: #1a1a1a; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"
+                       style="position: relative; height: 220px; aspect-ratio: 3/4; border-radius: 14px; border: none; outline: ${isActive ? '3px solid #f7b500' : 'none'}; outline-offset: -3px; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; font-weight: 600; color: white; transition: all 0.3s; padding: 0; font-size: 13px; background-image: url('${previewUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat; overflow: hidden; background-color: #1a1a1a; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"
                        onclick="window.selectThemeInModal(this)">
               ${lockOverlay}
               <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 8px; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; font-size: 13px; font-weight: 500; z-index: 6; width: 100%; text-align: center;">${theme.label}</div>
