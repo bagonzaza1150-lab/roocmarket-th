@@ -6740,6 +6740,72 @@ html, body {
   border: 1px solid var(--line);
 }
 
+.offer-mailbox > .offer-mail:not(.offer-mail-detail) {
+  display: none;
+}
+
+.offer-mail-detail {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.offer-mail-head {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.offer-mail-head b {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.15;
+}
+
+.offer-mail-head span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.offer-mail-message {
+  margin-top: 8px;
+}
+
+.offer-mail-message summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper-soft);
+  padding: 0 10px;
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
+}
+
+.offer-mail-message summary::-webkit-details-marker {
+  display: none;
+}
+
+.offer-mail-message p,
+.offer-mail-empty {
+  display: block;
+  margin: 8px 0 0;
+  padding: 8px;
+  border-radius: 6px;
+  background: var(--paper-soft);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
 .offer-mail div {
   display: flex;
   flex-direction: column;

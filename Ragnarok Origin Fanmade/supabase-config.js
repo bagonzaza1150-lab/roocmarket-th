@@ -1771,6 +1771,20 @@ window.ROOC_SUPABASE = {
 	                ${offers.length > 0 ? `
 	                  <div class="offer-mailbox">
 	                    <strong>Mailbox (${offers.length})</strong>
+	                    ${offers.slice(0, 3).map(o => `
+                        <div class="offer-mail offer-mail-detail">
+                          <div class="offer-mail-head">
+                            <b>฿${formatListingPrice(o.offer_price_text)}</b>
+                            <span>${escapeHtml(o.buyer_display_name || "ผู้เสนอราคา")}</span>
+                          </div>
+                          ${o.message ? `
+                            <details class="offer-mail-message">
+                              <summary>ดูข้อความ</summary>
+                              <p>${escapeHtml(o.message)}</p>
+                            </details>
+                          ` : `<small class="offer-mail-empty">ไม่มีข้อความเพิ่มเติม</small>`}
+                        </div>
+                      `).join("")}
 	                    ${offers.slice(0, 2).map(o => `<div class="offer-mail"><b>฿${formatListingPrice(o.offer_price_text)}</b> - ${escapeHtml(o.buyer_display_name)}</div>`).join("")}
 	                  </div>
 	                ` : ""}
