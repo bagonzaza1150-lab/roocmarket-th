@@ -1431,17 +1431,26 @@ window.ROOC_SUPABASE = {
 	        // ดึงข้อมูลโปรไฟล์โดยตรง (เผื่อกรณีไม่มีประกาศสินค้าเลย)
 	        const { data: profile } = await supabaseClient.from("marketplace_profiles").select("*").eq("user_id", sellerId).maybeSingle();
 	        
-	        if (profile || storeListings.length > 0) {
-	          const seller = profile || storeListings[0];
-	          storeName.textContent = seller.display_name || seller.seller_name || "ผู้ขาย ROOC";
-	          if (seller.avatar_url || seller.seller_avatar_url) storeAvatar.src = seller.avatar_url || seller.seller_avatar_url;
-		          if (seller.facebook_url) {
-		            storeFacebook.href = seller.facebook_url;
+		        if (profile || storeListings.length > 0) {
+		          const seller = profile || storeListings[0];
+		          storeName.textContent = seller.display_name || seller.seller_name || "ผู้ขาย ROOC";
+		          if (seller.avatar_url || seller.seller_avatar_url) storeAvatar.src = seller.avatar_url || seller.seller_avatar_url;
+		          
+		          // Reset Social Icons
+		          storeFacebook.hidden = true;
+		          const storeInstagram = document.querySelector("#storeInstagram");
+		          if (storeInstagram) storeInstagram.hidden = true;
+
+		          // ดึงข้อมูลจาก profile (ซึ่งมีความน่าเชื่อถือกว่าสำหรับข้อมูลโซเชียล)
+		          const finalFacebook = profile?.facebook_url || seller.facebook_url;
+		          const finalInstagram = profile?.instagram_url || seller.instagram_url;
+
+		          if (finalFacebook) {
+		            storeFacebook.href = finalFacebook;
 		            storeFacebook.hidden = false;
 		          }
-		          const storeInstagram = document.querySelector("#storeInstagram");
-		          if (seller.instagram_url && storeInstagram) {
-		            storeInstagram.href = seller.instagram_url;
+		          if (finalInstagram && storeInstagram) {
+		            storeInstagram.href = finalInstagram;
 		            storeInstagram.hidden = false;
 		          }
 		          storeDiscordText.textContent = seller.discord_id || seller.seller_discord_id || seller.contact || "N/A";
