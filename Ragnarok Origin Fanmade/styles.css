@@ -4203,11 +4203,11 @@ h1 {
 .listing-seller > .listing-seller-avatar {
   position: relative !important;
   display: block !important;
-  width: 46px !important;
-  height: 46px !important;
-  min-width: 46px !important;
-  max-width: 46px !important;
-  flex: 0 0 46px !important;
+  width: 54px !important;
+  height: 54px !important;
+  min-width: 54px !important;
+  max-width: 54px !important;
+  flex: 0 0 54px !important;
   overflow: visible !important;
   color: inherit !important;
   font-size: 0 !important;
@@ -4216,10 +4216,10 @@ h1 {
 
 .listing-seller > .listing-seller-avatar > .listing-seller-avatar-image {
   position: absolute !important;
-  top: 50% !important;
+  top: 52% !important;
   left: 50% !important;
-  width: 34px !important;
-  height: 34px !important;
+  width: 43px !important;
+  height: 43px !important;
   max-width: none !important;
   transform: translate(-50%, -50%);
   border: 0 !important;
@@ -4232,9 +4232,9 @@ h1 {
 
 .listing-seller > .listing-seller-avatar > .listing-seller-avatar-frame {
   position: absolute !important;
-  inset: -6px -5px -6px -5px !important;
-  width: calc(100% + 10px) !important;
-  height: calc(100% + 12px) !important;
+  inset: -5px -4px -5px -4px !important;
+  width: calc(100% + 8px) !important;
+  height: calc(100% + 10px) !important;
   max-width: none !important;
   transform: translateY(-1px);
   border: 0 !important;
