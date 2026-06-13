@@ -31,7 +31,7 @@
           <a href="#market">ตลาด</a>
           
           <a href="post.html">ลงประกาศ</a>
-          <a class="my-listings-link" href="my-listings.html" hidden>ประกาศของฉัน</a>
+          <a class="my-listings-link" href="store.html" hidden>ประกาศของฉัน</a>
           <a class="admin-link" href="admin.html" hidden>Admin</a>
         </div>
 
@@ -508,6 +508,7 @@
             const profileUrl = getListingProfileUrl(listing);
             const discordId = getListingDiscordId(listing);
             const sellerName = listing.seller_name || "ผู้ขาย ROOC";
+            const sellerUserId = listing.user_id || "";
             const galleryData = listing.category === "account"
               ? ` data-account-gallery="${escapeHtml(encodeURIComponent(JSON.stringify(listingImages)))}" data-account-title="${escapeHtml(title)}"`
               : "";
@@ -539,7 +540,10 @@
                 <h3>${escapeHtml(title)}</h3>
                 <p>${escapeHtml(description)}</p>
                 <div class="price-row">
-                  <strong>฿ ${formattedPrice}</strong>
+                  <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <strong>฿ ${formattedPrice}</strong>
+                    ${sellerUserId ? `<a href="store.html?id=${sellerUserId}" class="seller-store-link" style="font-size: 11px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 4px;">🏪 ดูร้านค้า: ${escapeHtml(sellerName)}</a>` : `<span style="font-size: 11px; color: var(--muted);">👤 ${escapeHtml(sellerName)}</span>`}
+                  </div>
                   <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">ติดต่อผู้ขาย</button>
                 </div>
               </article>

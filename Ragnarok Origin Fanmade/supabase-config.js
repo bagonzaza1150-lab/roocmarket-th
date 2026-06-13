@@ -1221,9 +1221,14 @@ window.ROOC_SUPABASE = {
       if (urlName) storeName.textContent = urlName;
       if (urlAvatar) storeAvatar.src = urlAvatar;
 
-      let storeListings = [];
-      let currentCategory = "all";
-      let currentSort = "newest";
+	      let storeListings = [];
+	      let currentCategory = "all";
+	      let currentSort = "newest";
+	      let offerMailbox = new Map();
+	      
+	      const { data: authData } = await supabaseClient.auth.getSession();
+	      const currentSession = authData.session;
+	      const isOwner = currentSession && currentSession.user.id === sellerId;
       
       // กำหนด listingSelectColumns ที่ใช้ในฟังก์ชัน
       const storeListingSelectColumns = [
@@ -1285,28 +1290,53 @@ window.ROOC_SUPABASE = {
           const description = listing.description || "";
           const descriptionParts = getDescriptionParts(description);
 
-          return `
-            <article class="listing-card${isServiceListing ? " service-listing-card" : ""}${listing.card_background && listing.card_background !== 'default' ? " " + listing.card_background : ""}">
-              ${isServiceListing ? "" : `<div class="item-media">
-                <img src="${escapeHtml(listingImages[0])}" alt="" loading="lazy" />
-              </div>`}
-              <div class="listing-seller">
-                <img src="${escapeHtml(sellerAvatar)}" alt="" />
-                <span>${escapeHtml(sellerName)}</span>
-                ${listing.seller_is_premium ? '<strong title="Premium">♛</strong>' : ""}
-              </div>
-              <div class="listing-meta">${badges}</div>
-              <h3>${escapeHtml(title)}</h3>
-              <p class="listing-description">${escapeHtml(descriptionParts.shortText)}</p>
-              <div class="price-row">
-                <strong>฿ ${formatListingPrice(listing.price_text)}</strong>
-                <span class="listing-card-actions">
-                  ${listing.offers_enabled ? `<button class="btn btn-small btn-light offer-button" type="button" data-offer-listing-id="${escapeHtml(listing.id)}" data-offer-title="${escapeHtml(title)}" data-offer-price="${escapeHtml(listing.price_text)}">เสนอราคา</button>` : ""}
-                  <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">ติดต่อ</button>
-                </span>
-              </div>
-            </article>
-          `;
+	          const status = listing.active && (listing.sale_status === "active") ? { label: "กำลังแสดง", className: "active" } : { label: "ปิดอยู่", className: "closed" };
+	          const offers = offerMailbox.get(listing.id) || [];
+	          
+	          return `
+	            <article class="listing-card${isServiceListing ? " service-listing-card" : ""}${listing.card_background && listing.card_background !== 'default' ? " " + listing.card_background : ""}${!listing.active ? " is-closed" : ""}">
+	              ${isServiceListing ? "" : `<div class="item-media">
+	                <img src="${escapeHtml(listingImages[0])}" alt="" loading="lazy" />
+	              </div>`}
+	              <div class="listing-seller">
+	                <img src="${escapeHtml(sellerAvatar)}" alt="" />
+	                <span>${escapeHtml(sellerName)}</span>
+	                ${listing.seller_is_premium ? '<strong title="Premium">♛</strong>' : ""}
+	                ${isOwner ? `<span class="status-badge ${status.className}" style="margin-left: auto;">${status.label}</span>` : ""}
+	              </div>
+	              <div class="listing-meta">${badges}</div>
+	              <h3>${escapeHtml(title)}</h3>
+	              <p class="listing-description">${escapeHtml(descriptionParts.shortText)}</p>
+	              
+	              <div class="price-row">
+	                <strong>฿ ${formatListingPrice(listing.price_text)}</strong>
+	                <span class="listing-card-actions">
+	                  ${isOwner ? `
+	                    <button class="btn btn-small btn-light" data-edit-price="${listing.id}">✏️ แก้ราคา</button>
+	                    <button class="btn btn-small btn-light" data-toggle="${listing.id}">${listing.active ? "⏸️ ปิด" : "▶️ เปิด"}</button>
+	                  ` : `
+	                    ${listing.offers_enabled ? `<button class="btn btn-small btn-light offer-button" type="button" data-offer-listing-id="${escapeHtml(listing.id)}" data-offer-title="${escapeHtml(title)}" data-offer-price="${escapeHtml(listing.price_text)}">เสนอราคา</button>` : ""}
+	                    <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">ติดต่อ</button>
+	                  `}
+	                </span>
+	              </div>
+
+	              ${isOwner ? `
+	                <div class="owner-controls">
+	                  <button class="btn btn-small btn-light" data-toggle-offers="${listing.id}">${listing.offers_enabled ? "🔕 ปิดเสนอราคา" : "🔔 เปิดเสนอราคา"}</button>
+	                  <button class="btn btn-small btn-light" data-customize="${listing.id}">✨ พื้นหลัง</button>
+	                  <button class="btn btn-small btn-light" data-sold="${listing.id}">✅ ขายแล้ว</button>
+	                  <button class="btn btn-small btn-light" data-delete="${listing.id}" style="color: var(--expired);">🗑️ ลบ</button>
+	                </div>
+	                ${offers.length > 0 ? `
+	                  <div class="offer-mailbox">
+	                    <strong>Mailbox (${offers.length})</strong>
+	                    ${offers.slice(0, 2).map(o => `<div class="offer-mail"><b>฿${formatListingPrice(o.offer_price_text)}</b> - ${escapeHtml(o.buyer_display_name)}</div>`).join("")}
+	                  </div>
+	                ` : ""}
+	              ` : ""}
+	            </article>
+	          `;
         }).join("");
         
         emptyState.hidden = filtered.length > 0;
@@ -1368,11 +1398,41 @@ window.ROOC_SUPABASE = {
           }
           storeDiscordText.textContent = seller.seller_discord_id || seller.contact || "N/A";
           
-          storeTotalListings.textContent = storeListings.filter(l => l.active).length;
-          storeSoldItems.textContent = storeListings.filter(l => l.sale_status === "sold").length;
-          
-          renderStoreGrid();
-        } else {
+	          storeTotalListings.textContent = storeListings.filter(l => l.active).length;
+	          storeSoldItems.textContent = storeListings.filter(l => l.sale_status === "sold").length;
+	          
+	          if (isOwner) {
+	            // ดึงโควตาและ Mailbox สำหรับเจ้าของร้าน
+	            const { data: profile } = await supabaseClient.from("marketplace_profiles").select("listing_limit").eq("user_id", sellerId).maybeSingle();
+	            const isPremium = (await getPremiumStatus(currentSession)).active;
+	            const limit = profile?.listing_limit || (isPremium ? 20 : 2);
+	            
+	            const sellListings = storeListings.filter(l => (l.listing_type || "sell") === "sell" && l.sale_status !== "deleted");
+	            const buyListings = storeListings.filter(l => l.listing_type === "buy" && l.sale_status !== "deleted");
+	            const serviceListings = storeListings.filter(l => l.listing_type === "service" && l.sale_status !== "deleted");
+
+	            const quotaUsed = document.querySelector("#quotaUsed");
+	            const quotaRemaining = document.querySelector("#quotaRemaining");
+	            const quotaService = document.querySelector("#quotaService");
+	            const quotaPlan = document.querySelector("#quotaPlan");
+
+	            if (quotaUsed) quotaUsed.textContent = `${sellListings.filter(l => l.active).length}/${limit}`;
+	            if (quotaRemaining) quotaRemaining.textContent = `${buyListings.filter(l => l.active).length}/${limit}`;
+	            if (quotaService) quotaService.textContent = `${serviceListings.filter(l => l.active).length}/${limit}`;
+	            if (quotaPlan) quotaPlan.textContent = isPremium ? "Premium" : "Free";
+
+	            // ดึง Mailbox
+	            const { data: offers } = await supabaseClient.from("marketplace_listing_offers").select("*").in("listing_id", storeListings.map(l => l.id)).order("created_at", { ascending: false });
+	            if (offers) {
+	              offers.forEach(o => {
+	                if (!offerMailbox.has(o.listing_id)) offerMailbox.set(o.listing_id, []);
+	                offerMailbox.get(o.listing_id).push(o);
+	              });
+	            }
+	          }
+
+	          renderStoreGrid();
+	        } else {
           storeName.textContent = "ไม่พบผู้ขาย";
           emptyState.hidden = false;
         }
@@ -1409,8 +1469,8 @@ window.ROOC_SUPABASE = {
     if (!navLinks || navLinks.querySelector(".my-listings-link")) return null;
     const link = document.createElement("a");
     link.className = "my-listings-link";
-    link.href = "my-listings.html";
-    link.textContent = "ประกาศของฉัน";
+    link.href = "store.html";
+    link.textContent = "ร้านค้าของฉัน";
     link.hidden = true;
     navLinks.append(link);
     return link;
@@ -1482,7 +1542,7 @@ window.ROOC_SUPABASE = {
       <div class="mailbox-panel" hidden>
         <div class="mailbox-head">
           <strong>Mailbox เสนอราคา</strong>
-          <a href="my-listings.html">ดูทั้งหมด</a>
+          <a href="store.html">ดูทั้งหมด</a>
         </div>
         <div class="mailbox-list">${renderMailboxItems(offers)}</div>
       </div>
@@ -1518,7 +1578,7 @@ window.ROOC_SUPABASE = {
           </button>
           <div class="user-menu-panel" hidden>
             <a class="premium-link" href="premium.html">Premium</a>
-            <a href="my-listings.html">ประกาศของฉัน</a>
+            <a href="store.html">ร้านค้าของฉัน</a>
             <button type="button" data-user-logout>ออกจากระบบ</button>
           </div>
         `;

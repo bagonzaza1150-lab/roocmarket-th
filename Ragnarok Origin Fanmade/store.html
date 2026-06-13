@@ -5,15 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="หน้าร้านค้าส่วนตัว ROOC Market TH ตลาดกลางซื้อขายไอเทม Ragnarok Origin Classic"
+      content="หน้าร้านค้า ROOC Market TH ตลาดกลางซื้อขายไอเทม Ragnarok Origin Classic"
     />
-    <title>ร้านค้าของผู้ขาย - ROOC Market TH</title>
+    <title>ร้านค้า - ROOC Market TH</title>
     <link rel="icon" type="image/png" sizes="32x32" href="assets/site-icons/rooc-icon-32.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="assets/site-icons/rooc-icon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/site-icons/rooc-icon-180.png" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20260610-v2"></script>
+    <script src="supabase-config.js?v=20260610-v3"></script>
+    <style>
+      /* เพิ่มสไตล์สำหรับโหมดจัดการ */
+      .owner-controls {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
+      }
+      .management-only {
+        display: none;
+      }
+      body.is-owner .management-only {
+        display: block;
+      }
+      .listing-card.is-closed {
+        opacity: 0.7;
+        filter: grayscale(0.5);
+      }
+      .status-badge {
+        font-size: 11px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+      }
+      .status-badge.active { background: #e6f7ed; color: #1db954; }
+      .status-badge.closed { background: #fff5f5; color: #ff4d4f; }
+      
+      .theme-picker-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+        margin: 16px 0;
+      }
+      .theme-option {
+        height: 80px;
+        border-radius: 12px;
+        border: 2px solid transparent;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        transition: all 0.2s;
+        background-size: cover;
+        background-position: center;
+      }
+      .theme-option.active { border-color: var(--primary); transform: scale(1.05); }
+      .theme-option.locked { filter: grayscale(0.8); cursor: not-allowed; }
+      
+      .offer-mailbox {
+        margin-top: 12px;
+        padding: 10px;
+        background: var(--paper-light);
+        border-radius: 8px;
+        font-size: 12px;
+      }
+      .offer-mail {
+        padding: 6px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .offer-mail:last-child { border-bottom: none; }
+    </style>
   </head>
   <body>
     <header class="site-header">
@@ -28,9 +93,8 @@
 
         <div class="nav-links" aria-label="เมนูหลัก">
           <a href="index.html#market">ตลาด</a>
-          <a href="index.html#categories">หมวดหมู่</a>
           <a href="post.html">ลงประกาศ</a>
-          <a class="my-listings-link" href="my-listings.html" hidden>ประกาศของฉัน</a>
+          <a class="my-listings-link" href="store.html">ร้านค้าของฉัน</a>
           <a class="admin-link" href="admin.html" hidden>Admin</a>
         </div>
 
@@ -58,6 +122,7 @@
             <div class="store-info">
               <div class="store-name-row">
                 <h1 id="storeName">กำลังโหลด...</h1>
+                <div id="ownerBadge" class="management-only" style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 20px; font-size: 12px; margin-left: 10px;">เจ้าของร้าน</div>
               </div>
               <p class="store-tagline" id="storeDiscordText"></p>
               <div class="store-socials">
@@ -65,6 +130,7 @@
                   <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.04c-5.5 0-10 4.49-10 10.02 0 5 3.66 9.15 8.44 9.9v-7h-2.54v-2.9h2.54v-2.2c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.23.19 2.23.19v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.9h-2.33v7a10 10 0 0 0 8.44-9.9c0-5.53-4.5-10.02-10-10.02z"/></svg>
                   Facebook
                 </a>
+                <button class="btn btn-small btn-light management-only" id="copyStoreLink">🔗 แชร์ลิงก์ร้านค้า</button>
               </div>
             </div>
           </div>
@@ -81,18 +147,54 @@
         </div>
       </section>
 
+      <!-- Dashboard สำหรับเจ้าของร้าน -->
+      <section class="shell management-only" id="ownerDashboard" style="margin-top: 20px;">
+        <div class="listing-quota dashboard-overview" id="listingQuota">
+          <div class="quota-item">
+            <div class="quota-icon">📤</div>
+            <div>
+              <span>ประกาศขาย</span>
+              <strong id="quotaUsed">0/2</strong>
+            </div>
+          </div>
+          <div class="quota-item">
+            <div class="quota-icon">📥</div>
+            <div>
+              <span>ประกาศรับซื้อ</span>
+              <strong id="quotaRemaining">0/2</strong>
+            </div>
+          </div>
+          <div class="quota-item">
+            <div class="quota-icon">🔧</div>
+            <div>
+              <span>รับจ้างลงดัน</span>
+              <strong id="quotaService">0/2</strong>
+            </div>
+          </div>
+          <div class="quota-item">
+            <div class="quota-icon">👤</div>
+            <div>
+              <span>สถานะบัญชี</span>
+              <strong id="quotaPlan">Free</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="shell store-content">
         <div class="section-head">
           <div>
-            <p class="eyebrow">Seller Inventory</p>
-            <h2>สินค้าในร้านค้า</h2>
+            <p class="eyebrow" id="inventoryLabel">Seller Inventory</p>
+            <h2 id="inventoryTitle">สินค้าในร้านค้า</h2>
           </div>
           <div class="listing-tools">
+            <input type="text" id="storeSearch" class="search-input management-only" placeholder="ค้นหาประกาศของคุณ..." style="margin-right: 10px;" />
             <select id="storeSortFilter">
               <option value="newest">ใหม่ล่าสุด</option>
               <option value="price-low">ราคาน้อยไปมาก</option>
               <option value="price-high">ราคามากไปน้อย</option>
             </select>
+            <button class="btn btn-light management-only" id="refreshStore" style="margin-left: 10px;">🔄 รีเฟรช</button>
           </div>
         </div>
 
@@ -103,6 +205,8 @@
           <button data-category="fashion">Fashion</button>
           <button data-category="account">Account</button>
         </div>
+
+        <p class="post-message" id="storeMessage" style="margin: 15px 0;"></p>
 
         <div class="listing-grid" id="storeListingGrid">
           <!-- Listings will be loaded here -->
@@ -121,174 +225,7 @@
       </div>
     </footer>
 
-    <script>
-      let activeSellerName = "";
-
-      function openSellerContact(title, contact, profileUrlOverride = "", sellerName = "", discordIdOverride = "") {
-        const sellerContactModal = document.querySelector("#sellerContactModal");
-        const sellerContactItem = document.querySelector("#sellerContactItem");
-        const sellerContactValue = document.querySelector("#sellerContactValue");
-        const sellerContactLink = document.querySelector("#sellerContactLink");
-        const sellerContactCopy = document.querySelector("#sellerContactCopy");
-        const sellerContactNote = document.querySelector("#sellerContactNote");
-        const offerForm = document.querySelector("#offerForm");
-        const offerMessageText = document.querySelector("#offerMessageText");
-
-        if (!sellerContactModal || !sellerContactItem || !sellerContactValue || !sellerContactLink || !sellerContactCopy) return;
-        
-        const app = window.ROOC_APP;
-        const discordId = String(discordIdOverride || (app?.getDiscordIdFromContact ? app.getDiscordIdFromContact(profileUrlOverride || contact) : "")).trim();
-        const profileUrl = profileUrlOverride || (discordId ? `https://discord.com/users/${discordId}` : "") || (app?.getContactProfileUrl ? app.getContactProfileUrl(contact) : "");
-        
-        activeSellerName = sellerName || "";
-        sellerContactItem.textContent = title || "ประกาศขาย";
-        sellerContactValue.textContent = sellerName
-          ? sellerName
-          : profileUrl
-          ? "กดปุ่มด้านบนเพื่อไปหน้าโปรไฟล์ผู้ขาย"
-          : (contact || "ผู้ขายยังไม่ได้ระบุช่องทางติดต่อ");
-        
-        sellerContactLink.hidden = !profileUrl;
-        sellerContactLink.href = profileUrl || "#";
-        sellerContactCopy.hidden = !sellerName;
-        sellerContactCopy.classList.remove("is-copied");
-        
-        if (offerForm) offerForm.hidden = true;
-        if (offerMessageText) offerMessageText.textContent = "";
-        if (sellerContactNote) {
-          sellerContactNote.textContent = "กดเปิดโปรไฟล์เพื่อแอดเพื่อน หรือคัดลอกชื่อ Discord ไปค้นหาใน DM";
-        }
-        
-        sellerContactModal.hidden = false;
-        document.body.classList.add("modal-open");
-      }
-
-      function openOfferForm(listingId, title, price) {
-        const offerForm = document.querySelector("#offerForm");
-        const offerListingId = document.querySelector("#offerListingId");
-        const offerPrice = document.querySelector("#offerPrice");
-        const offerMessage = document.querySelector("#offerMessage");
-        const offerMessageText = document.querySelector("#offerMessageText");
-
-        openSellerContact(title, "", "", "", "");
-        if (!offerForm || !offerListingId || !offerPrice || !offerMessageText) return;
-        offerListingId.value = listingId || "";
-        offerPrice.value = price ? (window.ROOC_APP?.parsePrice ? window.ROOC_APP.parsePrice(price) : price) : "";
-        offerMessage.value = "";
-        offerMessageText.textContent = "";
-        offerForm.hidden = false;
-      }
-
-      async function submitOffer(event) {
-        event.preventDefault();
-        const app = window.ROOC_APP;
-        const supabase = app?.getSupabaseClient?.();
-        const offerForm = document.querySelector("#offerForm");
-        const offerListingId = document.querySelector("#offerListingId");
-        const offerPrice = document.querySelector("#offerPrice");
-        const offerMessage = document.querySelector("#offerMessage");
-        const offerMessageText = document.querySelector("#offerMessageText");
-
-        if (!supabase || !offerForm) return;
-
-        const { data } = await supabase.auth.getSession();
-        if (!data.session) {
-          window.location.href = `login.html?redirect=${encodeURIComponent(`store.html${window.location.search}`)}`;
-          return;
-        }
-
-        const priceText = String(offerPrice?.value || "").replace(/,/g, "");
-        if (!priceText) {
-          if (offerMessageText) {
-            offerMessageText.textContent = "กรุณาใส่ราคาเสนอ";
-            offerMessageText.classList.add("is-error");
-          }
-          return;
-        }
-
-        if (offerMessageText) {
-          offerMessageText.textContent = "กำลังส่งราคาเสนอ...";
-          offerMessageText.classList.remove("is-error");
-        }
-        
-        const { error } = await supabase
-          .from("marketplace_listing_offers")
-          .insert({
-            listing_id: offerListingId.value,
-            buyer_user_id: data.session.user.id,
-            buyer_display_name: app.getDiscordDisplayName(data.session),
-            buyer_avatar_url: app.getDiscordAvatarUrl(data.session),
-            offer_price_text: priceText,
-            message: offerMessage?.value.trim() || ""
-          });
-
-        if (error) {
-          if (offerMessageText) {
-            offerMessageText.textContent = error.message;
-            offerMessageText.classList.add("is-error");
-          }
-          return;
-        }
-
-        if (offerMessageText) {
-          offerMessageText.textContent = "ส่งราคาเสนอแล้ว เจ้าของประกาศจะเห็นใน Mailbox";
-          offerMessageText.classList.remove("is-error");
-        }
-        offerForm.reset();
-      }
-
-      // Event Listeners
-      document.addEventListener("click", (event) => {
-        const contactButton = event.target.closest(".contact-seller-button");
-        if (contactButton) {
-          openSellerContact(
-            contactButton.dataset.title,
-            contactButton.dataset.contact,
-            contactButton.dataset.profileUrl,
-            contactButton.dataset.sellerName,
-            contactButton.dataset.discordId
-          );
-          return;
-        }
-
-        const offerButton = event.target.closest(".offer-button");
-        if (offerButton) {
-          openOfferForm(
-            offerButton.dataset.offerListingId,
-            offerButton.dataset.offerTitle,
-            offerButton.dataset.offerPrice
-          );
-          return;
-        }
-
-        if (event.target.closest("#sellerContactCopy") && activeSellerName) {
-          navigator.clipboard?.writeText(activeSellerName);
-          sellerContactCopy.classList.add("is-copied");
-          return;
-        }
-
-        if (event.target.closest("[data-close-contact]")) {
-          if (sellerContactModal) sellerContactModal.hidden = true;
-          document.body.classList.remove("modal-open");
-        }
-      });
-
-      document.addEventListener("submit", (event) => {
-        if (event.target.id === "offerForm") {
-          submitOffer(event);
-        }
-      });
-
-      // เรียกใช้ initStorePage เมื่อหน้าโหลดเสร็จ
-      window.addEventListener("DOMContentLoaded", () => {
-        const sellerId = new URLSearchParams(window.location.search).get("id");
-        if (window.ROOC_APP?.initStorePage && sellerId) {
-          window.ROOC_APP.initStorePage(sellerId);
-        }
-      });
-    </script>
-
-    <!-- Contact Modal -->
+    <!-- Contact & Offer Modals -->
     <div class="contact-modal" id="sellerContactModal" hidden>
       <div class="contact-modal-backdrop" data-close-contact></div>
       <section class="contact-modal-card" role="dialog" aria-modal="true" aria-labelledby="sellerContactTitle">
@@ -321,12 +258,195 @@
           </label>
           <label>
             <span>ข้อความถึงเจ้าของประกาศ</span>
-            <textarea id="offerMessage" rows="3" placeholder="รายละเอียดเพิ่มเติม เช่น นัดเวลาเทรด หรือต่อรองได้"></textarea>
+            <textarea id="offerMessage" rows="3" placeholder="รายละเอียดเพิ่มเติม..."></textarea>
           </label>
+          <p id="offerMessageText" class="post-message"></p>
           <button class="btn btn-primary" type="submit">ส่งราคาเสนอ</button>
-          <p class="post-message" id="offerMessageText"></p>
         </form>
       </section>
     </div>
+
+    <script>
+      // Logic การจัดการหน้า Store แบบ Hybrid
+      let activeSellerName = "";
+      let currentSession = null;
+      let isOwner = false;
+      let storeListings = [];
+      let currentCategory = "all";
+      let currentSort = "newest";
+      let offerMailbox = new Map();
+      let premiumResult = { active: false };
+
+      const app = window.ROOC_APP;
+      const supabase = app?.getSupabaseClient?.();
+
+      function setMessage(text, isError = false) {
+        const msgEl = document.querySelector("#storeMessage");
+        if (!msgEl) return;
+        msgEl.textContent = text;
+        msgEl.classList.toggle("is-error", isError);
+      }
+
+      // ฟังก์ชันจัดการประกาศ (ย้ายมาจาก my-listings.html)
+      async function toggleListing(id) {
+        const listing = storeListings.find(l => l.id === id);
+        if (!listing) return;
+        setMessage("กำลังอัปเดตประกาศ...");
+        const nextActive = !listing.active;
+        const { error } = await supabase
+          .from("marketplace_listings")
+          .update({ active: nextActive, sale_status: nextActive ? "active" : "closed" })
+          .eq("id", id);
+        if (error) setMessage(error.message, true);
+        else refreshStoreData();
+      }
+
+      async function editListingPrice(id) {
+        const listing = storeListings.find(l => l.id === id);
+        if (!listing) return;
+        const nextPrice = prompt("ใส่ราคาใหม่", app.formatListingPrice(listing.price_text));
+        if (nextPrice === null) return;
+        const priceText = String(nextPrice).replace(/,/g, "").replace(/[^\d.]/g, "");
+        setMessage("กำลังแก้ไขราคา...");
+        const { error } = await supabase
+          .from("marketplace_listings")
+          .update({ price_text: priceText })
+          .eq("id", id);
+        if (error) setMessage(error.message, true);
+        else refreshStoreData();
+      }
+
+      async function markListingSold(id) {
+        if (!confirm("ทำเครื่องหมายว่าประกาศนี้ขายออกแล้ว?")) return;
+        setMessage("กำลังย้ายไปขายออกแล้ว...");
+        const { error } = await supabase
+          .from("marketplace_listings")
+          .update({ active: false, sale_status: "sold" })
+          .eq("id", id);
+        if (error) setMessage(error.message, true);
+        else refreshStoreData();
+      }
+
+      async function deleteListing(id) {
+        if (!confirm("ลบประกาศนี้ออกจากรายการ? โควต้าจะยังถูกนับอยู่")) return;
+        setMessage("กำลังลบประกาศ...");
+        const { error } = await supabase
+          .from("marketplace_listings")
+          .update({ active: false, sale_status: "deleted" })
+          .eq("id", id);
+        if (error) setMessage(error.message, true);
+        else refreshStoreData();
+      }
+
+      async function toggleOffers(id) {
+        const listing = storeListings.find(l => l.id === id);
+        if (!listing) return;
+        const nextEnabled = !Boolean(listing.offers_enabled);
+        setMessage("กำลังอัปเดตการเสนอราคา...");
+        const { error } = await supabase
+          .from("marketplace_listings")
+          .update({ offers_enabled: nextEnabled })
+          .eq("id", id);
+        if (error) setMessage(error.message, true);
+        else refreshStoreData();
+      }
+
+      async function refreshStoreData() {
+        const sellerId = new URLSearchParams(window.location.search).get("id");
+        if (app?.initStorePage && sellerId) {
+          app.initStorePage(sellerId);
+        } else if (currentSession) {
+          app.initStorePage(currentSession.user.id);
+        }
+      }
+
+      // Event Listeners
+      document.addEventListener("click", (event) => {
+        const target = event.target;
+        
+        // Management Actions
+        if (target.dataset.toggle) toggleListing(target.dataset.toggle);
+        if (target.dataset.editPrice) editListingPrice(target.dataset.editPrice);
+        if (target.dataset.toggleOffers) toggleOffers(target.dataset.toggleOffers);
+        if (target.dataset.sold) markListingSold(target.dataset.sold);
+        if (target.dataset.delete) deleteListing(target.dataset.delete);
+        if (target.dataset.customize) {
+          // เรียกใช้ฟังก์ชัน Theme Picker ถ้ามีในระบบ
+          if (typeof window.showThemePickerModal === 'function') {
+            window.showThemePickerModal(target.dataset.customize);
+          } else {
+            alert("ฟีเจอร์นี้กำลังปรับปรุง");
+          }
+        }
+
+        // Public Actions
+        const contactButton = target.closest(".contact-seller-button");
+        if (contactButton) {
+          app.openSellerContact(
+            contactButton.dataset.title,
+            contactButton.dataset.contact,
+            contactButton.dataset.profileUrl,
+            contactButton.dataset.sellerName,
+            contactButton.dataset.discordId
+          );
+        }
+
+        const offerButton = target.closest(".offer-button");
+        if (offerButton) {
+          app.openOfferForm(
+            offerButton.dataset.offerListingId,
+            offerButton.dataset.offerTitle,
+            offerButton.dataset.offerPrice
+          );
+        }
+
+        if (target.closest("#sellerContactCopy") && activeSellerName) {
+          navigator.clipboard?.writeText(activeSellerName);
+          target.closest("#sellerContactCopy").classList.add("is-copied");
+        }
+
+        if (target.closest("[data-close-contact]")) {
+          document.querySelector("#sellerContactModal").hidden = true;
+          document.body.classList.remove("modal-open");
+        }
+      });
+
+      document.querySelector("#refreshStore")?.addEventListener("click", refreshStoreData);
+      document.querySelector("#copyStoreLink")?.addEventListener("click", () => {
+        const url = window.location.href;
+        navigator.clipboard.writeText(url);
+        alert("คัดลอกลิงก์ร้านค้าแล้ว!");
+      });
+
+      // Initialize Page
+      window.addEventListener("DOMContentLoaded", async () => {
+        if (!supabase) return;
+        
+        const { data } = await supabase.auth.getSession();
+        currentSession = data.session;
+        
+        let sellerId = new URLSearchParams(window.location.search).get("id");
+        
+        // ถ้าไม่มี ID และล็อกอินอยู่ ให้แสดงหน้าของตัวเอง
+        if (!sellerId && currentSession) {
+          sellerId = currentSession.user.id;
+          window.history.replaceState(null, "", `?id=${sellerId}`);
+        } else if (!sellerId && !currentSession) {
+          window.location.href = "login.html?redirect=store.html";
+          return;
+        }
+
+        isOwner = currentSession && currentSession.user.id === sellerId;
+        if (isOwner) {
+          document.body.classList.add("is-owner");
+          document.querySelector("#inventoryLabel").textContent = "My Inventory";
+          document.querySelector("#inventoryTitle").textContent = "จัดการสินค้าในร้าน";
+        }
+
+        if (app?.initStorePage) {
+          app.initStorePage(sellerId);
+        }
+      });
+    </script>
   </body>
 </html>
