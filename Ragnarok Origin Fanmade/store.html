@@ -86,19 +86,53 @@
         text-shadow: 0 0 8px rgba(245, 158, 11, 0.2);
       }
 
-      /* ปรับขนาด Grid ให้เหมือนหน้าแรก */
+      /* ปรับขนาด Grid ให้เหมือนหน้าแรก 100% */
       .listing-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 24px;
-        margin-top: 24px;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 14px;
+        margin-top: 16px;
       }
 
       @media (max-width: 768px) {
         .listing-grid {
-          grid-template-columns: 1fr;
-          gap: 16px;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
         }
+      }
+      
+      @media (max-width: 480px) {
+        .listing-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* ปรับขนาด Badge ให้เล็กลงและสวยงามเหมือนหน้าแรก */
+      .listing-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-bottom: 8px;
+      }
+      .listing-meta span {
+        font-size: 10px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+      .listing-card h3 {
+        font-size: 15px;
+        margin: 8px 0;
+        line-height: 1.4;
+      }
+      .price-row strong {
+        font-size: 18px;
+      }
+      .btn-small {
+        font-size: 11px;
+        min-height: 30px;
+        padding: 0 8px;
       }
     </style>
   </head>

@@ -1282,12 +1282,12 @@ window.ROOC_SUPABASE = {
           const discordId = getListingDiscordId(listing);
           const sellerName = listing.seller_name || "ผู้ขาย ROOC";
           const sellerAvatar = listing.seller_avatar_url || "assets/category-icons/account-b.png";
-          const badges = [
-            `<span class="${listingType === "buy" ? "buy" : listingType === "service" ? "verified" : "fast"} shine">${listingType === "buy" ? "รับซื้อ" : listingType === "service" ? "รับจ้าง" : "ขาย"}</span>`,
-            `<span class="shine">${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
-            listing.ready_today ? '<span class="fast pulse">Fast Deal</span>' : "",
-            listing.category === "mvp" ? '<span class="mvp shine">MVP</span>' : ""
-          ].filter(Boolean).join("");
+	          const badges = [
+	            `<span class="${listingType === "buy" ? "buy" : listingType === "service" ? "verified" : "fast"} shine">${listingType === "buy" ? "รับซื้อ" : listingType === "service" ? "รับจ้าง" : "ขาย"}</span>`,
+	            `<span class="shine">${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
+	            listing.ready_today ? '<span class="fast pulse">FAST DEAL</span>' : "",
+	            listing.category === "mvp" ? '<span class="mvp shine">MVP</span>' : ""
+	          ].filter(Boolean).join("");
           const description = listing.description || "";
           const descriptionParts = getDescriptionParts(description);
 
@@ -1409,20 +1409,20 @@ window.ROOC_SUPABASE = {
 	            // ดึงโควตาและ Mailbox สำหรับเจ้าของร้าน
 	            const { data: profile } = await supabaseClient.from("marketplace_profiles").select("listing_limit").eq("user_id", sellerId).maybeSingle();
 		            const isPremium = await getPremiumStatus(currentSession);
-	            const limit = profile?.listing_limit || (isPremium ? 20 : 2);
-	            
-	            const sellListings = storeListings.filter(l => (l.listing_type || "sell") === "sell" && l.sale_status !== "deleted");
-	            const buyListings = storeListings.filter(l => l.listing_type === "buy" && l.sale_status !== "deleted");
-	            const serviceListings = storeListings.filter(l => l.listing_type === "service" && l.sale_status !== "deleted");
-
-	            const quotaUsed = document.querySelector("#quotaUsed");
-	            const quotaRemaining = document.querySelector("#quotaRemaining");
-	            const quotaService = document.querySelector("#quotaService");
-	            const quotaPlan = document.querySelector("#quotaPlan");
-
-	            if (quotaUsed) quotaUsed.textContent = `${sellListings.filter(l => l.active).length}/${limit}`;
-	            if (quotaRemaining) quotaRemaining.textContent = `${buyListings.filter(l => l.active).length}/${limit}`;
-	            if (quotaService) quotaService.textContent = `${serviceListings.filter(l => l.active).length}/${limit}`;
+			            const limit = profile?.listing_limit || (isPremium ? 5 : 2);
+		            
+		            const sellListings = storeListings.filter(l => (l.listing_type || "sell") === "sell" && l.sale_status !== "deleted");
+		            const buyListings = storeListings.filter(l => l.listing_type === "buy" && l.sale_status !== "deleted");
+		            const serviceListings = storeListings.filter(l => l.listing_type === "service" && l.sale_status !== "deleted");
+	
+		            const quotaUsed = document.querySelector("#quotaUsed");
+		            const quotaRemaining = document.querySelector("#quotaRemaining");
+		            const quotaService = document.querySelector("#quotaService");
+		            const quotaPlan = document.querySelector("#quotaPlan");
+	
+		            if (quotaUsed) quotaUsed.textContent = `${sellListings.filter(l => l.active).length}/${limit}`;
+		            if (quotaRemaining) quotaRemaining.textContent = `${buyListings.filter(l => l.active).length}/${limit}`;
+		            if (quotaService) quotaService.textContent = `${serviceListings.filter(l => l.active).length}/${limit}`;
 		            if (quotaPlan) {
 		              quotaPlan.textContent = isPremium ? "Premium" : "Free";
 		              quotaPlan.className = isPremium ? "quota-value is-premium" : "quota-value";
