@@ -1400,9 +1400,15 @@ window.ROOC_SUPABASE = {
     offerForm.addEventListener("submit", submitOffer);
   }
 
+  function mountModalAtViewportRoot(modal) {
+    if (!modal || modal.parentElement === document.documentElement) return;
+    document.documentElement.appendChild(modal);
+  }
+
   function openSellerContact(title, contact, profileUrlOverride = "", sellerName = "", discordIdOverride = "") {
     const { modal, item, value, link, copy, offerForm, offerMessageText } = getContactModalParts();
     if (!modal || !item || !value || !link || !copy) return;
+    mountModalAtViewportRoot(modal);
 
     const discordId = String(discordIdOverride || getDiscordIdFromContact(profileUrlOverride) || getDiscordIdFromContact(contact)).trim();
     const profileUrl = profileUrlOverride || (discordId ? `https://discord.com/users/${discordId}` : "") || getContactProfileUrl(contact);

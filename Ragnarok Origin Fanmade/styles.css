@@ -1957,6 +1957,11 @@ h1 {
   padding: 22px;
   overflow: auto;
   overscroll-behavior: contain;
+  color: var(--ink);
+  font-family: 'Mitr', sans-serif;
+  font-weight: 300;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
 }
 
 .contact-modal-backdrop {
@@ -2474,6 +2479,11 @@ h1 {
   padding: 18px;
   overflow: auto;
   overscroll-behavior: contain;
+  color: var(--ink);
+  font-family: 'Mitr', sans-serif;
+  font-weight: 300;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
 }
 
 .image-modal-card {
@@ -5568,6 +5578,11 @@ html, body {
   padding: 20px;
   overflow: auto;
   overscroll-behavior: contain;
+  color: var(--ink);
+  font-family: 'Mitr', sans-serif;
+  font-weight: 300;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
 }
 
 .modal-content {
@@ -6915,8 +6930,8 @@ body {
 }
 
 @keyframes pageFadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Skeleton Loader */
