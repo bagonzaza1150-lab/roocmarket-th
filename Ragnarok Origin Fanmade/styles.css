@@ -3499,12 +3499,44 @@ h1 {
   display: none;
 }
 
-.listing-quota div {
-  min-height: 78px;
+.quota-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 80px;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: color-mix(in srgb, var(--blue-soft) 42%, transparent);
-  padding: 14px;
+  background: color-mix(in srgb, var(--blue-soft) 15%, var(--paper));
+  padding: 16px;
+  transition: all 0.2s;
+}
+
+.quota-item:hover {
+  border-color: var(--blue);
+  background: color-mix(in srgb, var(--blue-soft) 25%, var(--paper));
+  transform: translateY(-2px);
+}
+
+.quota-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: color-mix(in srgb, var(--blue) 10%, var(--paper-soft));
+  border-radius: 12px;
+  color: var(--blue);
+  flex-shrink: 0;
+}
+
+.quota-icon-box svg {
+  width: 28px;
+  height: 28px;
+}
+
+.quota-details {
+  display: flex;
+  flex-direction: column;
 }
 
 .listing-quota span,
