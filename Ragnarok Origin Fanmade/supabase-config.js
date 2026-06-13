@@ -84,15 +84,15 @@ window.ROOC_SUPABASE = {
               if (quotaItem) {
                 const iconBox = quotaItem.querySelector('.quota-icon-box');
                 if (iconBox) {
-                  // ขยายไอคอนให้ใหญ่ขึ้นเป็น 64px
-                  iconBox.innerHTML = `<img src="${url}" style="width: 64px; height: 64px; object-fit: contain;" />`;
+                  // ขยายไอคอนให้ใหญ่ขึ้นเป็น 80px
+                  iconBox.innerHTML = `<img src="${url}" style="width: 80px; height: 80px; object-fit: contain;" />`;
                   // นำพื้นหลังและกรอบออกเพื่อให้ไอคอนลอยเด่น
                   iconBox.style.background = 'none';
                   iconBox.style.boxShadow = 'none';
                   iconBox.style.border = 'none';
                   iconBox.style.width = 'auto';
                   iconBox.style.height = 'auto';
-                  iconBox.style.marginRight = '10px';
+                  iconBox.style.marginRight = '15px';
                   updatedCount++;
                 }
               }
