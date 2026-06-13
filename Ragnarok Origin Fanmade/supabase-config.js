@@ -12,6 +12,7 @@ window.ROOC_SUPABASE = {
   const config = window.ROOC_SUPABASE;
   const canUseSupabase = Boolean(config.url && config.anonKey && window.supabase);
   const supabaseClient = canUseSupabase ? window.supabase.createClient(config.url, config.anonKey) : null;
+  window.roocSupabaseClient = supabaseClient; // ส่งออกเพื่อให้ไฟล์อื่นเข้าถึงได้
   let publicListings = [];
   let soldListings = [];
   const listingsPerPage = 6;

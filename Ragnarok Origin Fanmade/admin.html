@@ -1974,8 +1974,61 @@
         });
       });
 
-      // ใช้ฟังก์จาก icon-manager-fix.js แทน
-      const loadCurrentIconsForAdmin = window.loadCurrentIconsForAdmin || (() => {});
+      // ฟังก์ชันโหลดไอคอนปัจจุบันจากฐานข้อมูล
+      async function loadCurrentIconsForAdmin() {
+        const client = window.roocSupabaseClient;
+        if (!client) {
+          console.warn('Icon Manager: Supabase client not ready, retrying...');
+          setTimeout(loadCurrentIconsForAdmin, 500);
+          return;
+        }
+
+        try {
+          const iconPreviewMap = {
+            'site-logo': 'preview-site-logo',
+            'cat-mvp': 'preview-cat-mvp',
+            'cat-acc': 'preview-cat-acc',
+            'cat-fashion': 'preview-cat-fashion',
+            'dash-sell': 'preview-dash-sell',
+            'dash-buy': 'preview-dash-buy',
+            'dash-service': 'preview-dash-service',
+            'dash-account': 'preview-dash-account'
+          };
+
+          const iconTypes = Object.keys(iconPreviewMap);
+          const keys = iconTypes.map(t => `icon_${t}`);
+
+          const { data, error } = await client
+            .from('marketplace_settings')
+            .select('key, value')
+            .in('key', keys);
+
+          if (error) {
+            console.warn('Icon Manager Error:', error.message);
+            return;
+          }
+
+          if (!data || data.length === 0) return;
+
+          data.forEach(row => {
+            const iconType = row.key.replace('icon_', '');
+            const previewId = iconPreviewMap[iconType];
+            const previewEl = document.getElementById(previewId);
+
+            if (previewEl) {
+              const finalUrl = `${row.value}${row.value.includes('?') ? '&' : '?'}t=${Date.now()}`;
+              if (previewEl.tagName === 'IMG') {
+                previewEl.src = finalUrl;
+              } else if (previewEl.tagName === 'DIV') {
+                previewEl.innerHTML = `<img src="${finalUrl}" style="max-width: 24px; max-height: 24px;" />`;
+              }
+            }
+          });
+          console.log('Icon Manager: Successfully loaded current icons');
+        } catch (err) {
+          console.error('Icon Manager Error:', err);
+        }
+      }
 
       if (saveIconsBtn) {
         saveIconsBtn.addEventListener('click', async () => {
