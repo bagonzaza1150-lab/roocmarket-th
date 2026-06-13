@@ -167,6 +167,7 @@ window.ROOC_SUPABASE = {
           if (existingLock) existingLock.remove();
         }
       });
+      });
 
       // 3. อัปเดต Dashboard Icons (แก้ปัญหา SVG ไม่เปลี่ยน)
       const dashboardMapping = [
