@@ -1478,11 +1478,9 @@
       function showSuccessPopup() {
         const overlay = document.getElementById('successPopupOverlay');
         if (overlay) {
-          // บังคับเลื่อนไปบนสุดเพื่อให้เห็น Pop-up ชัดเจน (เป็นวิธีสำรอง)
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          
+          // แสดง Pop-up ในตำแหน่งปัจจุบันที่ผู้ใช้กำลังดูอยู่ (Fixed Position)
           overlay.classList.add('show');
-          document.body.style.overflow = 'hidden'; // ป้องกันการเลื่อนหน้าจอ
+          document.body.style.overflow = 'hidden'; // ป้องกันการเลื่อนหน้าจอขณะแสดงผล
           
           const fill = document.getElementById('successProgress');
           if (fill) {
