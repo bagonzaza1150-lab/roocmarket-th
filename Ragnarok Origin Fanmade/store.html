@@ -65,6 +65,18 @@
       .theme-option.active { border-color: var(--primary); transform: scale(1.05); }
       .theme-option.locked { cursor: not-allowed; opacity: 0.6; }
       
+      /* Theme options in modal - no overlay/shadow */
+      .theme-picker-modal .theme-option::before,
+      .theme-picker-modal .theme-option::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: transparent !important;
+        z-index: 0;
+        border-radius: inherit;
+        pointer-events: none;
+      }
+      
       .offer-mailbox {
         margin-top: 12px;
         padding: 10px;

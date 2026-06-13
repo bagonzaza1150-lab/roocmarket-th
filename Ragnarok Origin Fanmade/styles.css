@@ -5527,16 +5527,21 @@ html, body {
   background-repeat: no-repeat;
   z-index: 0;
   border-radius: inherit;
-  opacity: 1;
+  opacity: 0.92;
 }
 
-/* Overlay removed - display image without darkening */
+/* Overlay to keep text readable - Darkened for better contrast */
 .listing-card[class*="theme-pixel-"]::after,
 .my-listing-card[class*="theme-pixel-"]::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: transparent;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.15) 0%,
+    rgba(0, 0, 0, 0.55) 55%,
+    rgba(0, 0, 0, 0.85) 100%
+  );
   z-index: 1;
   border-radius: inherit;
   pointer-events: none;
