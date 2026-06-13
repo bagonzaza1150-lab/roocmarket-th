@@ -6817,8 +6817,53 @@ html, body {
   white-space: normal;
 }
 
+.offer-message-popup {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
+  display: grid !important;
+  place-items: center !important;
+  background: rgba(2, 8, 16, 0.72) !important;
+  padding: 20px !important;
+  backdrop-filter: blur(10px);
+}
+
+.offer-message-popup[hidden] {
+  display: none !important;
+}
+
 .offer-message-popup-card {
+  position: relative;
   width: min(430px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
+  overflow: auto;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+}
+
+.offer-message-popup-card h3 {
+  color: var(--ink) !important;
+}
+
+.offer-message-popup-card .eyebrow {
+  color: var(--blue) !important;
+}
+
+.offer-message-popup-card .modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper-soft);
+  color: var(--ink);
+  font-size: 20px;
+  cursor: pointer;
 }
 
 .offer-message-popup-meta {
