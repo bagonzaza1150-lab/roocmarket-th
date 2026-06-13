@@ -1478,15 +1478,21 @@
       function showSuccessPopup() {
         const overlay = document.getElementById('successPopupOverlay');
         if (overlay) {
+          // บังคับเลื่อนไปบนสุดเพื่อให้เห็น Pop-up ชัดเจน (เป็นวิธีสำรอง)
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          
           overlay.classList.add('show');
+          document.body.style.overflow = 'hidden'; // ป้องกันการเลื่อนหน้าจอ
+          
           const fill = document.getElementById('successProgress');
           if (fill) {
             fill.style.width = '0%';
             setTimeout(() => fill.style.width = '100%', 50);
           }
         }
-        // Redirect หลังจาก 2.5 วินาที
+        // Redirect หลังจาก 2.8 วินาที
         setTimeout(() => {
+          document.body.style.overflow = ''; // คืนค่าการเลื่อนหน้าจอ
           window.location.href = "store.html";
         }, 2800);
       }
