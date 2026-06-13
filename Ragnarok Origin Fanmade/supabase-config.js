@@ -73,37 +73,35 @@ window.ROOC_SUPABASE = {
         const src = img.src || '';
         if (src.includes('rooc-icon')) return;
         Object.entries(catPatterns).forEach(([key, patterns]) => {
-          if (iconMap[key] && patterns.some(p => src.includes(p))) {
-            img.src = addCacheBuster(iconMap[key]);
-            updatedCount++;
+          if (patterns.some(p => src.includes(p))) {
+            // อัปเดต Icon ถ้ามีในฐานข้อมูล
+            if (iconMap[key]) {
+              img.src = addCacheBuster(iconMap[key]);
+              updatedCount++;
+            }
             
-            // ตรวจสอบสถานะล็อคและเพิ่มเลเยอร์แม่กุญแจถ้าล็อคอยู่
-            const category = key.replace('cat-', '');
-            if (categoryLocks[category]) {
-              const parent = img.closest('article');
-              if (parent && !parent.querySelector('.category-lock-overlay')) {
-                const overlay = document.createElement('div');
-                overlay.className = 'category-lock-overlay';
-                overlay.innerHTML = '🔒';
-                overlay.style.cssText = `
-                  position: absolute;
-                  top: 0;
-                  left: 0;
-                  right: 0;
-                  bottom: 0;
-                  background: rgba(0, 0, 0, 0.6);
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  font-size: 48px;
-                  border-radius: 12px;
-                  cursor: not-allowed;
-                  pointer-events: auto;
-                `;
-                parent.style.position = 'relative';
-                parent.appendChild(overlay);
-                parent.style.pointerEvents = 'none';
-                parent.style.opacity = '0.7';
+            // ตรวจสอบสถานะล็อค (แมปชื่อ category ให้ตรงกัน)
+            let category = key.replace('cat-', '');
+            if (category === 'acc') category = 'accessories'; // ปรับให้ตรงกับ index.html
+            
+            const parent = img.closest('article');
+            if (parent) {
+              const existingOverlay = parent.querySelector('.category-lock-overlay');
+              if (categoryLocks[category === 'accessories' ? 'acc' : category]) {
+                if (!existingOverlay) {
+                  const overlay = document.createElement('div');
+                  overlay.className = 'category-lock-overlay';
+                  overlay.innerHTML = '🔒';
+                  parent.style.position = 'relative';
+                  parent.appendChild(overlay);
+                  parent.style.pointerEvents = 'none';
+                  parent.style.opacity = '0.7';
+                }
+              } else {
+                // ปลดล็อค: ลบ overlay และคืนค่าเดิม
+                if (existingOverlay) existingOverlay.remove();
+                parent.style.pointerEvents = 'auto';
+                parent.style.opacity = '1';
               }
             }
           }
