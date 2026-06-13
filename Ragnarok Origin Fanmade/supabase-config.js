@@ -1441,17 +1441,21 @@ window.ROOC_SUPABASE = {
 		          const storeInstagram = document.querySelector("#storeInstagram");
 		          if (storeInstagram) storeInstagram.hidden = true;
 
-		          // ดึงข้อมูลจาก profile (ซึ่งมีความน่าเชื่อถือกว่าสำหรับข้อมูลโซเชียล)
-		          const finalFacebook = profile?.facebook_url || seller.facebook_url;
-		          const finalInstagram = profile?.instagram_url || seller.instagram_url;
+		          // ดึงข้อมูลจาก profile หรือ seller (จาก listings)
+		          const finalFacebook = profile?.facebook_url || seller.facebook_url || seller.seller_facebook_url;
+		          const finalInstagram = profile?.instagram_url || seller.instagram_url || seller.seller_instagram_url;
 
-		          if (finalFacebook) {
-		            storeFacebook.href = finalFacebook;
-		            storeFacebook.hidden = false;
+		          console.log("Social Links Debug:", { finalFacebook, finalInstagram });
+
+		          if (finalFacebook && finalFacebook.trim() !== "") {
+		            storeFacebook.href = finalFacebook.startsWith('http') ? finalFacebook : `https://${finalFacebook}`;
+		            storeFacebook.removeAttribute('hidden');
+		            storeFacebook.style.display = 'flex';
 		          }
-		          if (finalInstagram && storeInstagram) {
-		            storeInstagram.href = finalInstagram;
-		            storeInstagram.hidden = false;
+		          if (finalInstagram && finalInstagram.trim() !== "" && storeInstagram) {
+		            storeInstagram.href = finalInstagram.startsWith('http') ? finalInstagram : `https://${finalInstagram}`;
+		            storeInstagram.removeAttribute('hidden');
+		            storeInstagram.style.display = 'flex';
 		          }
 		          storeDiscordText.textContent = seller.discord_id || seller.seller_discord_id || seller.contact || "N/A";
 	          
