@@ -41,6 +41,9 @@ window.ROOC_SUPABASE = {
       if (iconMap['site-logo']) {
         const logoUrl = addCacheBuster(iconMap['site-logo']);
         document.querySelectorAll('img').forEach(img => {
+          // ข้ามรูปภาพที่อยู่ในปุ่มโซเชียลมีเดีย
+          if (img.closest('.social-btn') || img.closest('.seller-socials')) return;
+
           if (img.src.includes('rooc-icon') || img.closest('.brand-mark') || img.closest('.brand') || img.id === 'storeAvatar') {
             img.src = logoUrl;
             updatedCount++;
