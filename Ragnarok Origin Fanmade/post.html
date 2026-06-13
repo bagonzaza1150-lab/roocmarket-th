@@ -1152,15 +1152,17 @@
           }
 
           // Fallback: if card_background column doesn’t exist yet, retry without it
-          if (error && /card_background|schema cache/i.test(error.message || "")) {
-            delete listingPayload.card_background;
-            const fallbackResult = await supabaseClient.from("marketplace_listings").insert(listingPayload);
-            error = fallbackResult.error;
-            if (!error) {
-              setPostMessage("เผยแพร่ประกาศเรียบร้อย (ยังไม่ได้รัน supabase-card-bg-migration.sql พื้นหลังจะยังไม่แสดง)");
-              return;
-            }
-          }
+	          if (error && /card_background|schema cache/i.test(error.message || "")) {
+	            delete listingPayload.card_background;
+	            const fallbackResult = await supabaseClient.from("marketplace_listings").insert(listingPayload);
+	            error = fallbackResult.error;
+	            if (!error) {
+	              // บันทึกสำเร็จแบบ fallback
+	              localStorage.removeItem('rooc-public-listings-v3');
+	              showSuccessPopup();
+	              return;
+	            }
+	          }
 
           if (error) throw error;
 
@@ -1452,33 +1454,31 @@
           discordIds.some((id) => (supabaseConfig.adminDiscordIds || []).includes(id));
       }
 
-      function showSuccessPopup() {
-        // สร้าง Overlay ถ้ายังไม่มี
-        let overlay = document.getElementById('successPopupOverlay');
-        if (!overlay) {
-          overlay = document.createElement('div');
-          overlay.id = 'successPopupOverlay';
-          overlay.className = 'success-popup-overlay';
-          overlay.innerHTML = `
-            <div class="success-popup-card">
-              <div class="success-icon-wrap">✅</div>
-              <h2>ประกาศสำเร็จ!</h2>
-              <p>ไอเทมของคุณถูกนำขึ้นตลาดเรียบร้อยแล้ว<br>กำลังพากลับไปที่หน้าร้านค้า...</p>
-              <div class="success-progress-bar">
-                <div class="success-progress-fill" id="successProgress"></div>
-              </div>
+      // เตรียม Success Popup ไว้ล่วงหน้า
+      const successPopupHTML = `
+        <div id="successPopupOverlay" class="success-popup-overlay">
+          <div class="success-popup-card">
+            <div class="success-icon-wrap">✅</div>
+            <h2>ประกาศสำเร็จ!</h2>
+            <p>ไอเทมของคุณถูกนำขึ้นตลาดเรียบร้อยแล้ว<br>กำลังพากลับไปที่หน้าร้านค้า...</p>
+            <div class="success-progress-bar">
+              <div class="success-progress-fill" id="successProgress"></div>
             </div>
-          `;
-          document.body.appendChild(overlay);
-        }
+          </div>
+        </div>
+      `;
+      document.body.insertAdjacentHTML('beforeend', successPopupHTML);
 
-        // แสดง Popup
-        setTimeout(() => {
+      function showSuccessPopup() {
+        const overlay = document.getElementById('successPopupOverlay');
+        if (overlay) {
           overlay.classList.add('show');
           const fill = document.getElementById('successProgress');
-          if (fill) setTimeout(() => fill.style.width = '100%', 100);
-        }, 100);
-
+          if (fill) {
+            fill.style.width = '0%';
+            setTimeout(() => fill.style.width = '100%', 50);
+          }
+        }
         // Redirect หลังจาก 2.5 วินาที
         setTimeout(() => {
           window.location.href = "store.html";
