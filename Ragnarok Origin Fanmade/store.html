@@ -600,10 +600,10 @@
           const isActive = currentBg === theme.id;
           const isLocked = !isPremium && theme.id !== 'default';
           
-          // สร้าง Overlay สำหรับกุญแจล็อคที่อยู่กึ่งกลางแน่นอน (ใช้พื้นหลังมืดสนิทเพื่อความเนียน)
+          // สร้าง Overlay สำหรับกุญแจล็อคที่อยู่กึ่งกลางแน่นอน (บีบให้พอดีกับขอบรูปธีมเป๊ะๆ)
           const lockOverlay = isLocked ? `
-            <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 5;">
-              <span style="font-size: 48px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));">🔒</span>
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 5; border-radius: 11px;">
+              <span style="font-size: 42px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));">🔒</span>
             </div>
           ` : '';
 
@@ -639,17 +639,19 @@
           backdrop-filter: blur(4px);
         `;
         modal.innerHTML = `
-          <div class="custom-modal-content" style="max-width: 800px; width: 92vw; max-height: 85vh; padding: 32px; background: #121b26 !important; border-radius: 24px; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 30px 60px rgba(0,0,0,0.7); display: flex; flex-direction: column; overflow: hidden;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
-              <h3 style="margin: 0; font-size: 1.5rem; font-weight: 600; color: white;">✨ เลือกพื้นหลังการ์ด</h3>
-              <button class="btn btn-light" style="padding: 8px 14px; font-size: 20px; line-height: 1; cursor: pointer; background: rgba(255,255,255,0.05); color: white; border: none; border-radius: 8px;" id="closeThemeModal">×</button>
+          <div class="custom-modal-content" style="max-width: 800px; width: 92vw; max-height: 85vh; padding: 0; background: #121b26 !important; border-radius: 24px; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 30px 60px rgba(0,0,0,0.7); display: flex; flex-direction: column; overflow: hidden;">
+            <div style="padding: 32px 32px 20px; background: #121b26;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                <h3 style="margin: 0; font-size: 1.5rem; font-weight: 600; color: white;">✨ เลือกพื้นหลังการ์ด</h3>
+                <button class="btn btn-light" style="padding: 8px 14px; font-size: 20px; line-height: 1; cursor: pointer; background: rgba(255,255,255,0.05); color: white; border: none; border-radius: 8px;" id="closeThemeModal">×</button>
+              </div>
+              <p style="font-size: 14px; color: #8a99af; margin: 0 0 8px; line-height: 1.5;">พื้นหลัง pixel art จะแสดงบนการ์ดประกาศในหน้าแรกเพื่อเพิ่มความโดดเด่น</p>
+              ${isPremium
+                ? '<p style="font-size: 13px; color: #f7b500; margin: 0; font-weight: 500;">♛ บัญชี Premium — เลือกพื้นหลังได้ทุกแบบ</p>'
+                : '<p style="font-size: 13px; color: #8a99af; margin: 0;">🔒 พื้นหลัง pixel art เปิดให้เฉพาะ <a href="premium.html" style="color: #f7b500; font-weight: bold; text-decoration: none;">Premium</a> เท่านั้น</p>'
+              }
             </div>
-            <p style="font-size: 14px; color: #8a99af; margin: 0 0 8px; line-height: 1.5;">พื้นหลัง pixel art จะแสดงบนการ์ดประกาศในหน้าแรกเพื่อเพิ่มความโดดเด่น</p>
-            ${isPremium
-              ? '<p style="font-size: 13px; color: #f7b500; margin: 0 0 20px; font-weight: 500;">♛ บัญชี Premium — เลือกพื้นหลังได้ทุกแบบ</p>'
-              : '<p style="font-size: 13px; color: #8a99af; margin: 0 0 20px;">🔒 พื้นหลัง pixel art เปิดให้เฉพาะ <a href="premium.html" style="color: #f7b500; font-weight: bold; text-decoration: none;">Premium</a> เท่านั้น</p>'
-            }
-            <div style="flex: 1; overflow-y: auto; padding-right: 8px; margin-bottom: 24px;">
+            <div style="flex: 1; overflow-y: auto; padding: 0 32px; margin-bottom: 24px;">
               <div class="theme-picker-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 18px; margin-bottom: 24px;">${themeHTML}</div>
               ${!isPremium ? `
                 <div style="margin-bottom: 24px; padding: 16px 18px; background: rgba(247,181,0,0.1); border: 1px solid rgba(247,181,0,0.2); border-radius: 12px;">
@@ -657,7 +659,7 @@
                 </div>
               ` : ''}
             </div>
-            <div style="display: flex; gap: 12px; justify-content: flex-end; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <div style="display: flex; gap: 12px; justify-content: flex-end; padding: 20px 32px; border-top: 1px solid rgba(255,255,255,0.1); background: #121b26;">
               <button class="btn btn-light" id="cancelThemeModal" style="padding: 12px 28px; font-size: 14px; font-weight: 500; background: rgba(255,255,255,0.05); color: white; border: none; border-radius: 8px;">ยกเลิก</button>
               <button class="btn btn-primary" id="confirmTheme" style="padding: 12px 32px; font-size: 14px; font-weight: 500; background: #f7b500; color: #000; border: none; border-radius: 8px;">✨ บันทึกพื้นหลัง</button>
             </div>
