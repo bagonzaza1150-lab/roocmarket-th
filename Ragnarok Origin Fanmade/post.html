@@ -1111,6 +1111,12 @@
           }
 
           const selectedTheme = document.querySelector('#themePickerInline .theme-option.active')?.dataset.theme || 'default';
+          const { data: profileFrameProfile } = await supabaseClient
+            .from("marketplace_profiles")
+            .select("profile_frame_id")
+            .eq("user_id", currentSession.user.id)
+            .maybeSingle();
+          const sellerProfileFrameId = isPremiumSeller ? profileFrameProfile?.profile_frame_id || null : null;
           const listingPayload = {
             listing_type: activeListingType,
             category: activeCategory,
@@ -1126,6 +1132,7 @@
             seller_avatar_url: getDiscordAvatarUrl(currentSession),
             seller_discord_id: getDiscordId(currentSession),
             seller_is_premium: isPremiumSeller,
+            seller_profile_frame_id: sellerProfileFrameId,
             card_background: isPremiumSeller ? selectedTheme : 'default',
             price_text: priceText,
             server_name: listingServer.value,
@@ -1141,6 +1148,12 @@
           };
 
           let { error } = await supabaseClient.from("marketplace_listings").insert(listingPayload);
+          if (error && /seller_profile_frame_id/i.test(error.message || "")) {
+            delete listingPayload.seller_profile_frame_id;
+            const fallbackResult = await supabaseClient.from("marketplace_listings").insert(listingPayload);
+            error = fallbackResult.error;
+          }
+
           if (error && /offers_enabled|schema cache|column/i.test(error.message || "")) {
             throw new Error("ฐานข้อมูลยังไม่ได้อัปเดตสำหรับระบบเสนอราคา กรุณารันไฟล์ supabase-offers-migration.sql ใน Supabase SQL Editor ก่อน");
           }
@@ -1161,7 +1174,9 @@
 	            error = fallbackResult.error;
 	            if (!error) {
 	              // บันทึกสำเร็จแบบ fallback
-	              localStorage.removeItem('rooc-public-listings-v3');
+              localStorage.removeItem('rooc-public-listings-v3');
+              localStorage.removeItem('rooc-public-listings-v3-no-frame');
+              localStorage.removeItem('rooc-profile-frames-v1');
 	              showSuccessPopup();
 	              return;
 	            }
@@ -1171,8 +1186,10 @@
 
           // Clear homepage cache so it shows the new listing with background immediately
           localStorage.removeItem('rooc-public-listings-v3');
+          localStorage.removeItem('rooc-public-listings-v3-no-frame');
           localStorage.removeItem('rooc-public-listings-v3-no-fb');
           localStorage.removeItem('rooc-public-listings-legacy-v1');
+          localStorage.removeItem('rooc-profile-frames-v1');
 
 	          // แสดง Success Popup แทนการแจ้งเตือนแบบเดิม
 	          showSuccessPopup();

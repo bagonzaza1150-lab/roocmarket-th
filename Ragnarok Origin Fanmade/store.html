@@ -951,6 +951,13 @@
           setMessage("เกิดข้อผิดพลาด: " + error.message, true);
         } else {
           setMessage("บันทึกข้อมูลโปรไฟล์เรียบร้อยแล้ว!");
+          await supabase
+            .from("marketplace_listings")
+            .update({ seller_profile_frame_id: isPremium && requestedFrameId ? requestedFrameId : null })
+            .eq("user_id", currentSession.user.id);
+          localStorage.removeItem("rooc-public-listings-v3");
+          localStorage.removeItem("rooc-public-listings-v3-no-frame");
+          localStorage.removeItem("rooc-profile-frames-v1");
           closeEditModal();
           setTimeout(() => window.location.reload(), 1000);
         }

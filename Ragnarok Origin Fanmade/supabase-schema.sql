@@ -54,6 +54,7 @@ create table if not exists public.marketplace_listings (
   seller_avatar_url text not null default '',
   seller_discord_id text not null default '',
   seller_is_premium boolean not null default false,
+  seller_profile_frame_id uuid,
   image_url text not null,
   image_path text,
   image_urls jsonb not null default '[]'::jsonb,
@@ -141,8 +142,32 @@ begin
   end if;
 end $$;
 
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'marketplace_listings_seller_profile_frame_fk'
+  ) then
+    alter table public.marketplace_listings
+    add constraint marketplace_listings_seller_profile_frame_fk
+    foreign key (seller_profile_frame_id)
+    references public.marketplace_profile_frames(id)
+    on delete set null;
+  end if;
+end $$;
+
 create index if not exists marketplace_profile_frames_active_idx
   on public.marketplace_profile_frames (active, sort_order, name);
+
+create index if not exists marketplace_listings_seller_profile_frame_idx
+  on public.marketplace_listings (seller_profile_frame_id);
+
+update public.marketplace_listings as listings
+set seller_profile_frame_id = profiles.profile_frame_id
+from public.marketplace_profiles as profiles
+where listings.user_id = profiles.user_id
+  and listings.seller_profile_frame_id is distinct from profiles.profile_frame_id;
 
 create table if not exists public.marketplace_premium_users (
   user_id uuid primary key references auth.users(id) on delete cascade,
@@ -226,6 +251,9 @@ add column if not exists seller_discord_id text not null default '';
 
 alter table public.marketplace_listings
 add column if not exists seller_is_premium boolean not null default false;
+
+alter table public.marketplace_listings
+add column if not exists seller_profile_frame_id uuid;
 
 alter table public.marketplace_listings
 add column if not exists offers_enabled boolean not null default false;

@@ -190,6 +190,8 @@ window.ROOC_SUPABASE = {
   };
   let publicListings = [];
   let soldListings = [];
+  let profileFramesCache = [];
+  let profileFramesLoadedAt = 0;
   const listingsPerPage = 6;
   const listingCacheMs = 45000;
   const soldListingCacheMs = 120000;
@@ -207,6 +209,7 @@ window.ROOC_SUPABASE = {
     "seller_avatar_url",
     "seller_discord_id",
     "seller_is_premium",
+    "seller_profile_frame_id",
     "price_text",
     "server_name",
     "contact",
@@ -232,6 +235,14 @@ window.ROOC_SUPABASE = {
   const noFacebookListingSelectColumns = listingSelectColumns
     .split(",")
     .filter((column) => column !== "facebook_url")
+    .join(",");
+  const noProfileFrameListingSelectColumns = listingSelectColumns
+    .split(",")
+    .filter((column) => column !== "seller_profile_frame_id")
+    .join(",");
+  const noProfileFrameNoFacebookListingSelectColumns = listingSelectColumns
+    .split(",")
+    .filter((column) => column !== "seller_profile_frame_id" && column !== "facebook_url")
     .join(",");
   let currentListingPage = 1;
   let activeListingType = "sell";
@@ -385,6 +396,25 @@ window.ROOC_SUPABASE = {
         force
       );
     } catch (error) {
+      if (/seller_profile_frame_id/i.test(error.message || "")) {
+        console.warn("Profile frame column not ready, trying without seller_profile_frame_id...");
+        try {
+          return await fetchCachedJson(
+            "rooc-public-listings-v3-no-frame",
+            `${config.url}/rest/v1/marketplace_listings?select=${noProfileFrameListingSelectColumns}&active=eq.true&sale_status=neq.deleted&sale_status=neq.sold&sale_status=neq.closed&order=created_at.desc&limit=1000`,
+            listingCacheMs,
+            force
+          );
+        } catch (frameFallbackError) {
+          if (!/facebook_url/i.test(frameFallbackError.message || "")) throw frameFallbackError;
+          return fetchCachedJson(
+            "rooc-public-listings-v3-no-frame-no-fb",
+            `${config.url}/rest/v1/marketplace_listings?select=${noProfileFrameNoFacebookListingSelectColumns}&active=eq.true&sale_status=neq.deleted&sale_status=neq.sold&sale_status=neq.closed&order=created_at.desc&limit=1000`,
+            listingCacheMs,
+            force
+          );
+        }
+      }
       console.warn("Facebook column not ready, trying without facebook_url...");
       try {
         return await fetchCachedJson(
@@ -414,6 +444,25 @@ window.ROOC_SUPABASE = {
         force
       );
     } catch (error) {
+      if (/seller_profile_frame_id/i.test(error.message || "")) {
+        console.warn("Profile frame column not ready in sold, trying without seller_profile_frame_id...");
+        try {
+          return await fetchCachedJson(
+            "rooc-sold-listings-v2-no-frame",
+            `${config.url}/rest/v1/marketplace_listings?select=${noProfileFrameListingSelectColumns}&active=eq.false&sale_status=eq.sold&order=updated_at.desc`,
+            soldListingCacheMs,
+            force
+          );
+        } catch (frameFallbackError) {
+          if (!/facebook_url/i.test(frameFallbackError.message || "")) throw frameFallbackError;
+          return fetchCachedJson(
+            "rooc-sold-listings-v2-no-frame-no-fb",
+            `${config.url}/rest/v1/marketplace_listings?select=${noProfileFrameNoFacebookListingSelectColumns}&active=eq.false&sale_status=eq.sold&order=updated_at.desc`,
+            soldListingCacheMs,
+            force
+          );
+        }
+      }
       console.warn("Facebook column not ready in sold, trying without facebook_url...");
       try {
         return await fetchCachedJson(
@@ -432,6 +481,39 @@ window.ROOC_SUPABASE = {
         );
       }
     }
+  }
+
+  async function fetchActiveProfileFrames(force = false) {
+    if (!force && profileFramesCache.length && Date.now() - profileFramesLoadedAt < listingCacheMs) {
+      return profileFramesCache;
+    }
+    const data = await fetchCachedJson(
+      "rooc-profile-frames-v1",
+      `${config.url}/rest/v1/marketplace_profile_frames?select=id,image_url&active=eq.true&order=sort_order.asc,name.asc`,
+      listingCacheMs,
+      force
+    ).catch((error) => {
+      console.warn("ROOC profile frames failed:", error);
+      return [];
+    });
+    profileFramesCache = data || [];
+    profileFramesLoadedAt = Date.now();
+    return profileFramesCache;
+  }
+
+  async function hydrateListingProfileFrames(listings, force = false) {
+    if (!listings?.length) return listings || [];
+    const frames = await fetchActiveProfileFrames(force);
+    const frameById = new Map(frames.map((frame) => [String(frame.id), frame.image_url]));
+
+    return listings.map((listing) => {
+      const frameId = listing.seller_profile_frame_id || "";
+      return {
+        ...listing,
+        seller_profile_frame_id: frameId,
+        seller_profile_frame_url: frameId ? frameById.get(String(frameId)) || "" : ""
+      };
+    });
   }
 
   async function fetchSiteSettings() {
@@ -802,6 +884,7 @@ window.ROOC_SUPABASE = {
       const discordId = getListingDiscordId(listing);
       const sellerName = listing.seller_name || "ผู้ขาย ROOC";
       const sellerAvatar = listing.seller_avatar_url || "assets/category-icons/account-b.png";
+      const sellerFrame = listing.seller_profile_frame_url || "";
       const galleryData = listing.category === "account"
         ? ` data-account-gallery="${escapeHtml(encodeURIComponent(JSON.stringify(listingImages)))}" data-account-title="${escapeHtml(title)}"`
         : "";
@@ -832,7 +915,10 @@ window.ROOC_SUPABASE = {
             ` : ""}
           </div>`}
           <div class="listing-seller">
-            <img src="${escapeHtml(sellerAvatar)}" alt="" loading="lazy" decoding="async" />
+            <span class="listing-seller-avatar${sellerFrame ? " has-frame" : ""}">
+              <img class="listing-seller-avatar-image" src="${escapeHtml(sellerAvatar)}" alt="" loading="lazy" decoding="async" />
+              ${sellerFrame ? `<img class="listing-seller-avatar-frame" src="${escapeHtml(sellerFrame)}" alt="" loading="lazy" decoding="async" />` : ""}
+            </span>
 		            <a href="store.html?id=${encodeURIComponent(listing.user_id)}" class="seller-store-link" title="ไปที่หน้าร้านค้า" onclick="event.stopPropagation();" style="display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden;">
 	              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(sellerName)}</span>
 	              ${listing.seller_is_premium ? '<strong title="Premium" style="color: #f59e0b; font-size: 14px; text-shadow: 0 0 8px rgba(245, 158, 11, 0.3); flex-shrink: 0;">♛</strong>' : ""}
@@ -1174,6 +1260,7 @@ window.ROOC_SUPABASE = {
           return [];
         })
       ]);
+      publicListings = await hydrateListingProfileFrames(publicListings, Boolean(force));
       renderFilteredListings();
       renderSoldListings(soldListings);
       console.info(`ROOC listings refreshed ${publicListings.length} active rows, ${soldListings.length} sold rows`);
