@@ -1696,50 +1696,57 @@ h1 {
 .listing-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px;
+  gap: 5px;
   align-items: center;
-  margin-top: 12px;
+  margin-top: 10px;
+  margin-bottom: 4px;
 }
 
 .listing-meta span {
   display: inline-flex;
-  min-height: 20px;
+  min-height: 18px;
   align-items: center;
-  border-radius: 6px;
+  border-radius: 4px;
   background: var(--paper-soft);
   color: var(--blue);
-  padding: 3px 10px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
+  padding: 2px 7px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
-  border: none;
+  border: 1px solid var(--line);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 :root[data-theme="dark"] .listing-meta span {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .listing-meta .verified {
-  background: rgba(24, 166, 106, 0.12);
+  background: rgba(24, 166, 106, 0.08);
   color: var(--green);
+  border-color: rgba(24, 166, 106, 0.2);
 }
 
 .listing-meta .fast {
-  background: rgba(240, 173, 36, 0.12);
+  background: rgba(240, 173, 36, 0.08);
   color: var(--gold);
+  border-color: rgba(240, 173, 36, 0.2);
 }
 
 .listing-meta .buy {
-  background: rgba(55, 160, 236, 0.12);
+  background: rgba(55, 160, 236, 0.08);
   color: var(--blue);
+  border-color: rgba(55, 160, 236, 0.2);
 }
 
 .listing-meta .mvp {
-  background: rgba(240, 70, 70, 0.12);
+  background: rgba(240, 70, 70, 0.08);
   color: #ff5f5f;
+  border-color: rgba(240, 70, 70, 0.2);
 }
 
 .listing-meta .time-left {
@@ -6324,13 +6331,14 @@ html, body {
 }
 
 .listing-meta span {
-  padding: 0.35rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
   background: var(--paper-soft);
   color: var(--muted);
   border: 1px solid var(--line);
+  text-transform: uppercase;
 }
 
 .listing-meta span.fast {
