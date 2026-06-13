@@ -5,6 +5,7 @@
   --paper: #ffffff;
   --paper-soft: #eef7fb;
   --ink: #102033;
+  --text: var(--ink);
   --muted: #637386;
   --line: #dce8ef;
   --blue: #177ddc;
@@ -20,6 +21,7 @@
   --paper: #101b2a;
   --paper-soft: #16263a;
   --ink: #f4f9ff;
+  --text: var(--ink);
   --muted: #9fb3c8;
   --line: #263a50;
   --blue: #55b8ff;
@@ -1979,6 +1981,7 @@ h1 {
   max-height: calc(100vh - 44px);
   max-height: calc(100dvh - 44px);
   overflow: auto;
+  color: var(--ink);
   border: 1px solid var(--line);
   border-radius: 18px;
   background: color-mix(in srgb, var(--paper) 94%, transparent);
@@ -2029,6 +2032,7 @@ h1 {
 .contact-modal-card h2 {
   margin: 4px 0 18px;
   font-size: 28px;
+  color: var(--ink);
 }
 
 .contact-modal-item {
@@ -2081,6 +2085,27 @@ h1 {
   color: var(--ink);
   padding: 11px 12px;
   resize: vertical;
+}
+
+.offer-form input::placeholder,
+.offer-form textarea::placeholder {
+  color: var(--muted);
+}
+
+:root[data-theme="dark"] .contact-modal,
+:root[data-theme="dark"] .contact-modal-card,
+:root[data-theme="dark"] .contact-modal-card h2,
+:root[data-theme="dark"] .contact-modal-item strong,
+:root[data-theme="dark"] .offer-form,
+:root[data-theme="dark"] .offer-form label,
+:root[data-theme="dark"] .offer-form input,
+:root[data-theme="dark"] .offer-form textarea {
+  color: #f4f9ff;
+}
+
+:root[data-theme="dark"] .offer-form input::placeholder,
+:root[data-theme="dark"] .offer-form textarea::placeholder {
+  color: #9fb3c8;
 }
 
 .seller-profile-button {
