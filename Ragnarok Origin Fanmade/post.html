@@ -684,10 +684,7 @@
         setPreviewImage(image, group.mediaClass);
         previewMedia.classList.toggle("is-hidden", activeListingType === "service");
         
-        // Update step progress when form fields are filled
-        if (listingTitle.value.trim() || listingPrice.value || listingDescription.value) {
-          updateStepProgress(4);
-        }
+        // Removed automatic step 4 update from syncPreview to prevent skipping steps
         
         // Update preview card theme
         const previewCard = document.querySelector('.preview-card');
@@ -714,8 +711,17 @@
             itemSelect.append(option);
           }
         });
-        itemSelect.addEventListener('change', () => updateStepProgress(3));
-        dungeonSelect.addEventListener('change', () => updateStepProgress(3));
+        // Set up event listeners for step 3
+        const updateToStep3 = () => updateStepProgress(3);
+        itemSelect.addEventListener('change', updateToStep3);
+        dungeonSelect.addEventListener('change', updateToStep3);
+        
+        // Step 4 triggers when user starts typing in price or description
+        const updateToStep4 = () => updateStepProgress(4);
+        listingPrice.addEventListener('input', updateToStep4);
+        listingDescription.addEventListener('input', updateToStep4);
+        listingTitle.addEventListener('input', updateToStep4);
+        listingServer.addEventListener('change', updateToStep4);
 
         itemSelectTitle.textContent = group.title;
         itemSelectLabel.textContent = group.field;
