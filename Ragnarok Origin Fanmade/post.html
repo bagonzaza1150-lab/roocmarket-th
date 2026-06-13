@@ -1334,64 +1334,10 @@
 
       window.ROOC_APP?.initTheme();
 
-      // โหลดไอคอนจากฐานข้อมูล
-      async function loadDynamicIconsForPost() {
-        const client = window.roocSupabaseClient;
-        if (!client) {
-          setTimeout(loadDynamicIconsForPost, 500);
-          return;
-        }
-
-        try {
-          const { data, error } = await client
-            .from('marketplace_settings')
-            .select('key, value')
-            .in('key', ['icon_site-logo', 'icon_cat-mvp', 'icon_cat-acc', 'icon_cat-fashion']);
-
-          if (error || !data || data.length === 0) return;
-
-          const iconMap = {};
-          data.forEach(row => {
-            iconMap[row.key.replace('icon_', '')] = row.value;
-          });
-
-          const addCacheBuster = (url) => {
-            const separator = url.includes('?') ? '&' : '?';
-            return `${url}${separator}t=${Date.now()}`;
-          };
-
-          if (iconMap['site-logo']) {
-            document.querySelectorAll('img[src*="rooc-icon"]').forEach(img => {
-              if (img.src.includes('rooc-icon-64') || img.src.includes('rooc-icon-32') || img.src.includes('rooc-icon-192')) {
-                img.src = addCacheBuster(iconMap['site-logo']);
-              }
-            });
-          }
-
-          const categoryMap = {
-            'cat-mvp': ['mvp-c.png', 'mvp'],
-            'cat-acc': ['accessories-a.png', 'acc', 'account-b.png'],
-            'cat-fashion': ['fashion-c.png', 'fashion']
-          };
-
-          Object.entries(categoryMap).forEach(([key, patterns]) => {
-            if (iconMap[key]) {
-              document.querySelectorAll('img').forEach(img => {
-                const src = img.src || '';
-                const shouldUpdate = patterns.some(pattern => src.includes(pattern));
-                if (shouldUpdate && !src.includes('rooc-icon')) {
-                  img.src = addCacheBuster(iconMap[key]);
-                }
-              });
-            }
-          });
-        } catch (err) {
-          console.warn('Failed to load dynamic icons for post:', err);
-        }
-      }
-
       window.addEventListener('DOMContentLoaded', () => {
-        setTimeout(loadDynamicIconsForPost, 500);
+        if (typeof window.ROOC_LOAD_ICONS === 'function') {
+          setTimeout(window.ROOC_LOAD_ICONS, 500);
+        }
       });
     </script>
   </body>

@@ -12,7 +12,81 @@ window.ROOC_SUPABASE = {
   const config = window.ROOC_SUPABASE;
   const canUseSupabase = Boolean(config.url && config.anonKey && window.supabase);
   const supabaseClient = canUseSupabase ? window.supabase.createClient(config.url, config.anonKey) : null;
-  window.roocSupabaseClient = supabaseClient; // ส่งออกเพื่อให้ไฟล์อื่นเข้าถึงได้
+  window.roocSupabaseClient = supabaseClient;
+
+  // ฟังก์ชันกลางสำหรับโหลดไอคอนจากฐานข้อมูล (ใช้กับทุกหน้า)
+  window.ROOC_LOAD_ICONS = async function() {
+    if (!supabaseClient) return;
+    try {
+      const { data, error } = await supabaseClient
+        .from('marketplace_settings')
+        .select('key, value')
+        .in('key', ['icon_site-logo', 'icon_cat-mvp', 'icon_cat-acc', 'icon_cat-fashion', 'icon_dash-sell', 'icon_dash-buy', 'icon_dash-service', 'icon_dash-account']);
+      
+      if (error || !data || data.length === 0) return;
+      
+      const iconMap = {};
+      data.forEach(row => {
+        iconMap[row.key.replace('icon_', '')] = row.value;
+      });
+
+      const addCacheBuster = (url) => {
+        const separator = url.includes('?') ? '&' : '?';
+        return `${url}${separator}t=${Date.now()}`;
+      };
+
+      // 1. อัปเดต Logo
+      if (iconMap['site-logo']) {
+        document.querySelectorAll('img[src*="rooc-icon"]').forEach(img => {
+          if (img.src.includes('rooc-icon-64') || img.src.includes('rooc-icon-32') || img.src.includes('rooc-icon-192')) {
+            img.src = addCacheBuster(iconMap['site-logo']);
+          }
+        });
+      }
+
+      // 2. อัปเดต Category Icons
+      const categoryMap = {
+        'cat-mvp': ['mvp-c.png', 'mvp'],
+        'cat-acc': ['accessories-a.png', 'acc', 'account-b.png'],
+        'cat-fashion': ['fashion-c.png', 'fashion']
+      };
+
+      Object.entries(categoryMap).forEach(([key, patterns]) => {
+        if (iconMap[key]) {
+          document.querySelectorAll('img').forEach(img => {
+            const src = img.src || '';
+            const shouldUpdate = patterns.some(pattern => src.includes(pattern));
+            if (shouldUpdate && !src.includes('rooc-icon')) {
+              img.src = addCacheBuster(iconMap[key]);
+            }
+          });
+        }
+      });
+
+      // 3. อัปเดต Dashboard Icons (ถ้ามีในหน้านั้น)
+      const dashMap = {
+        'dash-sell': 'preview-dash-sell',
+        'dash-buy': 'preview-dash-buy',
+        'dash-service': 'preview-dash-service',
+        'dash-account': 'preview-dash-account'
+      };
+
+      Object.entries(dashMap).forEach(([key, previewId]) => {
+        if (iconMap[key]) {
+          const el = document.getElementById(previewId);
+          if (el) {
+            const url = addCacheBuster(iconMap[key]);
+            if (el.tagName === 'IMG') el.src = url;
+            else el.innerHTML = `<img src="${url}" style="max-width: 24px; max-height: 24px;" />`;
+          }
+        }
+      });
+      
+      console.log('ROOC: Dynamic icons loaded successfully');
+    } catch (err) {
+      console.warn('ROOC: Failed to load dynamic icons', err);
+    }
+  };
   let publicListings = [];
   let soldListings = [];
   const listingsPerPage = 6;
@@ -139,70 +213,7 @@ window.ROOC_SUPABASE = {
     });
   }
 
-  // ฟังก์ชันดึงและแสดงไอคอนจากฐานข้อมูล
-  async function loadDynamicIcons() {
-    if (!supabaseClient) return;
-    
-    try {
-      const { data, error } = await supabaseClient
-        .from('marketplace_settings')
-        .select('key, value')
-        .in('key', ['icon_site-logo', 'icon_cat-mvp', 'icon_cat-acc', 'icon_cat-fashion']);
-      
-      if (error) {
-        console.warn('Error loading dynamic icons:', error.message);
-        return;
-      }
-      
-      if (!data || data.length === 0) return;
-      
-      // สร้าง map ของ icon URLs
-      const iconMap = {};
-      data.forEach(row => {
-        const iconType = row.key.replace('icon_', '');
-        iconMap[iconType] = row.value;
-      });
-      
-      // ฟังก์ชัน helper เพื่อเพิ่ม cache busting parameter
-      const addCacheBuster = (url) => {
-        if (!url) return url;
-        const separator = url.includes('?') ? '&' : '?';
-        return `${url}${separator}t=${Date.now()}`;
-      };
-      
-      // อัปเดต Logo เว็บไซต์
-      if (iconMap['site-logo']) {
-        const logoImages = document.querySelectorAll('img[src*="rooc-icon"]');
-        logoImages.forEach(img => {
-          if (img.src.includes('rooc-icon-64') || img.src.includes('rooc-icon-32') || img.src.includes('rooc-icon-192')) {
-            img.src = addCacheBuster(iconMap['site-logo']);
-          }
-        });
-      }
-      
-      // อัปเดต Category Icons
-      const categoryMap = {
-        'cat-mvp': ['mvp-c.png', 'mvp'],
-        'cat-acc': ['accessories-a.png', 'acc', 'account-b.png'],
-        'cat-fashion': ['fashion-c.png', 'fashion']
-      };
-      
-      Object.entries(categoryMap).forEach(([key, patterns]) => {
-        if (iconMap[key]) {
-          const categoryImages = document.querySelectorAll('img');
-          categoryImages.forEach(img => {
-            const src = img.src || '';
-            const shouldUpdate = patterns.some(pattern => src.includes(pattern));
-            if (shouldUpdate && !src.includes('rooc-icon')) {
-              img.src = addCacheBuster(iconMap[key]);
-            }
-          });
-        }
-      });
-    } catch (err) {
-      console.warn('Failed to load dynamic icons:', err);
-    }
-  }
+
 
   function getSupabaseClient() {
     return supabaseClient;
@@ -1837,8 +1848,8 @@ window.ROOC_SUPABASE = {
       hydratePublicListings();
       hydrateAuthUi();
       trackPageView();
-      // โหลดไอคอนหลังจากที่หน้าโหลดเสร็จแล้ว
-      setTimeout(loadDynamicIcons, 500);
+      // โหลดไอคอนแบบ Dynamic
+      setTimeout(window.ROOC_LOAD_ICONS, 500);
     });
   } else {
     initTheme();
@@ -1846,8 +1857,8 @@ window.ROOC_SUPABASE = {
     hydratePublicListings();
     hydrateAuthUi();
     trackPageView();
-    // โหลดไอคอนหลังจากที่หน้าโหลดเสร็จแล้ว
-    setTimeout(loadDynamicIcons, 500);
+    // โหลดไอคอนแบบ Dynamic
+    setTimeout(window.ROOC_LOAD_ICONS, 500);
   }
 })();
 
