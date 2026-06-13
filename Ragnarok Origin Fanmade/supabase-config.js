@@ -138,6 +138,60 @@ window.ROOC_SUPABASE = {
     });
   }
 
+  // ฟังก์ชันดึงและแสดงไอคอนจากฐานข้อมูล
+  async function loadDynamicIcons() {
+    if (!supabaseClient) return;
+    
+    try {
+      const { data, error } = await supabaseClient
+        .from('marketplace_settings')
+        .select('key, value')
+        .in('key', ['icon_site-logo', 'icon_cat-mvp', 'icon_cat-acc', 'icon_cat-fashion']);
+      
+      if (error) {
+        console.warn('Error loading dynamic icons:', error.message);
+        return;
+      }
+      
+      if (!data || data.length === 0) return;
+      
+      // สร้าง map ของ icon URLs
+      const iconMap = {};
+      data.forEach(row => {
+        const iconType = row.key.replace('icon_', '');
+        iconMap[iconType] = row.value;
+      });
+      
+      // อัปเดต Logo เว็บไซต์
+      if (iconMap['site-logo']) {
+        const logoImages = document.querySelectorAll('img[src*="rooc-icon"]');
+        logoImages.forEach(img => {
+          if (img.src.includes('rooc-icon-64') || img.src.includes('rooc-icon-32') || img.src.includes('rooc-icon-192')) {
+            img.src = iconMap['site-logo'];
+          }
+        });
+      }
+      
+      // อัปเดต Category Icons
+      const categoryMap = {
+        'cat-mvp': 'mvp-c.png',
+        'cat-acc': 'accessories-a.png',
+        'cat-fashion': 'fashion-c.png'
+      };
+      
+      Object.entries(categoryMap).forEach(([key, filename]) => {
+        if (iconMap[key]) {
+          const categoryImages = document.querySelectorAll(`img[src*="${filename}"]`);
+          categoryImages.forEach(img => {
+            img.src = iconMap[key];
+          });
+        }
+      });
+    } catch (err) {
+      console.warn('Failed to load dynamic icons:', err);
+    }
+  }
+
   function getSupabaseClient() {
     return supabaseClient;
   }
@@ -1768,6 +1822,7 @@ window.ROOC_SUPABASE = {
     document.addEventListener("DOMContentLoaded", () => {
       initTheme();
       initFloatingElements();
+      loadDynamicIcons();
       hydratePublicListings();
       hydrateAuthUi();
       trackPageView();
@@ -1775,6 +1830,7 @@ window.ROOC_SUPABASE = {
   } else {
     initTheme();
     initFloatingElements();
+    loadDynamicIcons();
     hydratePublicListings();
     hydrateAuthUi();
     trackPageView();
