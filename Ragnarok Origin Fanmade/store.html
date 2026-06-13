@@ -137,7 +137,7 @@
         border-radius: 6px;
       }
       .owner-controls .btn[data-delete] {
-        grid-column: span 2;
+        color: var(--expired);
         background: rgba(239, 68, 68, 0.05);
         border: 1px solid rgba(239, 68, 68, 0.1);
       }
@@ -573,12 +573,12 @@
         if (soldBtn) window.markListingSold(soldBtn.dataset.sold);
         if (deleteBtn) window.deleteListing(deleteBtn.dataset.delete);
         if (customizeBtn) {
+          event.preventDefault();
+          event.stopPropagation();
           const id = customizeBtn.dataset.customize;
+          console.log("Customizing theme for:", id);
           if (typeof window.showThemePickerModal === 'function') {
             window.showThemePickerModal(id);
-          } else {
-            // Fallback กรณีเรียกผ่าน window ไม่ได้ ให้ลองเรียกตรงๆ
-            showThemePickerModal(id);
           }
         }
 

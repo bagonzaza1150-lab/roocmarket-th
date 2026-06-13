@@ -4029,6 +4029,7 @@ h1 {
   align-items: center;
   gap: 8px;
   margin-bottom: 12px;
+  min-width: 0;
 }
 
 .listing-seller img {
@@ -4042,6 +4043,10 @@ h1 {
   font-size: 13px;
   font-weight: 700;
   color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
 }
 
 /* --- Seller Storefront Styles --- */

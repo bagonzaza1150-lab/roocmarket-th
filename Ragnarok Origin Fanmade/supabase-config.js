@@ -641,9 +641,9 @@ window.ROOC_SUPABASE = {
           </div>`}
           <div class="listing-seller">
             <img src="${escapeHtml(sellerAvatar)}" alt="" loading="lazy" decoding="async" />
-	            <a href="store.html?id=${encodeURIComponent(listing.user_id)}" class="seller-store-link" title="ไปที่หน้าร้านค้า" onclick="event.stopPropagation();" style="display: flex; align-items: center; gap: 4px;">
-	              <span>${escapeHtml(sellerName)}</span>
-	              ${listing.seller_is_premium ? '<strong title="Premium" style="color: #f59e0b; font-size: 14px; text-shadow: 0 0 8px rgba(245, 158, 11, 0.3);">♛</strong>' : ""}
+		            <a href="store.html?id=${encodeURIComponent(listing.user_id)}" class="seller-store-link" title="ไปที่หน้าร้านค้า" onclick="event.stopPropagation();" style="display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden;">
+	              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(sellerName)}</span>
+	              ${listing.seller_is_premium ? '<strong title="Premium" style="color: #f59e0b; font-size: 14px; text-shadow: 0 0 8px rgba(245, 158, 11, 0.3); flex-shrink: 0;">♛</strong>' : ""}
 	            </a>
             ${trustBadge}
           </div>
@@ -1299,13 +1299,13 @@ window.ROOC_SUPABASE = {
 	              ${isServiceListing ? "" : `<div class="item-media">
 	                <img src="${escapeHtml(listingImages[0])}" alt="" loading="lazy" />
 	              </div>`}
-		              <div class="listing-seller">
-		                <img src="${escapeHtml(sellerAvatar)}" alt="" />
-		                <span style="display: flex; align-items: center; gap: 4px;">
-		                  ${escapeHtml(sellerName)}
-		                  ${listing.seller_is_premium ? '<strong title="Premium" style="color: #f59e0b; font-size: 14px; text-shadow: 0 0 8px rgba(245, 158, 11, 0.3);">♛</strong>' : ""}
+		              <div class="listing-seller" style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+		                <img src="${escapeHtml(sellerAvatar)}" alt="" style="flex-shrink: 0;" />
+		                <span style="display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden;">
+		                  <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(sellerName)}</span>
+		                  ${listing.seller_is_premium ? '<strong title="Premium" style="color: #f59e0b; font-size: 14px; text-shadow: 0 0 8px rgba(245, 158, 11, 0.3); flex-shrink: 0;">♛</strong>' : ""}
 		                </span>
-		                ${isOwner ? `<span class="status-badge ${status.className}" style="margin-left: auto;">${status.label}</span>` : ""}
+		                ${isOwner ? `<span class="status-badge ${status.className}" style="margin-left: auto; flex-shrink: 0;">${status.label}</span>` : ""}
 		              </div>
 	              <div class="listing-meta">${badges}</div>
 	              <h3>${escapeHtml(title)}</h3>
