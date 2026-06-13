@@ -16,6 +16,104 @@
     <script src="supabase-config.js?v=20260609-hero-sponsor"></script>
   </head>
   <style>
+    /* Success Popup Animation */
+    @keyframes popupFadeIn {
+      from { opacity: 0; visibility: hidden; }
+      to { opacity: 1; visibility: visible; }
+    }
+    @keyframes iconBounce {
+      0% { transform: scale(0); opacity: 0; }
+      50% { transform: scale(1.2); }
+      70% { transform: scale(0.9); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes contentSlideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .success-popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .success-popup-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    .success-popup-card {
+      background: #121b26;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 32px;
+      padding: 48px 32px;
+      width: 90%;
+      max-width: 420px;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      transform: translateY(20px);
+      transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .success-popup-overlay.show .success-popup-card {
+      transform: translateY(0);
+    }
+    .success-icon-wrap {
+      width: 100px;
+      height: 100px;
+      background: rgba(29, 185, 84, 0.1);
+      color: #1db954;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 50px;
+      margin: 0 auto 24px;
+      animation: iconBounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      animation-delay: 0.2s;
+      opacity: 0;
+    }
+    .success-popup-card h2 {
+      color: white;
+      font-size: 28px;
+      margin-bottom: 12px;
+      font-weight: 700;
+      animation: contentSlideUp 0.6s ease-out forwards;
+      animation-delay: 0.4s;
+      opacity: 0;
+    }
+    .success-popup-card p {
+      color: #8a99af;
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 32px;
+      animation: contentSlideUp 0.6s ease-out forwards;
+      animation-delay: 0.5s;
+      opacity: 0;
+    }
+    .success-progress-bar {
+      height: 4px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    .success-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: #f7b500;
+      transition: width 2.5s linear;
+    }
+
     .theme-option.locked {
       position: relative;
       cursor: not-allowed;
@@ -1071,7 +1169,8 @@
           localStorage.removeItem('rooc-public-listings-v3-no-fb');
           localStorage.removeItem('rooc-public-listings-legacy-v1');
 
-          setPostMessage("เผยแพร่ประกาศเรียบร้อย กลับไปหน้าแรกเพื่อดูจำนวนประกาศที่อัปเดต");
+          // แสดง Success Popup แทนการแจ้งเตือนแบบเดิม
+          showSuccessPopup();
         } catch (error) {
           setPostMessage(error.message || "เผยแพร่ประกาศไม่สำเร็จ", true);
         }
@@ -1351,6 +1450,39 @@
         return (supabaseConfig.adminUserIds || []).includes(user.id) ||
           (supabaseConfig.adminEmails || []).map((entry) => entry.toLowerCase()).includes(email) ||
           discordIds.some((id) => (supabaseConfig.adminDiscordIds || []).includes(id));
+      }
+
+      function showSuccessPopup() {
+        // สร้าง Overlay ถ้ายังไม่มี
+        let overlay = document.getElementById('successPopupOverlay');
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.id = 'successPopupOverlay';
+          overlay.className = 'success-popup-overlay';
+          overlay.innerHTML = `
+            <div class="success-popup-card">
+              <div class="success-icon-wrap">✅</div>
+              <h2>ประกาศสำเร็จ!</h2>
+              <p>ไอเทมของคุณถูกนำขึ้นตลาดเรียบร้อยแล้ว<br>กำลังพากลับไปที่หน้าร้านค้า...</p>
+              <div class="success-progress-bar">
+                <div class="success-progress-fill" id="successProgress"></div>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(overlay);
+        }
+
+        // แสดง Popup
+        setTimeout(() => {
+          overlay.classList.add('show');
+          const fill = document.getElementById('successProgress');
+          if (fill) setTimeout(() => fill.style.width = '100%', 100);
+        }, 100);
+
+        // Redirect หลังจาก 2.5 วินาที
+        setTimeout(() => {
+          window.location.href = "store.html";
+        }, 2800);
       }
 
       if (canUseSupabase) {
