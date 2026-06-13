@@ -767,14 +767,17 @@
           );
         }
 
-        if (target.closest("#sellerContactCopy") && activeSellerName) {
-          navigator.clipboard?.writeText(activeSellerName);
-          target.closest("#sellerContactCopy").classList.add("is-copied");
+        if (target.closest("#sellerContactCopy")) {
+          app?.copySellerContactName?.();
         }
 
         if (target.closest("[data-close-contact]")) {
-          document.querySelector("#sellerContactModal").hidden = true;
-          document.body.classList.remove("modal-open");
+          if (app?.closeSellerContact) {
+            app.closeSellerContact();
+          } else {
+            document.querySelector("#sellerContactModal").hidden = true;
+            document.body.classList.remove("modal-open");
+          }
         }
       });
 
