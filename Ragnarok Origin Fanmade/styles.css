@@ -4406,6 +4406,14 @@ h1 {
   padding-bottom: 5rem;
 }
 
+.store-header .store-profile {
+  gap: 36px !important;
+}
+
+.store-header .store-info {
+  min-width: 0;
+}
+
 /* Link in listing card to store */
 .seller-store-link {
   text-decoration: none;
@@ -6710,7 +6718,7 @@ html, body {
 /* Offer Mailbox */
 .offer-mailbox {
   margin-top: 1rem;
-  padding: 1rem;
+  padding: 1rem 1.1rem;
   background: var(--paper-soft);
   border-radius: 8px;
   border-left: 3px solid var(--blue);
@@ -6733,7 +6741,7 @@ html, body {
 }
 
 .offer-mail {
-  padding: 0.75rem;
+  padding: 0.9rem;
   margin: 0.5rem 0;
   background: var(--paper);
   border-radius: 6px;
@@ -6770,26 +6778,29 @@ html, body {
 }
 
 .offer-mail-message {
+  display: none;
   margin-top: 8px;
 }
 
-.offer-mail-message summary {
+.offer-mail-message-button {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 28px;
   border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--paper-soft);
+  margin-top: 8px;
   padding: 0 10px;
   color: var(--blue);
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
-  list-style: none;
 }
 
-.offer-mail-message summary::-webkit-details-marker {
-  display: none;
+.offer-mail-message-button:hover {
+  border-color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 16%, var(--paper-soft));
 }
 
 .offer-mail-message p,
@@ -6804,6 +6815,45 @@ html, body {
   line-height: 1.45;
   overflow-wrap: anywhere;
   white-space: normal;
+}
+
+.offer-message-popup-card {
+  width: min(430px, calc(100vw - 32px));
+}
+
+.offer-message-popup-meta {
+  display: grid;
+  gap: 4px;
+  margin: 12px 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-soft);
+  padding: 12px;
+}
+
+.offer-message-popup-meta strong {
+  color: var(--green);
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}
+
+.offer-message-popup-meta span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.offer-message-popup-text {
+  min-height: 90px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  padding: 14px;
+  color: var(--ink);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .offer-mail div {

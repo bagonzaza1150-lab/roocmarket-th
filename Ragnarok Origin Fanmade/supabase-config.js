@@ -1778,6 +1778,7 @@ window.ROOC_SUPABASE = {
                             <span>${escapeHtml(o.buyer_display_name || "ผู้เสนอราคา")}</span>
                           </div>
                           ${o.message ? `
+                            <button class="offer-mail-message-button" type="button" data-offer-message="${escapeHtml(o.message)}" data-offer-buyer="${escapeHtml(o.buyer_display_name || "ผู้เสนอราคา")}" data-offer-price="${escapeHtml(formatListingPrice(o.offer_price_text))}">ดูข้อความ</button>
                             <details class="offer-mail-message">
                               <summary>ดูข้อความ</summary>
                               <p>${escapeHtml(o.message)}</p>
@@ -2095,12 +2096,62 @@ window.ROOC_SUPABASE = {
     });
   }
 
+  function closeOfferMessagePopup() {
+    const popup = document.querySelector("#offerMessagePopup");
+    if (popup) popup.hidden = true;
+    document.body.classList.remove("modal-open");
+  }
+
+  function openOfferMessagePopup(button) {
+    let popup = document.querySelector("#offerMessagePopup");
+    if (!popup) {
+      popup = document.createElement("div");
+      popup.id = "offerMessagePopup";
+      popup.className = "modal-overlay offer-message-popup";
+      popup.hidden = true;
+      popup.innerHTML = `
+        <section class="modal-content offer-message-popup-card" role="dialog" aria-modal="true" aria-labelledby="offerMessagePopupTitle">
+          <button class="modal-close" type="button" data-close-offer-message aria-label="ปิด">×</button>
+          <p class="eyebrow">OFFER MESSAGE</p>
+          <h3 id="offerMessagePopupTitle">ข้อความจากผู้เสนอราคา</h3>
+          <div class="offer-message-popup-meta">
+            <strong id="offerMessagePopupPrice"></strong>
+            <span id="offerMessagePopupBuyer"></span>
+          </div>
+          <p id="offerMessagePopupText" class="offer-message-popup-text"></p>
+        </section>
+      `;
+      document.documentElement.appendChild(popup);
+    }
+
+    popup.querySelector("#offerMessagePopupPrice").textContent = `฿${button.dataset.offerPrice || "-"}`;
+    popup.querySelector("#offerMessagePopupBuyer").textContent = button.dataset.offerBuyer || "ผู้เสนอราคา";
+    popup.querySelector("#offerMessagePopupText").textContent = button.dataset.offerMessage || "ไม่มีข้อความเพิ่มเติม";
+    popup.hidden = false;
+    document.body.classList.add("modal-open");
+  }
+
   document.addEventListener("click", async (event) => {
     const descriptionToggle = event.target.closest("[data-description-toggle]");
     const trigger = event.target.closest(".user-menu-trigger");
     const mailboxTrigger = event.target.closest(".mailbox-trigger");
+    const offerMessageButton = event.target.closest("[data-offer-message]");
+    const closeOfferMessageButton = event.target.closest("[data-close-offer-message]");
     const offerRead = event.target.closest("[data-offer-read]");
     const logout = event.target.closest("[data-user-logout]");
+
+    if (offerMessageButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      openOfferMessagePopup(offerMessageButton);
+      return;
+    }
+
+    if (closeOfferMessageButton || event.target.id === "offerMessagePopup") {
+      event.preventDefault();
+      closeOfferMessagePopup();
+      return;
+    }
 
     if (descriptionToggle) {
       event.preventDefault();
