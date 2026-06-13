@@ -21,7 +21,7 @@ window.ROOC_SUPABASE = {
       const { data, error } = await supabaseClient
         .from('marketplace_settings')
         .select('key, value')
-        .in('key', ['icon_site-logo', 'icon_cat-mvp', 'icon_cat-acc', 'icon_cat-fashion', 'icon_dash-sell', 'icon_dash-buy', 'icon_dash-service', 'icon_dash-account']);
+        .in('key', ['icon_site-logo', 'icon_cat-mvp', 'icon_cat-acc', 'icon_cat-fashion', 'icon_cat-auction', 'icon_dash-sell', 'icon_dash-buy', 'icon_dash-service', 'icon_dash-account', 'category_lock_mvp', 'category_lock_acc', 'category_lock_fashion', 'category_lock_auction']);
       
       if (error || !data || data.length === 0) return;
       
@@ -52,12 +52,22 @@ window.ROOC_SUPABASE = {
         });
       }
 
-      // 2. อัปเดต Category Icons
+      // 2. อัปเดต Category Icons และสถานะล็อค
       const catPatterns = {
         'cat-mvp': ['mvp-c.png', 'mvp'],
         'cat-acc': ['accessories-a.png', 'acc'],
-        'cat-fashion': ['fashion-c.png', 'fashion']
+        'cat-fashion': ['fashion-c.png', 'fashion'],
+        'cat-auction': ['auction-a.png', 'auction']
       };
+      
+      // โหลดสถานะล็อคหมวดหมู่
+      const categoryLocks = {};
+      data.forEach(row => {
+        if (row.key.startsWith('category_lock_')) {
+          const category = row.key.replace('category_lock_', '');
+          categoryLocks[category] = row.value === 'true' || row.value === true;
+        }
+      });
 
       document.querySelectorAll('img').forEach(img => {
         const src = img.src || '';
@@ -66,6 +76,36 @@ window.ROOC_SUPABASE = {
           if (iconMap[key] && patterns.some(p => src.includes(p))) {
             img.src = addCacheBuster(iconMap[key]);
             updatedCount++;
+            
+            // ตรวจสอบสถานะล็อคและเพิ่มเลเยอร์แม่กุญแจถ้าล็อคอยู่
+            const category = key.replace('cat-', '');
+            if (categoryLocks[category]) {
+              const parent = img.closest('article');
+              if (parent && !parent.querySelector('.category-lock-overlay')) {
+                const overlay = document.createElement('div');
+                overlay.className = 'category-lock-overlay';
+                overlay.innerHTML = '🔒';
+                overlay.style.cssText = `
+                  position: absolute;
+                  top: 0;
+                  left: 0;
+                  right: 0;
+                  bottom: 0;
+                  background: rgba(0, 0, 0, 0.6);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 48px;
+                  border-radius: 12px;
+                  cursor: not-allowed;
+                  pointer-events: auto;
+                `;
+                parent.style.position = 'relative';
+                parent.appendChild(overlay);
+                parent.style.pointerEvents = 'none';
+                parent.style.opacity = '0.7';
+              }
+            }
           }
         });
       });
@@ -111,6 +151,7 @@ window.ROOC_SUPABASE = {
         'cat-mvp': 'preview-cat-mvp',
         'cat-acc': 'preview-cat-acc',
         'cat-fashion': 'preview-cat-fashion',
+        'cat-auction': 'preview-cat-auction',
         'dash-sell': 'preview-dash-sell',
         'dash-buy': 'preview-dash-buy',
         'dash-service': 'preview-dash-service',

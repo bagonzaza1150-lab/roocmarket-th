@@ -166,6 +166,15 @@
             <p><span id="fashionListingCount">0</span> รายการ</p>
           </div>
         </article>
+        <article>
+          <span class="category-icon">
+            <img src="assets/category-icons/auction-a.png" alt="" />
+          </span>
+          <div>
+            <h2>Auction</h2>
+            <p><span id="auctionListingCount">0</span> รายการ</p>
+          </div>
+        </article>
 <!-- Account Category Removed -->
       </section>
 
@@ -210,6 +219,7 @@
               <option value="mvp">MVP Cards</option>
               <option value="accessories">Accessories</option>
               <option value="fashion">Fashion</option>
+              <option value="auction">Auction</option>
               <option value="account">Account</option>
             </select>
           </label>
@@ -378,6 +388,7 @@
         mvp: "MVP Cards",
         accessories: "Accessories",
         fashion: "Fashion",
+        auction: "Auction",
         account: "Account"
       };
       const appConfig = window.ROOC_SUPABASE || {};
@@ -420,6 +431,7 @@
           mvp: document.querySelector("#mvpListingCount"),
           accessories: document.querySelector("#accessoriesListingCount"),
           fashion: document.querySelector("#fashionListingCount"),
+          auction: document.querySelector("#auctionListingCount"),
           account: document.querySelector("#accountListingCount")
         };
         const totalTarget = document.querySelector("#totalListingCount");
@@ -450,7 +462,7 @@
 
           if (!data) return;
 
-          const counts = { mvp: 0, accessories: 0, fashion: 0, account: 0 };
+          const counts = { mvp: 0, accessories: 0, fashion: 0, auction: 0, account: 0 };
           data.forEach((listing) => {
             if (counts[listing.category] !== undefined) counts[listing.category] += 1;
           });

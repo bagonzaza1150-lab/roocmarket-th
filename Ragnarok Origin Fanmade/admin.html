@@ -272,6 +272,7 @@
                     <option value="mvp">MVP Cards</option>
                     <option value="accessories">Accessories</option>
                     <option value="fashion">Fashion</option>
+                    <option value="auction">Auction</option>
                   </select>
                 </div>
                 <div class="admin-items" id="adminItems"></div>
@@ -503,6 +504,50 @@
                           <span style="display: block; font-size: 13px; font-weight: bold;">Fashion Icon</span>
                           <input type="file" data-icon-type="cat-fashion" accept="image/*" style="font-size: 11px; margin-top: 4px;" />
                         </div>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft);">
+                          <img id="preview-cat-auction" src="assets/category-icons/auction-a.png" style="max-width: 32px; max-height: 32px;" />
+                        </div>
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">Auction Icon</span>
+                          <input type="file" data-icon-type="cat-auction" accept="image/*" style="font-size: 11px; margin-top: 4px;" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Category Lock/Unlock Controls -->
+                  <div class="icon-group-card" style="border: 1px solid var(--line); border-radius: 16px; padding: 16px; background: var(--paper);">
+                    <h3 style="margin-top: 0; font-size: 16px; border-bottom: 1px solid var(--line); padding-bottom: 8px;">🔒 ล็อค/ปลดล็อคหมวดหมู่</h3>
+                    <div class="icon-upload-list" style="display: grid; gap: 12px; margin-top: 12px;">
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px; justify-content: space-between;">
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">MVP Cards</span>
+                          <span style="display: block; font-size: 11px; color: var(--text-soft);">สถานะ: <span id="lock-status-mvp">ปลดล็อค</span></span>
+                        </div>
+                        <button class="btn btn-small" type="button" id="toggle-lock-mvp" data-category="mvp">ล็อค</button>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px; justify-content: space-between;">
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">Accessories</span>
+                          <span style="display: block; font-size: 11px; color: var(--text-soft);">สถานะ: <span id="lock-status-acc">ปลดล็อค</span></span>
+                        </div>
+                        <button class="btn btn-small" type="button" id="toggle-lock-acc" data-category="acc">ล็อค</button>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px; justify-content: space-between;">
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">Fashion</span>
+                          <span style="display: block; font-size: 11px; color: var(--text-soft);">สถานะ: <span id="lock-status-fashion">ปลดล็อค</span></span>
+                        </div>
+                        <button class="btn btn-small" type="button" id="toggle-lock-fashion" data-category="fashion">ล็อค</button>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px; justify-content: space-between;">
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">Auction</span>
+                          <span style="display: block; font-size: 11px; color: var(--text-soft);">สถานะ: <span id="lock-status-auction">ปลดล็อค</span></span>
+                        </div>
+                        <button class="btn btn-small" type="button" id="toggle-lock-auction" data-category="auction">ล็อค</button>
                       </div>
                     </div>
                   </div>
@@ -848,6 +893,10 @@
       const saveIconsBtn = document.getElementById('saveIconsBtn');
       const iconManagerMessage = document.getElementById('iconManagerMessage');
       let iconFiles = {};
+      
+      // Category Lock/Unlock Elements
+      const lockButtons = document.querySelectorAll('[id^="toggle-lock-"]');
+      let categoryLockState = { mvp: false, acc: false, fashion: false, auction: false };
 
       const supportSettingsForm = document.querySelector("#supportSettingsForm");
       const supportSettingsMessage = document.querySelector("#supportSettingsMessage");
@@ -1915,7 +1964,86 @@
           loadAdminListings();
           loadBannedUsers();
           if (typeof loadCurrentIconsForAdmin === 'function') {
-            loadCurrentIconsForAdmin(); // โหลดไอคอนปัจจุบันเมื่อเข้า Admin
+            loadCurrentIconsForAdmin();
+      
+      // โหลดสถานะการล็อคหมวดหมู่จากฐานข้อมูล
+      async function loadCategoryLockState() {
+        try {
+          const { data, error } = await supabaseClient
+            .from('marketplace_settings')
+            .select('key, value')
+            .in('key', ['category_lock_mvp', 'category_lock_acc', 'category_lock_fashion', 'category_lock_auction']);
+          
+          if (error) throw error;
+          
+          if (data && data.length > 0) {
+            data.forEach(row => {
+              const category = row.key.replace('category_lock_', '');
+              categoryLockState[category] = row.value === 'true' || row.value === true;
+            });
+          }
+          
+          updateLockButtonUI();
+        } catch (err) {
+          console.error('Error loading category lock state:', err);
+        }
+      }
+      
+      // อัปเดต UI ของปุ่มล็อค
+      function updateLockButtonUI() {
+        Object.entries(categoryLockState).forEach(([category, isLocked]) => {
+          const button = document.getElementById(`toggle-lock-${category}`);
+          const statusSpan = document.getElementById(`lock-status-${category}`);
+          if (button && statusSpan) {
+            if (isLocked) {
+              button.textContent = '🔓 ปลดล็อค';
+              button.classList.add('btn-danger');
+              statusSpan.textContent = '🔒 ล็อคอยู่';
+            } else {
+              button.textContent = '🔒 ล็อค';
+              button.classList.remove('btn-danger');
+              statusSpan.textContent = '✅ ปลดล็อค';
+            }
+          }
+        });
+      }
+      
+      // ฟังก์ชันสลับสถานะล็อค
+      async function toggleCategoryLock(category) {
+        const isCurrentlyLocked = categoryLockState[category];
+        const newLockState = !isCurrentlyLocked;
+        
+        try {
+          const { error } = await supabaseClient
+            .from('marketplace_settings')
+            .upsert(
+              { key: `category_lock_${category}`, value: newLockState ? 'true' : 'false' },
+              { onConflict: 'key' }
+            );
+          
+          if (error) throw error;
+          
+          categoryLockState[category] = newLockState;
+          updateLockButtonUI();
+          
+          // รีโหลด Icon เพื่ออัปเดตสถานะบนหน้าแรก
+          if (typeof window.ROOC_LOAD_ICONS === 'function') {
+            await window.ROOC_LOAD_ICONS();
+          }
+        } catch (err) {
+          alert('เกิดข้อผิดพลาด: ' + err.message);
+        }
+      }
+      
+      // เพิ่ม Event Listener ให้ปุ่มล็อค
+      lockButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const category = button.dataset.category;
+          toggleCategoryLock(category);
+        });
+      });
+      
+      loadCategoryLockState(); // โหลดไอคอนปัจจุบันเมื่อเข้า Admin
           }
         } else if (!session) {
           window.location.replace("login.html");
@@ -2022,6 +2150,11 @@
             iconFiles = {}; // Clear files
             if (typeof loadCurrentIconsForAdmin === 'function') {
               await loadCurrentIconsForAdmin(); // โหลดไอคอนล่าสุดมาแสดง
+            }
+            
+            // รีโหลด Icon เพื่ออัปเดตสถานะบนหน้าแรก
+            if (typeof window.ROOC_LOAD_ICONS === 'function') {
+              await window.ROOC_LOAD_ICONS();
             }
           } catch (err) {
             setMessage(iconManagerMessage, "เกิดข้อผิดพลาด: " + err.message, true);
