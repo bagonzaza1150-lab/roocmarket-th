@@ -118,26 +118,32 @@
       /* ปรับแต่งปุ่มจัดการเจ้าของร้านให้ไม่ล้นการ์ด */
       .owner-controls {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 4px;
-        margin-top: 8px;
-        padding-top: 8px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+        margin-top: 12px;
+        padding-top: 12px;
         border-top: 1px dashed var(--line);
       }
       .owner-controls .btn {
         width: 100%;
-        min-height: 28px;
+        min-height: 32px;
         justify-content: center;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        font-size: 10px;
-        padding: 4px 2px;
+        font-size: 11px;
+        padding: 4px 8px;
         font-weight: 700;
+        border-radius: 6px;
       }
-      .owner-controls .btn-danger {
+      .owner-controls .btn[data-delete] {
         grid-column: span 2;
-        margin-top: 2px;
+        background: rgba(239, 68, 68, 0.05);
+        border: 1px solid rgba(239, 68, 68, 0.1);
+      }
+      .owner-controls .btn[data-delete]:hover {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: rgba(239, 68, 68, 0.2);
       }
       .listing-meta span {
         font-size: 9px;
@@ -201,9 +207,9 @@
               <span class="status-indicator online"></span>
             </div>
             <div class="store-info">
-              <div class="store-name-row">
-                <h1 id="storeName">กำลังโหลด...</h1>
-                <div id="ownerBadge" class="management-only" style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 20px; font-size: 12px; margin-left: 10px;">เจ้าของร้าน</div>
+              <div class="store-name-row" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <h1 id="storeName" style="margin: 0; font-size: 28px;">กำลังโหลด...</h1>
+                <div id="ownerBadge" class="management-only" style="background: var(--primary); color: white; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; white-space: nowrap;">เจ้าของร้าน</div>
               </div>
               <p class="store-tagline" id="storeDiscordText"></p>
               <div class="store-socials">
@@ -479,10 +485,10 @@
         const themeHTML = themes.map(theme => {
           const isActive = currentBg === theme.id;
           const isLocked = !isPremium && theme.id !== 'default';
-          let bgStyle = theme.isDefault ? `background: var(--paper); border: 2px solid var(--line);` : `background-image: url('assets/card-bg/${theme.id}.png');`;
+          let bgStyle = theme.isDefault ? `background: var(--paper); border: 2px solid var(--line);` : `background-image: url('assets/card-bg/${theme.id}.png'); background-size: cover; background-position: center;`;
           return `
             <button type="button" class="theme-option${isActive ? ' active' : ''}${isLocked ? ' locked' : ''}" 
-                 style="${bgStyle}" 
+                 style="${bgStyle}; height: 80px; border-radius: 12px; border: 2px solid transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3); transition: all 0.2s;" 
                  data-theme="${theme.id}"
                  onclick="window.selectThemeInModal(this)">
               ${theme.label}
