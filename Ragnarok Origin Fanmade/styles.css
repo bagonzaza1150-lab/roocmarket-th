@@ -4152,6 +4152,44 @@ h1 {
   object-fit: cover;
 }
 
+.listing-seller-avatar {
+  position: relative;
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  overflow: visible !important;
+  max-width: none !important;
+}
+
+.listing-seller .listing-seller-avatar-image {
+  position: absolute;
+  inset: 3px;
+  width: 24px;
+  height: 24px;
+  border: 0 !important;
+  border-radius: 999px;
+  box-shadow: none !important;
+  background: transparent !important;
+  object-fit: cover;
+  z-index: 1;
+}
+
+.listing-seller .listing-seller-avatar-frame {
+  position: absolute;
+  inset: -7px -6px -7px -6px;
+  width: calc(100% + 12px);
+  height: calc(100% + 14px);
+  transform: translateY(-1px);
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 2;
+}
+
 .listing-seller span {
   font-size: 13px;
   font-weight: 700;
@@ -4160,6 +4198,52 @@ h1 {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 180px;
+}
+
+.listing-seller > .listing-seller-avatar {
+  position: relative !important;
+  display: block !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  max-width: 38px !important;
+  flex: 0 0 38px !important;
+  overflow: visible !important;
+  color: inherit !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+}
+
+.listing-seller > .listing-seller-avatar > .listing-seller-avatar-image {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 28px !important;
+  height: 28px !important;
+  max-width: none !important;
+  transform: translate(-50%, -50%);
+  border: 0 !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  object-fit: cover !important;
+  z-index: 1;
+}
+
+.listing-seller > .listing-seller-avatar > .listing-seller-avatar-frame {
+  position: absolute !important;
+  inset: -5px -4px -5px -4px !important;
+  width: calc(100% + 8px) !important;
+  height: calc(100% + 10px) !important;
+  max-width: none !important;
+  transform: translateY(-1px);
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  object-fit: contain !important;
+  pointer-events: none;
+  z-index: 2;
 }
 
 /* --- Seller Storefront Styles --- */
