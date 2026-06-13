@@ -62,25 +62,43 @@
 
       <section class="my-listings-panel" id="myListingsPanel" hidden>
         <div class="panel-head">
-          <h2>รายการประกาศ</h2>
-          <button class="btn btn-light" id="refreshListings" type="button">รีเฟรช</button>
+          <div class="panel-title-group">
+            <h2>รายการประกาศ</h2>
+            <p class="panel-subtitle">จัดการและติดตามประกาศของคุณ</p>
+          </div>
+          <div class="panel-actions">
+            <input type="text" id="searchListings" class="search-input" placeholder="ค้นหาประกาศ..." />
+            <button class="btn btn-light" id="refreshListings" type="button">🔄 รีเฟรช</button>
+          </div>
         </div>
-        <div class="listing-quota" id="listingQuota" hidden>
-          <div>
-            <span>ประกาศขาย</span>
-            <strong id="quotaUsed">0/2</strong>
+        <div class="listing-quota dashboard-overview" id="listingQuota" hidden>
+          <div class="quota-item">
+            <div class="quota-icon">📤</div>
+            <div>
+              <span>ประกาศขาย</span>
+              <strong id="quotaUsed">0/2</strong>
+            </div>
           </div>
-          <div>
-            <span>ประกาศรับซื้อ</span>
-            <strong id="quotaRemaining">0/2</strong>
+          <div class="quota-item">
+            <div class="quota-icon">📥</div>
+            <div>
+              <span>ประกาศรับซื้อ</span>
+              <strong id="quotaRemaining">0/2</strong>
+            </div>
           </div>
-          <div>
-            <span>รับจ้างลงดัน</span>
-            <strong id="quotaService">0/2</strong>
+          <div class="quota-item">
+            <div class="quota-icon">🔧</div>
+            <div>
+              <span>รับจ้างลงดัน</span>
+              <strong id="quotaService">0/2</strong>
+            </div>
           </div>
-          <div>
-            <span>สถานะบัญชี</span>
-            <strong id="quotaPlan">Free</strong>
+          <div class="quota-item">
+            <div class="quota-icon">👤</div>
+            <div>
+              <span>สถานะบัญชี</span>
+              <strong id="quotaPlan">Free</strong>
+            </div>
           </div>
         </div>
         <p class="post-message" id="myListingsMessage"></p>
@@ -104,6 +122,7 @@
       const emptyState = document.querySelector("#myListingEmpty");
       const message = document.querySelector("#myListingsMessage");
       const refreshButton = document.querySelector("#refreshListings");
+      const searchInput = document.querySelector("#searchListings");
       const listingQuota = document.querySelector("#listingQuota");
       const quotaUsed = document.querySelector("#quotaUsed");
       const quotaRemaining = document.querySelector("#quotaRemaining");
@@ -220,6 +239,27 @@
         `;
       }
 
+      function filterListings(searchTerm = "") {
+        if (!searchTerm.trim()) {
+          renderListings(currentListings);
+          return;
+        }
+        const term = searchTerm.toLowerCase();
+        const filtered = currentListings.filter((listing) => {
+          return (
+            (listing.title || "").toLowerCase().includes(term) ||
+            (listing.item_name || "").toLowerCase().includes(term) ||
+            (listing.description || "").toLowerCase().includes(term) ||
+            (listing.character_name || "").toLowerCase().includes(term) ||
+            (listing.server_name || "").toLowerCase().includes(term)
+          );
+        });
+        renderListings(filtered);
+        if (filtered.length === 0) {
+          setMessage(`ไม่พบประกาศที่ตรงกับ "${searchTerm}"`);
+        }
+      }
+
       function renderListings(listings) {
         emptyState.hidden = listings.length > 0;
         grid.innerHTML = listings.map((listing) => {
@@ -310,7 +350,8 @@
         await loadOfferMailbox(visibleListings);
         const isPremium = premiumResult && premiumResult.active;
         const limit = isPremium ? 5 : 2;
-        const oneHourAgo = Date.now() - 3600000;
+        // Store current listings for search filtering
+      const oneHourAgo = Date.now() - 3600000;
         const sellHourlyUsed = allListings.filter((listing) => getListingType(listing) === "sell" && new Date(listing.created_at).getTime() >= oneHourAgo).length;
         const buyHourlyUsed = allListings.filter((listing) => getListingType(listing) === "buy" && new Date(listing.created_at).getTime() >= oneHourAgo).length;
         const serviceHourlyUsed = allListings.filter((listing) => getListingType(listing) === "service" && new Date(listing.created_at).getTime() >= oneHourAgo).length;
@@ -605,6 +646,9 @@
       }
 
       refreshButton.addEventListener("click", loadMyListings);
+      if (searchInput) {
+        searchInput.addEventListener("input", (e) => filterListings(e.target.value));
+      }
       grid.addEventListener("click", (event) => {
         const toggleId = event.target.dataset.toggle;
         const editPriceId = event.target.dataset.editPrice;
