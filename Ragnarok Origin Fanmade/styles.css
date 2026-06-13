@@ -5551,13 +5551,16 @@ html, body {
 }
 
 .theme-option.locked::after {
-  content: '🔒';
+  content: '';
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 20px;
-  background: rgba(0,0,0,0.4);
+  background-color: rgba(0,0,0,0.45);
+  background-image: var(--rooc-lock-icon-image);
+  background-position: center;
+  background-size: 42px 42px;
+  background-repeat: no-repeat;
   width: 100%;
   height: 100%;
   display: flex;
@@ -6937,7 +6940,7 @@ html, body {
 
 /* Theme picker modal - no overlay/shadow for all pages */
 .theme-picker-modal .theme-option::before,
-.theme-picker-modal .theme-option::after {
+.theme-picker-modal .theme-option:not(.locked)::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -6945,6 +6948,24 @@ html, body {
   z-index: 0;
   border-radius: inherit;
   pointer-events: none;
+}
+
+.theme-picker-modal .theme-option.locked::after,
+.theme-option.locked::after {
+  content: '' !important;
+  position: absolute !important;
+  inset: 0 !important;
+  transform: none !important;
+  width: 100% !important;
+  height: 100% !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  background-image: var(--rooc-lock-icon-image) !important;
+  background-position: center !important;
+  background-size: 48px 48px !important;
+  background-repeat: no-repeat !important;
+  z-index: 10 !important;
+  border-radius: inherit !important;
+  pointer-events: none !important;
 }
 
 /* --- Smooth Transitions & Loading Effects --- */

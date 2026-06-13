@@ -37,6 +37,13 @@ window.ROOC_SUPABASE = {
 
       let updatedCount = 0;
 
+      if (iconMap['lock-icon']) {
+        const lockIconUrl = addCacheBuster(iconMap['lock-icon']);
+        window.ROOC_LOCK_ICON_URL = lockIconUrl;
+        window.ROOC_GET_LOCK_ICON_URL = () => window.ROOC_LOCK_ICON_URL || "";
+        document.documentElement.style.setProperty("--rooc-lock-icon-image", `url("${lockIconUrl.replace(/"/g, '\\"')}")`);
+      }
+
       // 1. อัปเดต Logo (เปลี่ยนเฉพาะโลโก้เว็บไซต์ ไม่ทับรูปโปรไฟล์ผู้ขาย)
       if (iconMap['site-logo']) {
         const logoUrl = addCacheBuster(iconMap['site-logo']);

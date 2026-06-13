@@ -120,18 +120,21 @@
       opacity: 0.8;
     }
     .theme-option.locked::after {
-      content: '🔒';
+      content: '';
       position: absolute !important;
       top: 50% !important;
       left: 50% !important;
       transform: translate(-50%, -50%) !important; /* บังคับให้อยู่กึ่งกลางเป๊ะ */
       width: 100% !important;
       height: 100% !important;
-      background: rgba(0, 0, 0, 0.5) !important;
+      background-color: rgba(0, 0, 0, 0.5) !important;
+      background-image: var(--rooc-lock-icon-image) !important;
+      background-position: center !important;
+      background-size: 48px 48px !important;
+      background-repeat: no-repeat !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      font-size: 28px !important;
       z-index: 999 !important;
       border-radius: inherit;
       margin: 0 !important;

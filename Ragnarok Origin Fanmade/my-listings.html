@@ -711,6 +711,9 @@
       syncPage();
 
       window.ROOC_APP?.initTheme();
+      if (typeof window.ROOC_LOAD_ICONS === 'function') {
+        setTimeout(window.ROOC_LOAD_ICONS, 500);
+      }
     </script>
   </body>
 </html>

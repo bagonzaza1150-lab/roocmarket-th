@@ -597,11 +597,13 @@
         const themeHTML = themes.map(theme => {
           const isActive = currentBg === theme.id;
           const isLocked = !isPremium && theme.id !== 'default';
+          const lockIconUrl = window.ROOC_GET_LOCK_ICON_URL?.() || window.ROOC_LOCK_ICON_URL || "";
+          const safeLockIconUrl = String(lockIconUrl).replace(/"/g, '&quot;');
           
           // สร้าง Overlay สำหรับกุญแจล็อคเฉพาะผู้ใช้ทั่วไป (Premium จะไม่เห็นเลเยอร์สีเทาเลย)
           const lockOverlay = (isLocked && !isPremium) ? `
             <div class="lock-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 10;">
-              <span style="font-size: 52px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));">🔒</span>
+              ${safeLockIconUrl ? `<img src="${safeLockIconUrl}" alt="" style="width: 56px; height: 56px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));" />` : ''}
             </div>
           ` : '';
 
