@@ -95,7 +95,7 @@ window.ROOC_SUPABASE = {
                   parent.style.position = 'relative';
                   parent.appendChild(overlay);
                   parent.style.pointerEvents = 'none';
-                  parent.style.opacity = '0.7';
+                  parent.style.opacity = '1';
                 }
               } else {
                 // ปลดล็อค: ลบ overlay และคืนค่าเดิม
