@@ -58,7 +58,6 @@
         justify-content: center;
         font-weight: bold;
         color: white;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         transition: all 0.2s;
         background-size: cover;
         background-position: center;
@@ -525,9 +524,9 @@
             <button type="button"
                  class="theme-option${isActive ? ' active' : ''}${isLocked ? ' locked' : ''}"
                  data-theme="${theme.id}"
-                 style="position: relative; height: 220px; aspect-ratio: 3/4; border-radius: 14px; border: 3px solid transparent; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; font-weight: 600; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.5); transition: all 0.3s; padding: 12px; font-size: 13px; background-size: cover; background-position: center; background-repeat: no-repeat; overflow: hidden;"
+                 style="position: relative; height: 220px; aspect-ratio: 3/4; border-radius: 14px; border: 3px solid transparent; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; font-weight: 600; color: white; transition: all 0.3s; padding: 12px; font-size: 13px; background-size: cover; background-position: center; background-repeat: no-repeat; overflow: hidden;"
                  onclick="window.selectThemeInModal(this)">
-              <span style="background: rgba(0,0,0,0.5); padding: 8px 14px; border-radius: 8px; backdrop-filter: blur(2px); font-size: 12px;">${theme.label}</span>
+              <span style="background: rgba(0,0,0,0.3); padding: 8px 14px; border-radius: 8px; backdrop-filter: blur(1px); font-size: 12px;">${theme.label}</span>
             </button>
           `;
         }).join('');
