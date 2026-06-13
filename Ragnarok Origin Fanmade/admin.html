@@ -2115,6 +2115,22 @@
       async function loadCurrentIconsForAdmin() {
         if (typeof window.ROOC_LOAD_ICONS === 'function') {
           await window.ROOC_LOAD_ICONS();
+          
+          // เพิ่มการดึงค่า lock-icon มาแสดงในพรีวิวหน้า Admin
+          try {
+            const { data } = await supabaseClient
+              .from('marketplace_settings')
+              .select('value')
+              .eq('key', 'lock-icon')
+              .single();
+            
+            if (data && data.value) {
+              const previewEl = document.getElementById('preview-lock-icon');
+              if (previewEl) {
+                previewEl.src = data.value + '?t=' + Date.now();
+              }
+            }
+          } catch (e) { console.log("No lock icon set yet"); }
         } else {
           setTimeout(loadCurrentIconsForAdmin, 500);
         }

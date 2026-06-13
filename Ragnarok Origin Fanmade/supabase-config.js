@@ -21,7 +21,7 @@ window.ROOC_SUPABASE = {
       const { data, error } = await supabaseClient
         .from('marketplace_settings')
         .select('key, value')
-        .in('key', ['icon_site-logo', 'icon_cat-mvp', 'icon_cat-acc', 'icon_cat-fashion', 'icon_cat-auction', 'icon_dash-sell', 'icon_dash-buy', 'icon_dash-service', 'icon_dash-account', 'category_lock_mvp', 'category_lock_acc', 'category_lock_fashion', 'category_lock_auction']);
+        .in('key', ['icon_site-logo', 'icon_cat-mvp', 'icon_cat-acc', 'icon_cat-fashion', 'icon_cat-auction', 'icon_dash-sell', 'icon_dash-buy', 'icon_dash-service', 'icon_dash-account', 'category_lock_mvp', 'category_lock_acc', 'category_lock_fashion', 'category_lock_auction', 'lock-icon']);
       
       if (error || !data || data.length === 0) return;
       
