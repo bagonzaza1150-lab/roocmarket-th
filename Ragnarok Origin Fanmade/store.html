@@ -76,12 +76,15 @@
         position: relative;
       }
       
-      /* ลบกุญแจที่มุมออก และปรับพื้นหลังให้เนียน */
+      /* ลบกุญแจและแถบสีส้มที่มุมออกทั้งหมด และปรับพื้นหลังให้เนียน */
       .theme-option.locked {
-        background-color: #1a1a1a !important; /* บังคับสีพื้นหลังเข้มให้เท่ากัน */
+        background-color: #1a1a1a !important;
+        border-color: rgba(255,255,255,0.05) !important;
       }
+      .theme-option.locked::before,
       .theme-option.locked::after {
-        display: none !important; /* ปิดกุญแจอันเก่าที่มุม */
+        display: none !important; /* ปิดทั้งกุญแจและแถบสีส้มที่มุม */
+        content: none !important;
       }
       
       .offer-mailbox {
@@ -597,10 +600,10 @@
           const isActive = currentBg === theme.id;
           const isLocked = !isPremium && theme.id !== 'default';
           
-          // สร้าง Overlay สำหรับกุญแจล็อคที่อยู่กึ่งกลางแน่นอน
+          // สร้าง Overlay สำหรับกุญแจล็อคที่อยู่กึ่งกลางแน่นอน (ใช้พื้นหลังมืดสนิทเพื่อความเนียน)
           const lockOverlay = isLocked ? `
-            <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 5;">
-              <span style="font-size: 48px;">🔒</span>
+            <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 5;">
+              <span style="font-size: 48px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));">🔒</span>
             </div>
           ` : '';
 
