@@ -69,22 +69,18 @@ window.ROOC_SUPABASE = {
         }
       });
 
-      // จำกัดเฉพาะรูปภาพที่อยู่ในส่วนหมวดหมู่ (Category Row) เท่านั้น
+      // 2.1 จัดการหมวดหมู่ในหน้า Index (Category Row)
       document.querySelectorAll('.category-row img').forEach(img => {
         const src = img.src || '';
         if (src.includes('rooc-icon')) return;
         Object.entries(catPatterns).forEach(([key, patterns]) => {
           if (patterns.some(p => src.includes(p))) {
-            // อัปเดต Icon ถ้ามีในฐานข้อมูล
             if (iconMap[key]) {
               img.src = addCacheBuster(iconMap[key]);
               updatedCount++;
             }
-            
-            // ตรวจสอบสถานะล็อค (แมปชื่อ category ให้ตรงกัน)
             let category = key.replace('cat-', '');
-            if (category === 'acc') category = 'accessories'; // ปรับให้ตรงกับ index.html
-            
+            if (category === 'acc') category = 'accessories';
             const parent = img.closest('article');
             if (parent) {
               const existingOverlay = parent.querySelector('.category-lock-overlay');
@@ -92,28 +88,84 @@ window.ROOC_SUPABASE = {
                 if (!existingOverlay) {
                   const overlay = document.createElement('div');
                   overlay.className = 'category-lock-overlay';
-                  
-                  // ใช้รูปภาพกุญแจถ้ามีการอัปโหลดไว้ ถ้าไม่มีใช้ Emoji 🔒
                   if (iconMap['lock-icon']) {
                     overlay.innerHTML = `<img src="${addCacheBuster(iconMap['lock-icon'])}" style="max-width: 60%; max-height: 60%; object-fit: contain;" />`;
                   } else {
                     overlay.innerHTML = '🔒';
                   }
-                  
-                  parent.style.position = 'relative';
                   parent.appendChild(overlay);
                   parent.style.pointerEvents = 'none';
-                  parent.style.opacity = '1';
+                  parent.style.cursor = 'not-allowed';
                 }
               } else {
-                // ปลดล็อค: ลบ overlay และคืนค่าเดิม
-                if (existingOverlay) existingOverlay.remove();
-                parent.style.pointerEvents = 'auto';
-                parent.style.opacity = '1';
+                if (existingOverlay) {
+                  existingOverlay.remove();
+                  parent.style.pointerEvents = 'auto';
+                  parent.style.cursor = 'pointer';
+                }
               }
             }
           }
         });
+      });
+
+      // 2.2 จัดการหมวดหมู่ในหน้า Post (Category Picker)
+      document.querySelectorAll('.category-picker button').forEach(btn => {
+        const category = btn.dataset.category;
+        if (!category) return;
+        
+        // ตรวจสอบสถานะล็อค
+        const lockKey = category === 'accessories' ? 'acc' : category;
+        if (categoryLocks[lockKey]) {
+          btn.disabled = true;
+          btn.style.opacity = '0.5';
+          btn.style.cursor = 'not-allowed';
+          btn.title = "หมวดหมู่นี้ถูกปิดใช้งานชั่วคราว";
+          
+          // เพิ่มไอคอนล็อคเล็กๆ ในปุ่ม (ถ้ายังไม่มี)
+          if (!btn.querySelector('.btn-lock-icon')) {
+            const lockIcon = document.createElement('span');
+            lockIcon.className = 'btn-lock-icon';
+            if (iconMap['lock-icon']) {
+              lockIcon.innerHTML = `<img src="${addCacheBuster(iconMap['lock-icon'])}" style="width: 12px; height: 12px; margin-left: 5px; vertical-align: middle;" />`;
+            } else {
+              lockIcon.innerHTML = ' 🔒';
+            }
+            btn.appendChild(lockIcon);
+          }
+        } else {
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          btn.style.cursor = 'pointer';
+          const existingLock = btn.querySelector('.btn-lock-icon');
+          if (existingLock) existingLock.remove();
+        }
+      });
+
+      // 2.3 จัดการหมวดหมู่ในหน้า Store (Market Tabs)
+      document.querySelectorAll('.market-tabs button').forEach(btn => {
+        const category = btn.dataset.category;
+        if (!category || category === 'all') return;
+        
+        const lockKey = category === 'accessories' ? 'acc' : category;
+        if (categoryLocks[lockKey]) {
+          btn.style.opacity = '0.5';
+          btn.title = "หมวดหมู่นี้ถูกปิดใช้งานชั่วคราว";
+          if (!btn.querySelector('.tab-lock-icon')) {
+            const lockIcon = document.createElement('span');
+            lockIcon.className = 'tab-lock-icon';
+            if (iconMap['lock-icon']) {
+              lockIcon.innerHTML = `<img src="${addCacheBuster(iconMap['lock-icon'])}" style="width: 10px; height: 10px; margin-left: 3px; vertical-align: middle;" />`;
+            } else {
+              lockIcon.innerHTML = ' 🔒';
+            }
+            btn.appendChild(lockIcon);
+          }
+        } else {
+          btn.style.opacity = '1';
+          const existingLock = btn.querySelector('.tab-lock-icon');
+          if (existingLock) existingLock.remove();
+        }
       });
 
       // 3. อัปเดต Dashboard Icons (แก้ปัญหา SVG ไม่เปลี่ยน)
