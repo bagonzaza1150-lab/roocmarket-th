@@ -37,14 +37,15 @@ window.ROOC_SUPABASE = {
 
       let updatedCount = 0;
 
-      // 1. อัปเดต Logo
+      // 1. อัปเดต Logo (เปลี่ยนเฉพาะโลโก้เว็บไซต์ ไม่ทับรูปโปรไฟล์ผู้ขาย)
       if (iconMap['site-logo']) {
         const logoUrl = addCacheBuster(iconMap['site-logo']);
         document.querySelectorAll('img').forEach(img => {
-          // ข้ามรูปภาพที่อยู่ในปุ่มโซเชียลมีเดีย
-          if (img.closest('.social-btn') || img.closest('.seller-socials')) return;
+          // ข้ามรูปภาพที่อยู่ในปุ่มโซเชียลมีเดีย และข้ามรูปโปรไฟล์ผู้ขาย (storeAvatar)
+          if (img.closest('.social-btn') || img.closest('.seller-socials') || img.id === 'storeAvatar') return;
 
-          if (img.src.includes('rooc-icon') || img.closest('.brand-mark') || img.closest('.brand') || img.id === 'storeAvatar') {
+          // เปลี่ยนเฉพาะจุดที่เป็นแบรนด์เว็บไซต์
+          if (img.src.includes('rooc-icon') || img.closest('.brand-mark') || img.closest('.brand')) {
             img.src = logoUrl;
             updatedCount++;
           }
