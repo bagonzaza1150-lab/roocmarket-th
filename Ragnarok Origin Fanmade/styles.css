@@ -6793,3 +6793,16 @@ html, body {
     min-width: calc(50% - 0.5rem);
   }
 }
+
+
+/* Theme picker modal - no overlay/shadow for all pages */
+.theme-picker-modal .theme-option::before,
+.theme-picker-modal .theme-option::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: transparent !important;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
