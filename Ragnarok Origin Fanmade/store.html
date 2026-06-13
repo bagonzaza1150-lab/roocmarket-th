@@ -468,63 +468,111 @@
 
       window.showThemePickerModal = async function(listingId) {
         const app = getApp();
-        const listing = storeListings.find(l => l.id == listingId);
-        if (!listing || !app) return;
-        
-        const isPremium = (await app.getPremiumStatus(currentSession)).active;
+        const supabase = getSupabase();
+
+        // ใช้ _storeState ที่ initStorePage expose ออกมาเป็น global
+        const state = window._storeState || {};
+        const activeListings = state.storeListings || storeListings;
+        const activeSession = state.currentSession || currentSession;
+
+        // ค้นหา listing จาก storeListings
+        const listing = activeListings.find(l => String(l.id) === String(listingId));
+        if (!listing) {
+          setMessage('ไม่พบประกาศ กรุณารีเฟรชหน้าเว็บ', true);
+          return;
+        }
+        if (!supabase) {
+          setMessage('ยังไม่ได้เชื่อมต่อ Supabase', true);
+          return;
+        }
+
+        // ตรวจสอบสถานะ Premium โดยตรงจาก Supabase
+        let isPremium = false;
+        try {
+          if (app && typeof app.getPremiumStatus === 'function') {
+            const result = await app.getPremiumStatus(activeSession);
+            isPremium = result === true || (result && result.active === true);
+          } else if (activeSession) {
+            // Fallback: query โดยตรง
+            const discordId = activeSession.user?.identities?.find(i => i.provider === 'discord')?.identity_data?.sub || '';
+            const { data } = await supabase
+              .from('marketplace_premium_users')
+              .select('active')
+              .or(`user_id.eq.${activeSession.user.id}${discordId ? `,discord_id.eq.${discordId}` : ''}`)
+              .maybeSingle();
+            isPremium = !!(data && (data.active === true || data.active === 'true' || data.active === 1));
+          }
+        } catch (e) {
+          console.warn('Premium check failed:', e);
+          isPremium = false;
+        }
+
         const themes = [
-          { id: 'default', label: 'ปกติ', color: 'var(--paper)', isDefault: true },
-          { id: 'theme-pixel-grass', label: 'ทุ่งหญ้า', color: '#7ec850' },
-          { id: 'theme-pixel-sky', label: 'ท้องฟ้า', color: '#4ec0ca' },
-          { id: 'theme-pixel-gold', label: 'ทองพิกเซล', color: '#f1c40f' },
-          { id: 'theme-pixel-night', label: 'คืนดาว', color: '#1a1a2e' },
-          { id: 'theme-pixel-pink', label: 'ชมพูพิกเซล', color: '#ff85a2' }
+          { id: 'default', label: 'ปกติ', isDefault: true },
+          { id: 'theme-pixel-grass', label: 'ทุ่งหญ้า' },
+          { id: 'theme-pixel-sky', label: 'ท้องฟ้า' },
+          { id: 'theme-pixel-gold', label: 'ทองพิกเซล' },
+          { id: 'theme-pixel-night', label: 'คืนดาว' },
+          { id: 'theme-pixel-pink', label: 'ชมพูพิกเซล' }
         ];
 
         const currentBg = listing.card_background || 'default';
+
         const themeHTML = themes.map(theme => {
           const isActive = currentBg === theme.id;
           const isLocked = !isPremium && theme.id !== 'default';
-          let bgStyle = theme.isDefault ? `background: var(--paper); border: 2px solid var(--line);` : `background-image: url('assets/card-bg/${theme.id}.png'); background-size: cover; background-position: center;`;
           return `
-            <button type="button" class="theme-option${isActive ? ' active' : ''}${isLocked ? ' locked' : ''}" 
-                 style="${bgStyle}; height: 80px; border-radius: 12px; border: 2px solid transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3); transition: all 0.2s;" 
+            <button type="button"
+                 class="theme-option${isActive ? ' active' : ''}${isLocked ? ' locked' : ''}"
                  data-theme="${theme.id}"
                  onclick="window.selectThemeInModal(this)">
-              ${theme.label}
+              <span>${theme.label}</span>
             </button>
           `;
         }).join('');
-        
+
+        // ลบ modal เก่าถ้ามี
+        document.querySelector('.theme-picker-modal')?.remove();
+
         const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.style = "position:fixed; inset:0; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;";
+        modal.className = 'modal theme-picker-modal';
         modal.innerHTML = `
-          <div class="modal-content" style="background:var(--paper); padding:24px; border-radius:16px; max-width:520px; width:100%; border:1px solid var(--line);">
+          <div class="modal-content" style="max-width: 520px;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-              <h3 style="margin: 0;">✨ เลือกพื้นหลังการ์ด Premium</h3>
-              <button class="btn btn-light" style="padding: 4px 10px; font-size: 13px;" onclick="this.closest('.modal').remove()">×</button>
+              <h3 style="margin: 0;">✨ เลือกพื้นหลังการ์ด</h3>
+              <button class="btn btn-light" style="padding: 4px 10px; font-size: 13px;" id="closeThemeModal">×</button>
             </div>
-            <p style="font-size: 12px; color: var(--muted); margin: 0 0 12px;">พื้นหลัง pixel art จะแสดงบนการ์ดประกาศในหน้าแรกเพื่อเพิ่มความโดดเด่น</p>
+            <p style="font-size: 12px; color: var(--muted); margin: 0 0 4px;">พื้นหลัง pixel art จะแสดงบนการ์ดประกาศในหน้าแรกเพื่อเพิ่มความโดดเด่น</p>
+            ${isPremium
+              ? '<p style="font-size: 11px; color: #f0ad24; margin: 0 0 12px;">♛ บัญชี Premium — เลือกพื้นหลังได้ทุกแบบ</p>'
+              : '<p style="font-size: 11px; color: var(--muted); margin: 0 0 12px;">🔒 พื้นหลัง pixel art เปิดให้เฉพาะ <a href="premium.html" style="color: #f0ad24;">Premium</a> เท่านั้น</p>'
+            }
             <div class="theme-picker-grid">${themeHTML}</div>
             ${!isPremium ? `
               <div style="margin-top: 12px; padding: 10px 14px; background: rgba(240,173,36,0.08); border: 1px solid rgba(240,173,36,0.25); border-radius: 8px;">
-                <p style="color: #f0ad24; font-size: 12px; margin: 0;">🔒 พื้นหลัง pixel art เปิดให้เฉพาะ Premium — <a href="premium.html" style="color: #f0ad24;">อัปเกรด</a></p>
+                <p style="color: #f0ad24; font-size: 12px; margin: 0;">🔒 อัปเกรดเป็น <a href="premium.html" style="color: #f0ad24; font-weight: bold;">Premium</a> เพื่อปลดล็อกพื้นหลังทั้งหมด</p>
               </div>
             ` : ''}
             <div style="margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end;">
-              <button class="btn btn-light" onclick="this.closest('.modal').remove()">ยกเลิก</button>
+              <button class="btn btn-light" id="cancelThemeModal">ยกเลิก</button>
               <button class="btn btn-primary" id="confirmTheme">✨ บันทึกพื้นหลัง</button>
             </div>
           </div>
         `;
-        
+
         document.body.appendChild(modal);
         let selectedTheme = currentBg;
-        
+
+        // ปิด modal
+        const closeModal = () => modal.remove();
+        modal.querySelector('#closeThemeModal').addEventListener('click', closeModal);
+        modal.querySelector('#cancelThemeModal').addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+        // เลือก theme
         window.selectThemeInModal = function(el) {
           if (el.classList.contains('locked')) {
-            if (confirm('🔒 ฟีเจอร์นี้สำหรับ Premium เท่านั้น คุณต้องการดูรายละเอียดการอัปเกรดใช่หรือไม่?')) {
+            if (confirm('🔒 ฟีเจอร์นี้สำหรับ Premium เท่านั้น\nต้องการดูรายละเอียดการอัปเกรดหรือไม่?')) {
               window.location.href = 'premium.html';
             }
             return;
@@ -533,24 +581,31 @@
           el.classList.add('active');
           selectedTheme = el.dataset.theme;
         };
-        
+
+        // บันทึก
         modal.querySelector('#confirmTheme').addEventListener('click', async () => {
-          const supabase = getSupabase();
           if (!isPremium && selectedTheme !== 'default') {
-            setMessage('ฟีเจอร์นี้เปิดให้ Premium เท่านั้น', true);
-            modal.remove();
+            setMessage('🔒 ฟีเจอร์นี้เปิดให้เฉพาะ Premium เท่านั้น', true);
+            closeModal();
             return;
           }
-          if (!supabase) return;
           setMessage('กำลังบันทึกพื้นหลัง...');
-          const { error } = await supabase.from('marketplace_listings').update({ card_background: selectedTheme }).eq('id', listingId);
-          if (error) setMessage(error.message, true);
-          else {
-            setMessage('✨ บันทึกพื้นหลังเรียบร้อย');
+          const { error } = await supabase
+            .from('marketplace_listings')
+            .update({ card_background: selectedTheme })
+            .eq('id', listingId);
+          if (error) {
+            const needsMigration = /card_background|schema cache|column/i.test(error.message || '');
+            setMessage(needsMigration ? 'ยังไม่ได้รัน migration สำหรับ card_background ใน Supabase' : error.message, true);
+          } else {
+            setMessage('✨ บันทึกพื้นหลังเรียบร้อยแล้ว');
+            // ล้าง cache หน้าแรกเพื่อให้แสดงพื้นหลังใหม่ทันที
             localStorage.removeItem('rooc-public-listings-v3');
+            localStorage.removeItem('rooc-public-listings-v3-no-fb');
+            localStorage.removeItem('rooc-public-listings-legacy-v1');
             refreshStoreData();
           }
-          modal.remove();
+          closeModal();
         });
       };
 

@@ -1203,6 +1203,7 @@ window.ROOC_SUPABASE = {
     parsePrice,
     formatListingPrice,
     getDescriptionParts,
+    getPremiumStatus,
 	      initStorePage: async (sellerId) => {
 	      console.log("initStorePage starting for seller:", sellerId);
 	      const grid = document.querySelector("#storeListingGrid");
@@ -1230,6 +1231,12 @@ window.ROOC_SUPABASE = {
 	      const { data: authData } = await supabaseClient.auth.getSession();
 	      const currentSession = authData.session;
 	      const isOwner = currentSession && currentSession.user.id === sellerId;
+
+      // Expose state ออกมาเป็น global เพื่อให้ showThemePickerModal ใน store.html เข้าถึงได้
+      window._storeState = window._storeState || {};
+      window._storeState.storeListings = storeListings;
+      window._storeState.currentSession = currentSession;
+      window._storeState.isOwner = isOwner;
       
       // กำหนด listingSelectColumns ที่ใช้ในฟังก์ชัน
       const storeListingSelectColumns = [
@@ -1395,6 +1402,8 @@ window.ROOC_SUPABASE = {
         if (result.error) throw result.error;
         const data = result.data;
         storeListings = data || [];
+        // อัปเดต global state หลังจาก fetch เสร็จ
+        if (window._storeState) window._storeState.storeListings = storeListings;
         console.log("Store listings found:", storeListings.length);
         
 	        // ดึงข้อมูลโปรไฟล์โดยตรง (เผื่อกรณีไม่มีประกาศสินค้าเลย)
