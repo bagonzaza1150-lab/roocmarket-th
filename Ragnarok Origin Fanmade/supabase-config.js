@@ -600,7 +600,7 @@ window.ROOC_SUPABASE = {
         return acc;
       }, {});
       const soldCount = sellerSoldCounts[listing.user_id] || 0;
-      const trustBadge = soldCount > 0 ? `<div class="seller-trust-badge"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"/></svg> ขายสำเร็จแล้ว ${soldCount} รายการ</div>` : "";
+      const trustBadge = soldCount > 0 ? `<div class="seller-trust-badge"><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"/></svg> สำเร็จ ${soldCount} รายการ</div>` : "";
       const listingType = listing.listing_type || "sell";
       const isServiceListing = listingType === "service";
       const mediaClass = listing.category === "mvp" ? "item-media card-media" : listing.category === "account" ? "item-media account-listing-media" : "item-media";

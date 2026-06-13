@@ -1479,9 +1479,10 @@ h1 {
 .listing-seller {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
   margin-top: 10px;
+  flex-wrap: wrap; /* ให้ขึ้นบรรทัดใหม่ได้ถ้าที่ว่างไม่พอ */
 }
 
 .listing-seller img {
@@ -1498,23 +1499,40 @@ h1 {
   min-width: 0;
   overflow: hidden;
   color: var(--muted);
-  font-size: 13px;
-  font-weight: 400; /* ลดความหนาชื่อผู้ใช้ */
+  font-size: 12px;
+  font-weight: 400;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 100px; /* ปรับลดลงอีกนิดเพื่อเพิ่มพื้นที่ให้ส่วนอื่น */
+}
+
+.seller-trust-badge {
+  font-size: 10px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  margin-top: 2px;
+  opacity: 0.8;
+}
+
+.seller-trust-badge svg {
+  color: var(--gold);
 }
 
 .listing-seller strong {
   display: inline-grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
-  flex: 0 0 22px;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
   border-radius: 999px;
   background: rgba(247, 181, 0, 0.16);
   color: #f7b500;
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1;
+  order: 2; /* ย้ายมงกุฎไปไว้หลังชื่อ */
 }
 
 .item-media {
@@ -1685,15 +1703,15 @@ h1 {
 
 .listing-meta span {
   display: inline-flex;
-  min-height: 24px;
+  min-height: 18px;
   align-items: center;
-  border-radius: 6px; /* เปลี่ยนจาก 999px เป็น 6px เพื่อความทันสมัยและเรียบหรู */
+  border-radius: 3px;
   background: var(--paper-soft);
   color: var(--blue);
-  padding: 0 10px;
-  font-size: 11px;
-  font-weight: 500; /* เพิ่มความชัดเจนเล็กน้อย */
-  letter-spacing: 0.03em;
+  padding: 0 6px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   border: 1px solid rgba(0, 0, 0, 0.03);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -6552,5 +6570,213 @@ html, body {
     min-width: 70px;
     padding: 0.4rem 0.5rem;
     font-size: 0.75rem;
+  }
+}
+
+
+/* ===== STORE PAGE STYLES (NEW) ===== */
+
+.store-profile-header {
+  margin-bottom: 2.5rem;
+  background: var(--paper);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.store-cover {
+  height: 120px;
+  background: linear-gradient(135deg, var(--blue) 0%, #6366f1 100%);
+  position: relative;
+}
+
+.store-info-container {
+  padding: 0 2rem 2rem;
+  display: flex;
+  align-items: flex-end;
+  gap: 2rem;
+  margin-top: -50px;
+  position: relative;
+  flex-wrap: wrap;
+}
+
+.store-avatar-wrapper {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  background: var(--paper);
+  border-radius: 20px;
+  padding: 6px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  border: 4px solid var(--paper);
+}
+
+.store-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+.premium-badge {
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  background: var(--paper);
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 8px rgba(240, 173, 36, 0.3);
+  z-index: 2;
+}
+
+.store-details {
+  flex: 1;
+  min-width: 300px;
+  padding-bottom: 0.5rem;
+}
+
+.store-name-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.store-name-row h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.trust-badge {
+  background: rgba(24, 166, 106, 0.1);
+  color: var(--green);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid rgba(24, 166, 106, 0.2);
+}
+
+.store-description {
+  margin: 0 0 1rem 0;
+  color: var(--muted);
+  font-size: 1rem;
+  max-width: 600px;
+  line-height: 1.5;
+}
+
+.store-meta {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.store-meta span {
+  font-size: 0.85rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.store-stats-grid {
+  display: flex;
+  gap: 1rem;
+  min-width: 100%;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.stat-card {
+  flex: 1;
+  background: var(--paper-soft);
+  padding: 1rem;
+  border-radius: 12px;
+  text-align: center;
+  border: 1px solid var(--line);
+  transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--blue);
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Public View Adjustments */
+.public-view .my-listing-actions,
+.public-view .offer-mailbox,
+.public-view #listingsBreadcrumb,
+.public-view .panel-head .panel-actions,
+.public-view .quota-item:not(:last-child) {
+  display: none !important;
+}
+
+.public-view .my-listings-panel {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.public-view .panel-title-group h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Responsive Store */
+@media (max-width: 768px) {
+  .store-info-container {
+    padding: 0 1.25rem 1.5rem;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .store-details {
+    min-width: 100%;
+  }
+  
+  .store-name-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .store-meta {
+    justify-content: center;
+    gap: 1rem;
+  }
+  
+  .store-stats-grid {
+    flex-wrap: wrap;
+  }
+  
+  .stat-card {
+    min-width: calc(50% - 0.5rem);
   }
 }

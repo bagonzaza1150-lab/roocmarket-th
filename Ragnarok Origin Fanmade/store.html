@@ -120,18 +120,24 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 4px;
-        margin-top: 10px;
-        padding-top: 10px;
+        margin-top: 8px;
+        padding-top: 8px;
         border-top: 1px dashed var(--line);
       }
       .owner-controls .btn {
         width: 100%;
+        min-height: 28px;
         justify-content: center;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        font-size: 11px;
-        padding: 6px 4px;
+        font-size: 10px;
+        padding: 4px 2px;
+        font-weight: 700;
+      }
+      .owner-controls .btn-danger {
+        grid-column: span 2;
+        margin-top: 2px;
       }
       .listing-meta span {
         font-size: 9px;
@@ -366,10 +372,12 @@
       // ฟังก์ชันจัดการประกาศ (ย้ายมาจาก my-listings.html) - ประกาศเป็น Global
       window.toggleListing = async function(id) {
         const supabase = getSupabase();
-        // ใช้ == แทน === เพื่อรองรับทั้ง string และ number ID
-        const listing = storeListings.find(l => l.id == id);
-        if (!listing || !supabase) return;
+        if (!supabase) return;
         setMessage("กำลังอัปเดตประกาศ...");
+        // ค้นหาข้อมูลล่าสุดจากฐานข้อมูลเพื่อความชัวร์
+        const { data: listing, error: fetchError } = await supabase.from("marketplace_listings").select("active").eq("id", id).single();
+        if (fetchError || !listing) { setMessage("ไม่พบประกาศ", true); return; }
+        
         const nextActive = !listing.active;
         const { error } = await supabase
           .from("marketplace_listings")
@@ -382,11 +390,15 @@
       window.editListingPrice = async function(id) {
         const app = getApp();
         const supabase = getSupabase();
-        const listing = storeListings.find(l => l.id == id);
-        if (!listing || !supabase || !app) return;
+        if (!supabase || !app) return;
+        
+        const { data: listing, error: fetchError } = await supabase.from("marketplace_listings").select("price_text").eq("id", id).single();
+        if (fetchError || !listing) { setMessage("ไม่พบประกาศ", true); return; }
+
         const nextPrice = prompt("ใส่ราคาใหม่", app.formatListingPrice(listing.price_text));
         if (nextPrice === null) return;
         const priceText = String(nextPrice).replace(/,/g, "").replace(/[^\d.]/g, "");
+        
         setMessage("กำลังแก้ไขราคา...");
         const { error } = await supabase
           .from("marketplace_listings")
@@ -422,8 +434,11 @@
 
       window.toggleOffers = async function(id) {
         const supabase = getSupabase();
-        const listing = storeListings.find(l => l.id == id);
-        if (!listing || !supabase) return;
+        if (!supabase) return;
+        
+        const { data: listing, error: fetchError } = await supabase.from("marketplace_listings").select("offers_enabled").eq("id", id).single();
+        if (fetchError || !listing) { setMessage("ไม่พบประกาศ", true); return; }
+
         const nextEnabled = !Boolean(listing.offers_enabled);
         setMessage("กำลังอัปเดตการเสนอราคา...");
         const { error } = await supabase
