@@ -1408,7 +1408,7 @@ window.ROOC_SUPABASE = {
 	          if (isOwner) {
 	            // ดึงโควตาและ Mailbox สำหรับเจ้าของร้าน
 	            const { data: profile } = await supabaseClient.from("marketplace_profiles").select("listing_limit").eq("user_id", sellerId).maybeSingle();
-	            const isPremium = (await getPremiumStatus(currentSession)).active;
+		            const isPremium = await getPremiumStatus(currentSession);
 	            const limit = profile?.listing_limit || (isPremium ? 20 : 2);
 	            
 	            const sellListings = storeListings.filter(l => (l.listing_type || "sell") === "sell" && l.sale_status !== "deleted");
@@ -1423,7 +1423,10 @@ window.ROOC_SUPABASE = {
 	            if (quotaUsed) quotaUsed.textContent = `${sellListings.filter(l => l.active).length}/${limit}`;
 	            if (quotaRemaining) quotaRemaining.textContent = `${buyListings.filter(l => l.active).length}/${limit}`;
 	            if (quotaService) quotaService.textContent = `${serviceListings.filter(l => l.active).length}/${limit}`;
-	            if (quotaPlan) quotaPlan.textContent = isPremium ? "Premium" : "Free";
+		            if (quotaPlan) {
+		              quotaPlan.textContent = isPremium ? "Premium" : "Free";
+		              quotaPlan.className = isPremium ? "quota-value is-premium" : "quota-value";
+		            }
 
 	            // ดึง Mailbox
 	            const { data: offers } = await supabaseClient.from("marketplace_listing_offers").select("*").in("listing_id", storeListings.map(l => l.id)).order("created_at", { ascending: false });

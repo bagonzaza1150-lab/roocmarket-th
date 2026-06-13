@@ -78,6 +78,28 @@
         border-bottom: 1px solid var(--line);
       }
       .offer-mail:last-child { border-bottom: none; }
+      
+      /* ปรับแต่งสถานะ Premium ใน Dashboard */
+      .quota-value.is-premium {
+        color: #f59e0b;
+        font-weight: bold;
+        text-shadow: 0 0 8px rgba(245, 158, 11, 0.2);
+      }
+
+      /* ปรับขนาด Grid ให้เหมือนหน้าแรก */
+      .listing-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 24px;
+        margin-top: 24px;
+      }
+
+      @media (max-width: 768px) {
+        .listing-grid {
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+      }
     </style>
   </head>
   <body>
@@ -175,7 +197,7 @@
             <div class="quota-icon">👤</div>
             <div>
               <span>สถานะบัญชี</span>
-              <strong id="quotaPlan">Free</strong>
+              <strong id="quotaPlan" class="quota-value">Free</strong>
             </div>
           </div>
         </div>
@@ -290,8 +312,9 @@
 
       // ฟังก์ชันจัดการประกาศ (ย้ายมาจาก my-listings.html)
       async function toggleListing(id) {
+        const supabase = getSupabase();
         const listing = storeListings.find(l => l.id === id);
-        if (!listing) return;
+        if (!listing || !supabase) return;
         setMessage("กำลังอัปเดตประกาศ...");
         const nextActive = !listing.active;
         const { error } = await supabase
@@ -303,8 +326,10 @@
       }
 
       async function editListingPrice(id) {
+        const app = getApp();
+        const supabase = getSupabase();
         const listing = storeListings.find(l => l.id === id);
-        if (!listing) return;
+        if (!listing || !supabase || !app) return;
         const nextPrice = prompt("ใส่ราคาใหม่", app.formatListingPrice(listing.price_text));
         if (nextPrice === null) return;
         const priceText = String(nextPrice).replace(/,/g, "").replace(/[^\d.]/g, "");
@@ -318,7 +343,8 @@
       }
 
       async function markListingSold(id) {
-        if (!confirm("ทำเครื่องหมายว่าประกาศนี้ขายออกแล้ว?")) return;
+        const supabase = getSupabase();
+        if (!confirm("ทำเครื่องหมายว่าประกาศนี้ขายออกแล้ว?") || !supabase) return;
         setMessage("กำลังย้ายไปขายออกแล้ว...");
         const { error } = await supabase
           .from("marketplace_listings")
@@ -329,7 +355,8 @@
       }
 
       async function deleteListing(id) {
-        if (!confirm("ลบประกาศนี้ออกจากรายการ? โควต้าจะยังถูกนับอยู่")) return;
+        const supabase = getSupabase();
+        if (!confirm("ลบประกาศนี้ออกจากรายการ? โควต้าจะยังถูกนับอยู่") || !supabase) return;
         setMessage("กำลังลบประกาศ...");
         const { error } = await supabase
           .from("marketplace_listings")
@@ -340,8 +367,9 @@
       }
 
       async function toggleOffers(id) {
+        const supabase = getSupabase();
         const listing = storeListings.find(l => l.id === id);
-        if (!listing) return;
+        if (!listing || !supabase) return;
         const nextEnabled = !Boolean(listing.offers_enabled);
         setMessage("กำลังอัปเดตการเสนอราคา...");
         const { error } = await supabase
