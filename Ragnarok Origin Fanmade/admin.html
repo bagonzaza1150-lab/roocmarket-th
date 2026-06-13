@@ -89,6 +89,7 @@
             <button class="admin-tab" data-tab="servers" type="button">🖥️ Server</button>
             <button class="admin-tab" data-tab="listings" type="button">📋 ประกาศ</button>
             <button class="admin-tab" data-tab="premium" type="button">👑 Premium</button>
+            <button class="admin-tab" data-tab="icons" type="button">🎨 ไอคอน</button>
             <button class="admin-tab" data-tab="settings" type="button">⚙️ ตั้งค่า</button>
           </div>
         </div>
@@ -449,6 +450,134 @@
           </div>
         </div>
 
+        <!-- Icons Tab -->
+        <div class="admin-tab-content" data-tab-content="icons">
+          <div class="admin-grid-layout">
+            <div class="admin-column">
+              <section class="admin-editor">
+                <div class="form-block-head">
+                  <span>🎨</span>
+                  <div>
+                    <h2>จัดการไอคอนเว็บไซต์</h2>
+                    <p>อัปโหลดไอคอนเพื่อเปลี่ยนรูปในส่วนต่างๆ ของเว็บไซต์</p>
+                  </div>
+                </div>
+
+                <div class="icon-manager-grid" style="display: grid; gap: 20px;">
+                  <!-- Website Icons -->
+                  <div class="icon-group-card" style="border: 1px solid var(--line); border-radius: 16px; padding: 16px; background: var(--paper);">
+                    <h3 style="margin-top: 0; font-size: 16px; border-bottom: 1px solid var(--line); padding-bottom: 8px;">🌐 ไอคอนหลัก & หมวดหมู่</h3>
+                    <div class="icon-upload-list" style="display: grid; gap: 12px; margin-top: 12px;">
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft);">
+                          <img id="preview-site-logo" src="assets/site-icons/rooc-icon-64.png" style="max-width: 32px; max-height: 32px;" />
+                        </div>
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">Logo เว็บไซต์</span>
+                          <input type="file" data-icon-type="site-logo" accept="image/*" style="font-size: 11px; margin-top: 4px;" />
+                        </div>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft);">
+                          <img id="preview-cat-mvp" src="assets/category-icons/mvp-c.png" style="max-width: 32px; max-height: 32px;" />
+                        </div>
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">MVP Cards Icon</span>
+                          <input type="file" data-icon-type="cat-mvp" accept="image/*" style="font-size: 11px; margin-top: 4px;" />
+                        </div>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft);">
+                          <img id="preview-cat-acc" src="assets/category-icons/acc.png" style="max-width: 32px; max-height: 32px;" />
+                        </div>
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">Accessories Icon</span>
+                          <input type="file" data-icon-type="cat-acc" accept="image/*" style="font-size: 11px; margin-top: 4px;" />
+                        </div>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft);">
+                          <img id="preview-cat-fashion" src="assets/category-icons/fashion.png" style="max-width: 32px; max-height: 32px;" />
+                        </div>
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">Fashion Icon</span>
+                          <input type="file" data-icon-type="cat-fashion" accept="image/*" style="font-size: 11px; margin-top: 4px;" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Dashboard Icons -->
+                  <div class="icon-group-card" style="border: 1px solid var(--line); border-radius: 16px; padding: 16px; background: var(--paper);">
+                    <h3 style="margin-top: 0; font-size: 16px; border-bottom: 1px solid var(--line); padding-bottom: 8px;">📊 Dashboard Icons</h3>
+                    <div class="icon-upload-list" style="display: grid; gap: 12px; margin-top: 12px;">
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft); color: var(--blue);">
+                          <div id="preview-dash-sell" style="display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M5 20h14v-2H5v2zm0-10h4v6h6v-6h4l-7-7-7 7z"/></svg></div>
+                        </div>
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">ไอคอนประกาศขาย</span>
+                          <input type="file" data-icon-type="dash-sell" accept="image/*" style="font-size: 11px; margin-top: 4px;" />
+                        </div>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft); color: var(--blue);">
+                          <div id="preview-dash-buy" style="display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19 15h-4v-6h-6v6h-4l7 7 7-7zm0-11h-14v2h14v-2z"/></svg></div>
+                        </div>
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">ไอคอนประกาศรับซื้อ</span>
+                          <input type="file" data-icon-type="dash-buy" accept="image/*" style="font-size: 11px; margin-top: 4px;" />
+                        </div>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft); color: var(--blue);">
+                          <div id="preview-dash-service" style="display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg></div>
+                        </div>
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">ไอคอนรับจ้างลงดัน</span>
+                          <input type="file" data-icon-type="dash-service" accept="image/*" style="font-size: 11px; margin-top: 4px;" />
+                        </div>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft); color: var(--blue);">
+                          <div id="preview-dash-account" style="display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+                        </div>
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">ไอคอนสถานะบัญชี</span>
+                          <input type="file" data-icon-type="dash-account" accept="image/*" style="font-size: 11px; margin-top: 4px;" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="post-actions" style="margin-top: 24px;">
+                  <p id="iconManagerMessage" class="admin-message"></p>
+                  <button class="btn btn-primary" id="saveIconsBtn" type="button">💾 บันทึกการเปลี่ยนแปลงไอคอน</button>
+                </div>
+              </section>
+            </div>
+            <div class="admin-column">
+              <section class="admin-list-panel">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Help</p>
+                    <h2>คำแนะนำการจัดการไอคอน</h2>
+                  </div>
+                </div>
+                <div style="padding: 16px;">
+                  <ul style="padding-left: 20px; display: grid; gap: 10px; font-size: 14px; line-height: 1.6;">
+                    <li><strong>ขนาดที่แนะนำ:</strong> ควรใช้รูปจัตุรัส (1:1) เช่น 128x128 px เพื่อความสวยงาม</li>
+                    <li><strong>นามสกุลไฟล์:</strong> รองรับ PNG (แนะนำแบบโปร่งใส), JPG และ WebP</li>
+                    <li><strong>การแสดงผล:</strong> หลังจากกดบันทึก ระบบจะอัปโหลดไฟล์เข้า Supabase Storage และนำ URL มาใช้งานแทนไฟล์เดิมในเครื่องทันที</li>
+                    <li><strong>Dashboard Icons:</strong> หากไม่ได้อัปโหลดรูป ระบบจะใช้ไอคอนมาตรฐาน (SVG) ที่เตรียมไว้ให้</li>
+                  </ul>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+
         <!-- Settings Tab -->
         <div class="admin-tab-content" data-tab-content="settings">
           <section class="admin-list-panel support-admin-panel">
@@ -713,6 +842,13 @@
       const premiumSearchInput = document.querySelector("#premiumSearchInput");
       const premiumSearchButton = document.querySelector("#premiumSearchButton");
       const premiumSearchResults = document.querySelector("#premiumSearchResults");
+      
+      // Icon Manager Elements
+      const iconInputs = document.querySelectorAll('input[data-icon-type]');
+      const saveIconsBtn = document.getElementById('saveIconsBtn');
+      const iconManagerMessage = document.getElementById('iconManagerMessage');
+      let iconFiles = {};
+
       const supportSettingsForm = document.querySelector("#supportSettingsForm");
       const supportSettingsMessage = document.querySelector("#supportSettingsMessage");
       const supportFields = {
@@ -1814,6 +1950,73 @@
       dungeonResetButton.addEventListener("click", resetDungeonForm);
       premiumResetButton.addEventListener("click", resetPremiumForm);
       premiumSearchButton.addEventListener("click", searchPremiumProfiles);
+
+      // Icon Manager Listeners
+      iconInputs.forEach(input => {
+        input.addEventListener('change', (e) => {
+          const type = e.target.dataset.iconType;
+          const file = e.target.files[0];
+          if (file) {
+            iconFiles[type] = file;
+            const previewId = `preview-${type}`;
+            const previewEl = document.getElementById(previewId);
+            if (previewEl) {
+              if (previewEl.tagName === 'IMG') {
+                previewEl.src = URL.createObjectURL(file);
+              } else {
+                previewEl.innerHTML = `<img src="${URL.createObjectURL(file)}" style="max-width: 32px; max-height: 32px;" />`;
+              }
+            }
+          }
+        });
+      });
+
+      if (saveIconsBtn) {
+        saveIconsBtn.addEventListener('click', async () => {
+          if (Object.keys(iconFiles).length === 0) {
+            setMessage(iconManagerMessage, "กรุณาเลือกไฟล์ที่ต้องการเปลี่ยนก่อน", true);
+            return;
+          }
+
+          saveIconsBtn.disabled = true;
+          saveIconsBtn.textContent = "⏳ กำลังอัปโหลด...";
+          setMessage(iconManagerMessage, "กำลังอัปโหลดไอคอน...");
+
+          try {
+            const results = [];
+            for (const [type, file] of Object.entries(iconFiles)) {
+              const fileName = `site_assets/${type}_${Date.now()}.${file.name.split('.').pop()}`;
+              const { data, error } = await supabaseClient.storage
+                .from('marketplace-assets')
+                .upload(fileName, file, { upsert: true });
+
+              if (error) throw error;
+
+              const { data: { publicUrl } } = supabaseClient.storage
+                .from('marketplace-assets')
+                .getPublicUrl(fileName);
+              
+              results.push({ type, url: publicUrl });
+            }
+
+            // บันทึกลงตาราง marketplace_settings
+            const { error: settingsError } = await supabaseClient
+              .from('marketplace_settings')
+              .upsert(results.map(r => ({ key: `icon_${r.type}`, value: r.url })), { onConflict: 'key' });
+
+            if (settingsError) throw settingsError;
+
+            setMessage(iconManagerMessage, "บันทึกไอคอนเรียบร้อยแล้ว! ระบบจะเริ่มใช้ไอคอนใหม่ทันที");
+            iconFiles = {}; // Clear files
+          } catch (err) {
+            setMessage(iconManagerMessage, "เกิดข้อผิดพลาด: " + err.message, true);
+          } finally {
+            saveIconsBtn.disabled = false;
+            saveIconsBtn.textContent = "💾 บันทึกการเปลี่ยนแปลงไอคอน";
+          }
+        });
+      }
+
       premiumSearchInput.addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
           event.preventDefault();
