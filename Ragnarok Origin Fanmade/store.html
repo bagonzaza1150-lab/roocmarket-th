@@ -360,6 +360,91 @@
         }
       }
 
+      window.showThemePickerModal = async function(listingId) {
+        const listing = storeListings.find(l => l.id === listingId);
+        if (!listing) return;
+        
+        const isPremium = (await app.getPremiumStatus(currentSession)).active;
+        const themes = [
+          { id: 'default', label: 'ปกติ', color: 'var(--paper)', isDefault: true },
+          { id: 'theme-pixel-grass', label: 'ทุ่งหญ้า', color: '#7ec850' },
+          { id: 'theme-pixel-sky', label: 'ท้องฟ้า', color: '#4ec0ca' },
+          { id: 'theme-pixel-gold', label: 'ทองพิกเซล', color: '#f1c40f' },
+          { id: 'theme-pixel-night', label: 'คืนดาว', color: '#1a1a2e' },
+          { id: 'theme-pixel-pink', label: 'ชมพูพิกเซล', color: '#ff85a2' }
+        ];
+
+        const currentBg = listing.card_background || 'default';
+        const themeHTML = themes.map(theme => {
+          const isActive = currentBg === theme.id;
+          const isLocked = !isPremium && theme.id !== 'default';
+          let bgStyle = theme.isDefault ? `background: var(--paper); border: 2px solid var(--line);` : `background-image: url('assets/card-bg/${theme.id}.png');`;
+          return `
+            <button type="button" class="theme-option${isActive ? ' active' : ''}${isLocked ? ' locked' : ''}" 
+                 style="${bgStyle}" 
+                 data-theme="${theme.id}"
+                 onclick="window.selectThemeInModal(this)">
+              ${theme.label}
+            </button>
+          `;
+        }).join('');
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style = "position:fixed; inset:0; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px;";
+        modal.innerHTML = `
+          <div class="modal-content" style="background:var(--paper); padding:24px; border-radius:16px; max-width:520px; width:100%; border:1px solid var(--line);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+              <h3 style="margin: 0;">✨ เลือกพื้นหลังการ์ด Premium</h3>
+              <button class="btn btn-light" style="padding: 4px 10px; font-size: 13px;" onclick="this.closest('.modal').remove()">×</button>
+            </div>
+            <p style="font-size: 12px; color: var(--muted); margin: 0 0 12px;">พื้นหลัง pixel art จะแสดงบนการ์ดประกาศในหน้าแรกเพื่อเพิ่มความโดดเด่น</p>
+            <div class="theme-picker-grid">${themeHTML}</div>
+            ${!isPremium ? `
+              <div style="margin-top: 12px; padding: 10px 14px; background: rgba(240,173,36,0.08); border: 1px solid rgba(240,173,36,0.25); border-radius: 8px;">
+                <p style="color: #f0ad24; font-size: 12px; margin: 0;">🔒 พื้นหลัง pixel art เปิดให้เฉพาะ Premium — <a href="premium.html" style="color: #f0ad24;">อัปเกรด</a></p>
+              </div>
+            ` : ''}
+            <div style="margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end;">
+              <button class="btn btn-light" onclick="this.closest('.modal').remove()">ยกเลิก</button>
+              <button class="btn btn-primary" id="confirmTheme">✨ บันทึกพื้นหลัง</button>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(modal);
+        let selectedTheme = currentBg;
+        
+        window.selectThemeInModal = function(el) {
+          if (el.classList.contains('locked')) {
+            if (confirm('🔒 ฟีเจอร์นี้สำหรับ Premium เท่านั้น คุณต้องการดูรายละเอียดการอัปเกรดใช่หรือไม่?')) {
+              window.location.href = 'premium.html';
+            }
+            return;
+          }
+          modal.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'));
+          el.classList.add('active');
+          selectedTheme = el.dataset.theme;
+        };
+        
+        modal.querySelector('#confirmTheme').addEventListener('click', async () => {
+          if (!isPremium && selectedTheme !== 'default') {
+            setMessage('ฟีเจอร์นี้เปิดให้ Premium เท่านั้น', true);
+            modal.remove();
+            return;
+          }
+          setMessage('กำลังบันทึกพื้นหลัง...');
+          const { error } = await supabase.from('marketplace_listings').update({ card_background: selectedTheme }).eq('id', listingId);
+          if (error) setMessage(error.message, true);
+          else {
+            setMessage('✨ บันทึกพื้นหลังเรียบร้อย');
+            localStorage.removeItem('rooc-public-listings-v3');
+            refreshStoreData();
+          }
+          modal.remove();
+        });
+      };
+
       // Event Listeners
       document.addEventListener("click", (event) => {
         const target = event.target;
