@@ -277,8 +277,9 @@
       let offerMailbox = new Map();
       let premiumResult = { active: false };
 
-      const app = window.ROOC_APP;
-      const supabase = app?.getSupabaseClient?.();
+      // ใช้ getter เพื่อให้ได้ค่าล่าสุดเสมอ
+      const getApp = () => window.ROOC_APP;
+      const getSupabase = () => window.ROOC_APP?.getSupabaseClient?.();
 
       function setMessage(text, isError = false) {
         const msgEl = document.querySelector("#storeMessage");
@@ -352,7 +353,9 @@
       }
 
       async function refreshStoreData() {
+        const app = getApp();
         const sellerId = new URLSearchParams(window.location.search).get("id");
+        console.log("Refreshing store data for:", sellerId);
         if (app?.initStorePage && sellerId) {
           app.initStorePage(sellerId);
         } else if (currentSession) {
@@ -503,43 +506,56 @@
         alert("คัดลอกลิงก์ร้านค้าแล้ว!");
       });
 
-      // Initialize Page with Retry Logic
+      // Initialize Page with Retry Logic and Timeout
+      let initAttempts = 0;
       async function initStore() {
+        initAttempts++;
         const app = window.ROOC_APP;
         const supabase = app?.getSupabaseClient?.();
         
+        console.log(`Init attempt ${initAttempts}: App ready? ${!!app}, Supabase ready? ${!!supabase}, initStorePage ready? ${!!app?.initStorePage}`);
+
         if (!supabase || !app?.initStorePage) {
-          console.log("Waiting for Supabase/App to be ready...");
+          if (initAttempts > 20) { // 10 วินาที
+            document.querySelector("#storeName").textContent = "ไม่สามารถเชื่อมต่อระบบได้ กรุณารีเฟรชหน้าเว็บ";
+            return;
+          }
           setTimeout(initStore, 500);
           return;
         }
 
         try {
-          const { data } = await supabase.auth.getSession();
+          const { data, error: sessionError } = await supabase.auth.getSession();
+          if (sessionError) throw sessionError;
           currentSession = data.session;
           
           let sellerId = new URLSearchParams(window.location.search).get("id");
+          console.log("URL Seller ID:", sellerId);
           
-          // ถ้าไม่มี ID และล็อกอินอยู่ ให้แสดงหน้าของตัวเอง
           if (!sellerId && currentSession) {
             sellerId = currentSession.user.id;
+            console.log("Using session user ID:", sellerId);
             window.history.replaceState(null, "", `?id=${sellerId}`);
           } else if (!sellerId && !currentSession) {
+            console.log("No ID and no session, redirecting to login...");
             window.location.href = "login.html?redirect=store.html";
             return;
           }
 
           isOwner = currentSession && currentSession.user.id === sellerId;
+          console.log("Is Owner?", isOwner);
+          
           if (isOwner) {
             document.body.classList.add("is-owner");
             document.querySelector("#inventoryLabel").textContent = "My Inventory";
             document.querySelector("#inventoryTitle").textContent = "จัดการสินค้าในร้าน";
           }
 
+          console.log("Calling initStorePage...");
           app.initStorePage(sellerId);
         } catch (err) {
           console.error("Initialization error:", err);
-          document.querySelector("#storeName").textContent = "เกิดข้อผิดพลาดในการโหลด";
+          document.querySelector("#storeName").textContent = "เกิดข้อผิดพลาด: " + (err.message || "Unknown error");
         }
       }
 

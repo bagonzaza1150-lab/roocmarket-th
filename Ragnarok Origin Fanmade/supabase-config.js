@@ -1203,10 +1203,11 @@ window.ROOC_SUPABASE = {
     parsePrice,
     formatListingPrice,
     getDescriptionParts,
-    initStorePage: async (sellerId) => {
-      const grid = document.querySelector("#storeListingGrid");
-      const emptyState = document.querySelector("#storeEmptyState");
-      const storeName = document.querySelector("#storeName");
+	      initStorePage: async (sellerId) => {
+	      console.log("initStorePage starting for seller:", sellerId);
+	      const grid = document.querySelector("#storeListingGrid");
+	      const emptyState = document.querySelector("#storeEmptyState");
+	      const storeName = document.querySelector("#storeName");
       const storeAvatar = document.querySelector("#storeAvatar");
       const storeFacebook = document.querySelector("#storeFacebook");
       const storeDiscordText = document.querySelector("#storeDiscordText");
@@ -1439,10 +1440,10 @@ window.ROOC_SUPABASE = {
           storeName.textContent = "ไม่พบผู้ขาย";
           emptyState.hidden = false;
         }
-      } catch (err) {
-        console.error("Store error:", err);
-        storeName.textContent = "เกิดข้อผิดพลาด";
-      }
+	      } catch (err) {
+	        console.error("Store error:", err);
+	        if (storeName) storeName.textContent = "เกิดข้อผิดพลาด: " + (err.message || "Unknown error");
+	      }
 
       document.querySelectorAll("#storeCategoryTabs button").forEach(btn => {
         btn.addEventListener("click", () => {
