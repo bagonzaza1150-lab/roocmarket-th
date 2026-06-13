@@ -35,31 +35,50 @@ window.ROOC_SUPABASE = {
         return `${url}${separator}t=${Date.now()}`;
       };
 
-      // 1. อัปเดต Logo
+      let updatedCount = 0;
+
+      // 1. อัปเดต Logo (ครอบคลุมทุกจุดที่น่าจะเป็น Logo)
       if (iconMap['site-logo']) {
-        document.querySelectorAll('img[src*="rooc-icon"]').forEach(img => {
-          if (img.src.includes('rooc-icon-64') || img.src.includes('rooc-icon-32') || img.src.includes('rooc-icon-192')) {
+        const logoUrls = [iconMap['site-logo']];
+        document.querySelectorAll('img').forEach(img => {
+          const src = img.src || '';
+          if (src.includes('rooc-icon') || img.closest('.brand-mark') || img.closest('.brand') || img.id === 'storeAvatar') {
             img.src = addCacheBuster(iconMap['site-logo']);
+            updatedCount++;
           }
         });
       }
 
-      // 2. อัปเดต Category Icons
-      const categoryMap = {
+      // 2. อัปเดต Category Icons (กวาดหาจาก pattern และโครงสร้าง)
+      const catPatterns = {
         'cat-mvp': ['mvp-c.png', 'mvp'],
-        'cat-acc': ['accessories-a.png', 'acc', 'account-b.png'],
+        'cat-acc': ['accessories-a.png', 'acc'],
         'cat-fashion': ['fashion-c.png', 'fashion']
       };
 
-      Object.entries(categoryMap).forEach(([key, patterns]) => {
-        if (iconMap[key]) {
-          document.querySelectorAll('img').forEach(img => {
-            const src = img.src || '';
-            const shouldUpdate = patterns.some(pattern => src.includes(pattern));
-            if (shouldUpdate && !src.includes('rooc-icon')) {
-              img.src = addCacheBuster(iconMap[key]);
-            }
-          });
+      document.querySelectorAll('img').forEach(img => {
+        const src = img.src || '';
+        // ข้าม Logo ไปก่อน
+        if (src.includes('rooc-icon')) return;
+
+        Object.entries(catPatterns).forEach(([key, patterns]) => {
+          if (iconMap[key] && patterns.some(p => src.includes(p))) {
+            img.src = addCacheBuster(iconMap[key]);
+            updatedCount++;
+          }
+        });
+
+        // พิเศษสำหรับหน้าแรกที่ใช้ .category-icon
+        const article = img.closest('article');
+        const categoryRow = img.closest('.category-row');
+        if (categoryRow && article) {
+          const index = Array.from(categoryRow.querySelectorAll('article')).indexOf(article);
+          const mapping = ['cat-mvp', 'cat-acc', 'cat-fashion'];
+          const targetKey = mapping[index];
+          if (targetKey && iconMap[targetKey]) {
+            img.src = addCacheBuster(iconMap[targetKey]);
+            updatedCount++;
+          }
         }
       });
 
@@ -82,7 +101,7 @@ window.ROOC_SUPABASE = {
         }
       });
       
-      console.log('ROOC: Dynamic icons loaded successfully');
+      console.log(`ROOC: Dynamic icons updated ${updatedCount} elements`);
     } catch (err) {
       console.warn('ROOC: Failed to load dynamic icons', err);
     }
