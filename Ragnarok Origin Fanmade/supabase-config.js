@@ -1411,13 +1411,13 @@ window.ROOC_SUPABASE = {
         .filter((column) => column !== "listing_type" && column !== "facebook_url")
         .join(",");
 
-      const renderStoreGrid = () => {
-        // ให้แสดงรายการที่ active หรือขายแล้ว (sold)
-        let filtered = storeListings.filter(l => {
-          const categoryMatch = currentCategory === "all" || l.category === currentCategory;
-          const statusMatch = l.active || l.sale_status === "sold";
-          return categoryMatch && statusMatch;
-        });
+	      const renderStoreGrid = () => {
+	        // เจ้าของร้านเห็นทั้งหมด (ยกเว้นที่ลบ), คนอื่นเห็นเฉพาะ active หรือ sold
+	        let filtered = storeListings.filter(l => {
+	          const categoryMatch = currentCategory === "all" || l.category === currentCategory;
+	          const statusMatch = isOwner ? (l.sale_status !== "deleted") : (l.active || l.sale_status === "sold");
+	          return categoryMatch && statusMatch;
+	        });
         
         if (currentSort === "price-low") filtered.sort((a, b) => parsePrice(a.price_text) - parsePrice(b.price_text));
         else if (currentSort === "price-high") filtered.sort((a, b) => parsePrice(b.price_text) - parsePrice(a.price_text));
