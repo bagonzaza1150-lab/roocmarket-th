@@ -624,26 +624,27 @@
 
         const modal = document.createElement('div');
         modal.className = 'modal theme-picker-modal';
+        modal.style.cssText = "display: flex !important; align-items: center; justify-content: center; background: rgba(0,0,0,0.85);";
         modal.innerHTML = `
-          <div class="modal-content" style="max-width: 800px; width: 95vw; padding: 32px;">
+          <div class="modal-content" style="max-width: 800px; width: 95vw; padding: 32px; background: #121b26 !important; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
-              <h3 style="margin: 0; font-size: 1.5rem; font-weight: 600;">✨ เลือกพื้นหลังการ์ด</h3>
-              <button class="btn btn-light" style="padding: 8px 14px; font-size: 20px; line-height: 1; cursor: pointer;" id="closeThemeModal">×</button>
+              <h3 style="margin: 0; font-size: 1.5rem; font-weight: 600; color: white;">✨ เลือกพื้นหลังการ์ด</h3>
+              <button class="btn btn-light" style="padding: 8px 14px; font-size: 20px; line-height: 1; cursor: pointer; background: rgba(255,255,255,0.05); color: white; border: none; border-radius: 8px;" id="closeThemeModal">×</button>
             </div>
-            <p style="font-size: 14px; color: var(--muted); margin: 0 0 8px; line-height: 1.5;">พื้นหลัง pixel art จะแสดงบนการ์ดประกาศในหน้าแรกเพื่อเพิ่มความโดดเด่น</p>
+            <p style="font-size: 14px; color: #8a99af; margin: 0 0 8px; line-height: 1.5;">พื้นหลัง pixel art จะแสดงบนการ์ดประกาศในหน้าแรกเพื่อเพิ่มความโดดเด่น</p>
             ${isPremium
-              ? '<p style="font-size: 13px; color: #f0ad24; margin: 0 0 20px; font-weight: 500;">♛ บัญชี Premium — เลือกพื้นหลังได้ทุกแบบ</p>'
-              : '<p style="font-size: 13px; color: var(--muted); margin: 0 0 20px;">🔒 พื้นหลัง pixel art เปิดให้เฉพาะ <a href="premium.html" style="color: #f0ad24; font-weight: bold; text-decoration: none;">Premium</a> เท่านั้น</p>'
+              ? '<p style="font-size: 13px; color: #f7b500; margin: 0 0 20px; font-weight: 500;">♛ บัญชี Premium — เลือกพื้นหลังได้ทุกแบบ</p>'
+              : '<p style="font-size: 13px; color: #8a99af; margin: 0 0 20px;">🔒 พื้นหลัง pixel art เปิดให้เฉพาะ <a href="premium.html" style="color: #f7b500; font-weight: bold; text-decoration: none;">Premium</a> เท่านั้น</p>'
             }
             <div class="theme-picker-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 18px; margin-bottom: 24px;">${themeHTML}</div>
             ${!isPremium ? `
-              <div style="margin-bottom: 24px; padding: 16px 18px; background: rgba(240,173,36,0.12); border: 1.5px solid rgba(240,173,36,0.35); border-radius: 12px;">
-                <p style="color: #f0ad24; font-size: 13px; margin: 0; font-weight: 500;">🔒 อัปเกรดเป็น <a href="premium.html" style="color: #f0ad24; font-weight: bold; text-decoration: underline;">Premium</a> เพื่อปลดล็อกพื้นหลังทั้งหมด</p>
+              <div style="margin-bottom: 24px; padding: 16px 18px; background: rgba(247,181,0,0.1); border: 1px solid rgba(247,181,0,0.2); border-radius: 12px;">
+                <p style="color: #f7b500; font-size: 13px; margin: 0; font-weight: 500;">🔒 อัปเกรดเป็น <a href="premium.html" style="color: #f7b500; font-weight: bold; text-decoration: underline;">Premium</a> เพื่อปลดล็อกพื้นหลังทั้งหมด</p>
               </div>
             ` : ''}
             <div style="display: flex; gap: 12px; justify-content: flex-end;">
-              <button class="btn btn-light" id="cancelThemeModal" style="padding: 12px 28px; font-size: 14px; font-weight: 500;">ยกเลิก</button>
-              <button class="btn btn-primary" id="confirmTheme" style="padding: 12px 32px; font-size: 14px; font-weight: 500;">✨ บันทึกพื้นหลัง</button>
+              <button class="btn btn-light" id="cancelThemeModal" style="padding: 12px 28px; font-size: 14px; font-weight: 500; background: rgba(255,255,255,0.05); color: white; border: none; border-radius: 8px;">ยกเลิก</button>
+              <button class="btn btn-primary" id="confirmTheme" style="padding: 12px 32px; font-size: 14px; font-weight: 500; background: #f7b500; color: #000; border: none; border-radius: 8px;">✨ บันทึกพื้นหลัง</button>
             </div>
           </div>
         `;
