@@ -84,6 +84,7 @@
         <!-- Admin Navigation Tabs -->
         <div class="admin-tabs-container">
           <div class="admin-tabs">
+            <button class="admin-tab" data-tab="frames" type="button">Profile Frames</button>
             <button class="admin-tab is-active" data-tab="dashboard" type="button">📊 Dashboard</button>
             <button class="admin-tab" data-tab="items" type="button">📦 ไอเท็ม</button>
             <button class="admin-tab" data-tab="servers" type="button">🖥️ Server</button>
@@ -446,6 +447,63 @@
                   </div>
                 </div>
                 <div class="admin-items premium-list" id="premiumUsers"></div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile Frames Tab -->
+        <div class="admin-tab-content" data-tab-content="frames">
+          <div class="admin-grid-layout">
+            <div class="admin-column">
+              <form class="admin-editor" id="profileFrameForm">
+                <div class="form-block-head">
+                  <span>FR</span>
+                  <div>
+                    <h2 id="profileFrameEditorTitle">เพิ่มกรอบโปรไฟล์</h2>
+                    <p>อัปโหลดกรอบโปรไฟล์แบบ PNG, GIF หรือ WebP โปร่งใส เพื่อให้สมาชิก Premium เลือกใช้ในหน้าร้านได้</p>
+                  </div>
+                </div>
+                <input id="profileFrameId" type="hidden" />
+                <input id="profileFrameImageUrl" type="hidden" />
+                <input id="profileFrameImagePath" type="hidden" />
+                <div class="post-grid">
+                  <label class="post-field">
+                    <span>ชื่อกรอบ</span>
+                    <input id="profileFrameName" type="text" placeholder="เช่น Golden Aura Frame" required />
+                  </label>
+                  <label class="post-field">
+                    <span>ลำดับ</span>
+                    <input id="profileFrameSortOrder" type="number" value="0" />
+                  </label>
+                </div>
+                <label class="post-field">
+                  <span>รูปกรอบโปรไฟล์</span>
+                  <input id="profileFrameImage" type="file" accept="image/png,image/webp,image/gif,image/*" />
+                </label>
+                <div class="profile-frame-admin-preview">
+                  <img class="profile-frame-preview-avatar" src="assets/site-icons/rooc-icon-192.png" alt="" />
+                  <img id="profileFramePreview" class="profile-frame-preview-frame" src="" alt="" hidden />
+                </div>
+                <label class="post-checks">
+                  <span><input id="profileFrameActive" type="checkbox" checked /> เปิดใช้งาน</span>
+                </label>
+                <div class="post-actions">
+                  <button class="btn btn-light" id="profileFrameResetButton" type="button">ล้างฟอร์ม</button>
+                  <button class="btn btn-primary" type="submit">บันทึกกรอบ</button>
+                </div>
+                <p class="admin-message" id="profileFrameMessage"></p>
+              </form>
+            </div>
+            <div class="admin-column">
+              <section class="admin-list-panel">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Profile Frames</p>
+                    <h2>กรอบโปรไฟล์ทั้งหมด</h2>
+                  </div>
+                </div>
+                <div class="admin-items" id="profileFrameList"></div>
               </section>
             </div>
           </div>
@@ -896,6 +954,13 @@
       const premiumSearchInput = document.querySelector("#premiumSearchInput");
       const premiumSearchButton = document.querySelector("#premiumSearchButton");
       const premiumSearchResults = document.querySelector("#premiumSearchResults");
+      const profileFrameForm = document.querySelector("#profileFrameForm");
+      const profileFrameList = document.querySelector("#profileFrameList");
+      const profileFrameResetButton = document.querySelector("#profileFrameResetButton");
+      const profileFrameMessage = document.querySelector("#profileFrameMessage");
+      const profileFrameImage = document.querySelector("#profileFrameImage");
+      const profileFramePreview = document.querySelector("#profileFramePreview");
+      const profileFrameEditorTitle = document.querySelector("#profileFrameEditorTitle");
       
       // Icon Manager Elements
       const iconInputs = document.querySelectorAll('input[data-icon-type]');
@@ -981,6 +1046,7 @@
       let dungeonCache = [];
       let premiumCache = [];
       let premiumProfileResults = [];
+      let profileFrameCache = [];
       let listingCache = [];
       let bannedCache = [];
       let currentSession = null;
@@ -1000,6 +1066,15 @@
         avatarUrl: document.querySelector("#premiumAvatarUrl"),
         note: document.querySelector("#premiumNote"),
         active: document.querySelector("#premiumActive")
+      };
+
+      const profileFrameFields = {
+        id: document.querySelector("#profileFrameId"),
+        name: document.querySelector("#profileFrameName"),
+        imageUrl: document.querySelector("#profileFrameImageUrl"),
+        imagePath: document.querySelector("#profileFrameImagePath"),
+        sortOrder: document.querySelector("#profileFrameSortOrder"),
+        active: document.querySelector("#profileFrameActive")
       };
 
       function arrangeAdminPanels() {
@@ -1407,6 +1482,150 @@
 
         premiumCache = data || [];
         renderPremiumUsers();
+      }
+
+      function resetProfileFrameForm() {
+        profileFrameForm?.reset();
+        profileFrameFields.id.value = "";
+        profileFrameFields.imageUrl.value = "";
+        profileFrameFields.imagePath.value = "";
+        profileFrameFields.sortOrder.value = "0";
+        profileFrameFields.active.checked = true;
+        profileFramePreview.src = "";
+        profileFramePreview.hidden = true;
+        profileFrameEditorTitle.textContent = "เพิ่มกรอบโปรไฟล์";
+        setMessage(profileFrameMessage, "");
+      }
+
+      function renderProfileFrames() {
+        if (!profileFrameList) return;
+        profileFrameList.innerHTML = "";
+        if (!profileFrameCache.length) {
+          profileFrameList.innerHTML = '<p class="admin-empty">ยังไม่มีกรอบโปรไฟล์</p>';
+          return;
+        }
+
+        profileFrameCache.forEach((frame) => {
+          const card = document.createElement("article");
+          card.className = "admin-item-card";
+          card.innerHTML = `
+            <span class="profile-frame-admin-preview" style="width: 82px; height: 82px; margin: 0;">
+              <img class="profile-frame-preview-avatar" src="assets/site-icons/rooc-icon-192.png" alt="" style="width: 58px; height: 58px;" />
+              <img class="profile-frame-preview-frame" src="${escapeHtml(frame.image_url)}" alt="" />
+            </span>
+            <div>
+              <strong>${escapeHtml(frame.name)}</strong>
+              <span>${frame.active ? "เปิดใช้งาน" : "ปิดใช้งาน"} · ลำดับ ${Number(frame.sort_order || 0)}</span>
+              <small>Premium only</small>
+            </div>
+            <div class="admin-item-actions">
+              <button class="btn btn-small" type="button" data-frame-edit="${escapeHtml(frame.id)}">แก้ไข</button>
+              <button class="btn btn-small admin-delete" type="button" data-frame-delete="${escapeHtml(frame.id)}">ลบ</button>
+            </div>
+          `;
+          profileFrameList.append(card);
+        });
+      }
+
+      async function loadProfileFrames() {
+        if (!profileFrameList) return;
+        const { data, error } = await supabaseClient
+          .from("marketplace_profile_frames")
+          .select("*")
+          .order("sort_order", { ascending: true })
+          .order("name", { ascending: true });
+
+        if (error) {
+          setMessage(profileFrameMessage, error.message, true);
+          return;
+        }
+
+        profileFrameCache = data || [];
+        renderProfileFrames();
+      }
+
+      function editProfileFrame(frameId) {
+        const frame = profileFrameCache.find((entry) => entry.id === frameId);
+        if (!frame) return;
+        profileFrameFields.id.value = frame.id;
+        profileFrameFields.name.value = frame.name || "";
+        profileFrameFields.imageUrl.value = frame.image_url || "";
+        profileFrameFields.imagePath.value = frame.image_path || "";
+        profileFrameFields.sortOrder.value = frame.sort_order || 0;
+        profileFrameFields.active.checked = Boolean(frame.active);
+        profileFramePreview.src = frame.image_url || "";
+        profileFramePreview.hidden = !frame.image_url;
+        profileFrameEditorTitle.textContent = "แก้ไขกรอบโปรไฟล์";
+        setMessage(profileFrameMessage, "");
+        profileFrameForm.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+
+      async function saveProfileFrame(event) {
+        event.preventDefault();
+        const file = profileFrameImage?.files?.[0];
+        let imageUrl = profileFrameFields.imageUrl.value;
+        let imagePath = profileFrameFields.imagePath.value;
+
+        try {
+          if (file) {
+            const uploaded = await uploadImage(file, "profile-frames");
+            imageUrl = uploaded.imageUrl;
+            imagePath = uploaded.imagePath;
+          }
+
+          if (!profileFrameFields.name.value.trim()) {
+            setMessage(profileFrameMessage, "กรุณาใส่ชื่อกรอบ", true);
+            profileFrameFields.name.focus();
+            return;
+          }
+
+          if (!imageUrl) {
+            setMessage(profileFrameMessage, "กรุณาอัปโหลดรูปกรอบ", true);
+            return;
+          }
+
+          const payload = {
+            name: profileFrameFields.name.value.trim(),
+            image_url: imageUrl,
+            image_path: imagePath || null,
+            sort_order: Number(profileFrameFields.sortOrder.value || 0),
+            active: profileFrameFields.active.checked
+          };
+
+          const request = profileFrameFields.id.value
+            ? supabaseClient.from("marketplace_profile_frames").update(payload).eq("id", profileFrameFields.id.value)
+            : supabaseClient.from("marketplace_profile_frames").insert(payload);
+          const { error } = await request;
+          if (error) throw error;
+
+          setMessage(profileFrameMessage, "บันทึกกรอบโปรไฟล์เรียบร้อย");
+          resetProfileFrameForm();
+          await loadProfileFrames();
+        } catch (error) {
+          setMessage(profileFrameMessage, error.message || "บันทึกกรอบไม่สำเร็จ", true);
+        }
+      }
+
+      async function deleteProfileFrame(frameId) {
+        const frame = profileFrameCache.find((entry) => entry.id === frameId);
+        if (!frame || !confirm(`ลบกรอบ "${frame.name}"?`)) return;
+
+        const { error } = await supabaseClient
+          .from("marketplace_profile_frames")
+          .delete()
+          .eq("id", frameId);
+
+        if (error) {
+          setMessage(profileFrameMessage, error.message, true);
+          return;
+        }
+
+        if (frame.image_path) {
+          await supabaseClient.storage.from(bucketName).remove([frame.image_path]);
+        }
+
+        resetProfileFrameForm();
+        await loadProfileFrames();
       }
 
       function renderAdminListings() {
@@ -1969,6 +2188,7 @@
           loadServers();
           loadDungeons();
           loadPremiumUsers();
+          loadProfileFrames();
           loadSupportSettings();
           loadAdminListings();
           loadBannedUsers();
@@ -2220,6 +2440,21 @@
         const file = supportFields.heroSponsorImage.files && supportFields.heroSponsorImage.files[0];
         if (file) supportFields.heroSponsorPreview.src = URL.createObjectURL(file);
       });
+      profileFrameImage?.addEventListener("change", () => {
+        const file = profileFrameImage.files && profileFrameImage.files[0];
+        if (file) {
+          profileFramePreview.src = URL.createObjectURL(file);
+          profileFramePreview.hidden = false;
+        }
+      });
+      profileFrameForm?.addEventListener("submit", saveProfileFrame);
+      profileFrameResetButton?.addEventListener("click", resetProfileFrameForm);
+      profileFrameList?.addEventListener("click", (event) => {
+        const editId = event.target.dataset.frameEdit;
+        const deleteId = event.target.dataset.frameDelete;
+        if (editId) editProfileFrame(editId);
+        if (deleteId) deleteProfileFrame(deleteId);
+      });
       adminItems.addEventListener("click", (event) => {
         const editId = event.target.dataset.edit;
         const deleteId = event.target.dataset.delete;
@@ -2327,7 +2562,7 @@
         const btn = document.getElementById("dashboardRefreshBtn");
         btn.disabled = true;
         btn.textContent = "🔄 กำลังรีเฟรช...";
-        await Promise.all([loadItems(), loadServers(), loadDungeons(), loadAdminListings(), loadBannedUsers(), loadPremiumUsers()]);
+        await Promise.all([loadItems(), loadServers(), loadDungeons(), loadAdminListings(), loadBannedUsers(), loadPremiumUsers(), loadProfileFrames()]);
         updateDashboardStats();
         btn.disabled = false;
         btn.textContent = "🔄 รีเฟรชข้อมูล";

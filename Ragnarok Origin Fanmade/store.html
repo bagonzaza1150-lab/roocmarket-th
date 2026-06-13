@@ -221,8 +221,9 @@
       <section class="store-header">
         <div class="shell store-header-grid" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
           <div class="store-profile" style="display: flex; align-items: center; gap: 16px;">
-            <div class="store-avatar" style="width: 110px; height: 110px; flex-shrink: 0;">
+            <div class="store-avatar" style="width: 110px; height: 110px; flex-shrink: 0; position: relative;">
               <img id="storeAvatar" src="assets/site-icons/rooc-icon-192.png" alt="Seller Avatar" style="width: 100%; height: 100%; border-radius: 20px; object-fit: cover; border: 3px solid var(--paper); box-shadow: 0 6px 16px rgba(0,0,0,0.15);" />
+              <img id="storeProfileFrame" class="store-profile-frame-image" src="" alt="" hidden />
               <span class="status-indicator online" style="width: 18px; height: 18px; border-width: 3px; bottom: 5px; right: 5px;"></span>
             </div>
             <div class="store-info">
@@ -280,6 +281,12 @@
               <span style="display: block; margin-bottom: 5px; font-size: 14px;">Instagram URL</span>
               <input type="url" id="editInstagramUrl" placeholder="https://instagram.com/username" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--ink);" />
             </label>
+            <div>
+              <span style="display: block; margin-bottom: 5px; font-size: 14px;">กรอบโปรไฟล์ Premium</span>
+              <div class="profile-frame-picker" id="profileFramePicker"></div>
+              <input type="hidden" id="editProfileFrameId" />
+              <p id="profileFrameHint" style="margin: 6px 0 0; color: var(--muted); font-size: 12px;"></p>
+            </div>
             <div style="display: flex; gap: 10px; margin-top: 10px;">
               <button type="button" class="btn btn-light" id="cancelEditProfile" style="flex: 1;">ยกเลิก</button>
               <button type="submit" class="btn btn-primary" style="flex: 2;">บันทึกการตั้งค่า</button>
@@ -425,6 +432,8 @@
       let currentSort = "newest";
       let offerMailbox = new Map();
       let premiumResult = { active: false };
+      let profileFrames = [];
+      let selectedProfileFrameId = "";
 
       // ใช้ getter เพื่อให้ได้ค่าล่าสุดเสมอ
       const getApp = () => window.ROOC_APP;
@@ -541,6 +550,71 @@
           app.initStorePage(currentSession.user.id);
         }
       }
+
+      async function loadProfileFramesForStore() {
+        const supabase = getSupabase();
+        if (!supabase) return [];
+        const { data, error } = await supabase
+          .from("marketplace_profile_frames")
+          .select("*")
+          .eq("active", true)
+          .order("sort_order", { ascending: true })
+          .order("name", { ascending: true });
+        if (error) {
+          console.warn("Profile frames failed:", error);
+          return [];
+        }
+        profileFrames = data || [];
+        return profileFrames;
+      }
+
+      function setStoreProfileFrame(frameId) {
+        const frameEl = document.querySelector("#storeProfileFrame");
+        if (!frameEl) return;
+        const frame = profileFrames.find((entry) => String(entry.id) === String(frameId));
+        if (frame?.image_url) {
+          frameEl.src = frame.image_url;
+          frameEl.hidden = false;
+        } else {
+          frameEl.src = "";
+          frameEl.hidden = true;
+        }
+      }
+
+      function renderProfileFramePicker(isPremium) {
+        const picker = document.querySelector("#profileFramePicker");
+        const hint = document.querySelector("#profileFrameHint");
+        const escape = getApp()?.escapeHtml || ((value) => String(value || ""));
+        if (!picker) return;
+
+        if (hint) {
+          hint.textContent = isPremium
+            ? "เลือกกรอบที่ต้องการแสดงบนรูปโปรไฟล์ร้าน"
+            : "กรอบโปรไฟล์เปิดให้ใช้งานเฉพาะสมาชิก Premium";
+        }
+
+        const defaultButton = `
+          <button class="profile-frame-option ${!selectedProfileFrameId ? "is-active" : ""}" type="button" data-frame-id="">
+            <span>ไม่ใช้กรอบ</span>
+          </button>
+        `;
+
+        const frameButtons = profileFrames.map((frame) => `
+          <button class="profile-frame-option ${String(selectedProfileFrameId) === String(frame.id) ? "is-active" : ""} ${isPremium ? "" : "is-locked"}" type="button" data-frame-id="${escape(frame.id)}" ${isPremium ? "" : "disabled"}>
+            <img src="${escape(frame.image_url)}" alt="" />
+            <span>${escape(frame.name)}</span>
+          </button>
+        `).join("");
+
+        picker.innerHTML = defaultButton + frameButtons;
+      }
+
+      window.ROOC_STORE_SET_SELECTED_PROFILE_FRAME = function(frameId) {
+        selectedProfileFrameId = frameId || "";
+        setStoreProfileFrame(selectedProfileFrameId);
+      };
+
+      window.ROOC_STORE_RENDER_PROFILE_FRAMES = renderProfileFramePicker;
 
       window.showThemePickerModal = async function(listingId) {
         const app = getApp();
@@ -736,6 +810,15 @@
         const soldBtn = target.closest("[data-sold]");
         const deleteBtn = target.closest("[data-delete]");
         const customizeBtn = target.closest("[data-customize]");
+        const frameOption = target.closest(".profile-frame-option");
+
+        if (frameOption && !frameOption.disabled && !frameOption.classList.contains("is-locked")) {
+          selectedProfileFrameId = frameOption.dataset.frameId || "";
+          const frameInput = document.querySelector("#editProfileFrameId");
+          if (frameInput) frameInput.value = selectedProfileFrameId;
+          document.querySelectorAll(".profile-frame-option").forEach((option) => option.classList.remove("is-active"));
+          frameOption.classList.add("is-active");
+        }
 
         if (toggleBtn) window.toggleListing(toggleBtn.dataset.toggle);
         if (editPriceBtn) window.editListingPrice(editPriceBtn.dataset.editPrice);
@@ -813,7 +896,18 @@
           document.querySelector("#editDisplayName").value = profile.display_name || "";
           document.querySelector("#editFacebookUrl").value = profile.facebook_url || "";
           document.querySelector("#editInstagramUrl").value = profile.instagram_url || "";
+          selectedProfileFrameId = profile.profile_frame_id || "";
+          document.querySelector("#editProfileFrameId").value = selectedProfileFrameId;
+        } else {
+          selectedProfileFrameId = "";
+          document.querySelector("#editProfileFrameId").value = "";
         }
+
+        if (!profileFrames.length) await loadProfileFramesForStore();
+        const app = getApp();
+        const premiumStatus = app?.getPremiumStatus ? await app.getPremiumStatus(currentSession) : false;
+        const isPremium = premiumStatus === true || (premiumStatus && premiumStatus.active === true);
+        renderProfileFramePicker(isPremium);
         
         mountModalAtViewportRoot(editProfileModal);
         editProfileModal.hidden = false;
@@ -837,6 +931,10 @@
         const displayName = document.querySelector("#editDisplayName").value.trim();
         const facebookUrl = document.querySelector("#editFacebookUrl").value.trim();
         const instagramUrl = document.querySelector("#editInstagramUrl").value.trim();
+        const requestedFrameId = document.querySelector("#editProfileFrameId")?.value || "";
+        const app = getApp();
+        const premiumStatus = app?.getPremiumStatus ? await app.getPremiumStatus(currentSession) : false;
+        const isPremium = premiumStatus === true || (premiumStatus && premiumStatus.active === true);
 
         setMessage("กำลังบันทึกข้อมูล...");
         
@@ -845,6 +943,7 @@
           display_name: displayName,
           facebook_url: facebookUrl,
           instagram_url: instagramUrl,
+          profile_frame_id: isPremium && requestedFrameId ? requestedFrameId : null,
           updated_at: new Date().toISOString()
         });
 
@@ -895,6 +994,7 @@
 
           isOwner = currentSession && currentSession.user.id === sellerId;
           console.log("Is Owner?", isOwner);
+          await loadProfileFramesForStore();
           
           if (isOwner) {
             document.body.classList.add("is-owner");

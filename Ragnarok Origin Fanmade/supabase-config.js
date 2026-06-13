@@ -1752,6 +1752,7 @@ window.ROOC_SUPABASE = {
         
 	        // ดึงข้อมูลโปรไฟล์โดยตรง (เผื่อกรณีไม่มีประกาศสินค้าเลย)
 	        const { data: profile } = await supabaseClient.from("marketplace_profiles").select("*").eq("user_id", sellerId).maybeSingle();
+	        window.ROOC_STORE_SET_SELECTED_PROFILE_FRAME?.(profile?.profile_frame_id || "");
 	        
 		        if (profile || storeListings.length > 0) {
 		          const seller = profile || storeListings[0];

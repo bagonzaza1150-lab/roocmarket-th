@@ -107,12 +107,42 @@ create table if not exists public.marketplace_profiles (
   display_name text not null default '',
   avatar_url text not null default '',
   email text not null default '',
+  profile_frame_id uuid,
   updated_at timestamptz not null default now(),
   created_at timestamptz not null default now()
 );
 
 create index if not exists marketplace_profiles_search_idx
   on public.marketplace_profiles (display_name, discord_id);
+
+create table if not exists public.marketplace_profile_frames (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  image_url text not null default '',
+  image_path text,
+  sort_order integer not null default 0,
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'marketplace_profiles_profile_frame_fk'
+  ) then
+    alter table public.marketplace_profiles
+    add constraint marketplace_profiles_profile_frame_fk
+    foreign key (profile_frame_id)
+    references public.marketplace_profile_frames(id)
+    on delete set null;
+  end if;
+end $$;
+
+create index if not exists marketplace_profile_frames_active_idx
+  on public.marketplace_profile_frames (active, sort_order, name);
 
 create table if not exists public.marketplace_premium_users (
   user_id uuid primary key references auth.users(id) on delete cascade,
@@ -322,6 +352,11 @@ create trigger marketplace_profiles_set_updated_at
 before update on public.marketplace_profiles
 for each row execute function public.set_updated_at();
 
+drop trigger if exists marketplace_profile_frames_set_updated_at on public.marketplace_profile_frames;
+create trigger marketplace_profile_frames_set_updated_at
+before update on public.marketplace_profile_frames
+for each row execute function public.set_updated_at();
+
 drop trigger if exists marketplace_premium_users_set_updated_at on public.marketplace_premium_users;
 create trigger marketplace_premium_users_set_updated_at
 before update on public.marketplace_premium_users
@@ -344,6 +379,7 @@ alter table public.marketplace_listings enable row level security;
 alter table public.marketplace_listing_offers enable row level security;
 alter table public.marketplace_admins enable row level security;
 alter table public.marketplace_profiles enable row level security;
+alter table public.marketplace_profile_frames enable row level security;
 alter table public.marketplace_premium_users enable row level security;
 alter table public.marketplace_banned_users enable row level security;
 alter table public.marketplace_site_settings enable row level security;
@@ -432,6 +468,8 @@ grant all privileges on table public.marketplace_listings to authenticated;
 grant all privileges on table public.marketplace_listing_offers to authenticated;
 grant select on table public.marketplace_admins to authenticated;
 grant all privileges on table public.marketplace_profiles to authenticated;
+grant select on table public.marketplace_profile_frames to anon, authenticated;
+grant all privileges on table public.marketplace_profile_frames to authenticated;
 grant all privileges on table public.marketplace_premium_users to authenticated;
 grant all privileges on table public.marketplace_banned_users to authenticated;
 grant select on table public.marketplace_site_settings to anon;
@@ -581,6 +619,35 @@ for update
 to authenticated
 using (auth.uid() = user_id or public.is_market_admin())
 with check (auth.uid() = user_id or public.is_market_admin());
+
+drop policy if exists "Public can read active profile frames" on public.marketplace_profile_frames;
+create policy "Public can read active profile frames"
+on public.marketplace_profile_frames
+for select
+to anon, authenticated
+using (active = true or public.is_market_admin());
+
+drop policy if exists "Authenticated admins can insert profile frames" on public.marketplace_profile_frames;
+create policy "Authenticated admins can insert profile frames"
+on public.marketplace_profile_frames
+for insert
+to authenticated
+with check (public.is_market_admin());
+
+drop policy if exists "Authenticated admins can update profile frames" on public.marketplace_profile_frames;
+create policy "Authenticated admins can update profile frames"
+on public.marketplace_profile_frames
+for update
+to authenticated
+using (public.is_market_admin())
+with check (public.is_market_admin());
+
+drop policy if exists "Authenticated admins can delete profile frames" on public.marketplace_profile_frames;
+create policy "Authenticated admins can delete profile frames"
+on public.marketplace_profile_frames
+for delete
+to authenticated
+using (public.is_market_admin());
 
 drop policy if exists "Authenticated users can read own premium status" on public.marketplace_premium_users;
 create policy "Authenticated users can read own premium status"
