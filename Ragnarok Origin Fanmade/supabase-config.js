@@ -37,19 +37,18 @@ window.ROOC_SUPABASE = {
 
       let updatedCount = 0;
 
-      // 1. อัปเดต Logo (ครอบคลุมทุกจุดที่น่าจะเป็น Logo)
+      // 1. อัปเดต Logo
       if (iconMap['site-logo']) {
-        const logoUrls = [iconMap['site-logo']];
+        const logoUrl = addCacheBuster(iconMap['site-logo']);
         document.querySelectorAll('img').forEach(img => {
-          const src = img.src || '';
-          if (src.includes('rooc-icon') || img.closest('.brand-mark') || img.closest('.brand') || img.id === 'storeAvatar') {
-            img.src = addCacheBuster(iconMap['site-logo']);
+          if (img.src.includes('rooc-icon') || img.closest('.brand-mark') || img.closest('.brand') || img.id === 'storeAvatar') {
+            img.src = logoUrl;
             updatedCount++;
           }
         });
       }
 
-      // 2. อัปเดต Category Icons (กวาดหาจาก pattern และโครงสร้าง)
+      // 2. อัปเดต Category Icons
       const catPatterns = {
         'cat-mvp': ['mvp-c.png', 'mvp'],
         'cat-acc': ['accessories-a.png', 'acc'],
@@ -58,45 +57,62 @@ window.ROOC_SUPABASE = {
 
       document.querySelectorAll('img').forEach(img => {
         const src = img.src || '';
-        // ข้าม Logo ไปก่อน
         if (src.includes('rooc-icon')) return;
-
         Object.entries(catPatterns).forEach(([key, patterns]) => {
           if (iconMap[key] && patterns.some(p => src.includes(p))) {
             img.src = addCacheBuster(iconMap[key]);
             updatedCount++;
           }
         });
+      });
 
-        // พิเศษสำหรับหน้าแรกที่ใช้ .category-icon
-        const article = img.closest('article');
-        const categoryRow = img.closest('.category-row');
-        if (categoryRow && article) {
-          const index = Array.from(categoryRow.querySelectorAll('article')).indexOf(article);
-          const mapping = ['cat-mvp', 'cat-acc', 'cat-fashion'];
-          const targetKey = mapping[index];
-          if (targetKey && iconMap[targetKey]) {
-            img.src = addCacheBuster(iconMap[targetKey]);
-            updatedCount++;
-          }
+      // 3. อัปเดต Dashboard Icons (แก้ปัญหา SVG ไม่เปลี่ยน)
+      const dashboardMapping = [
+        { text: 'ประกาศขาย', key: 'dash-sell' },
+        { text: 'ประกาศรับซื้อ', key: 'dash-buy' },
+        { text: 'รับจ้างลงดัน', key: 'dash-service' },
+        { text: 'สถานะบัญชี', key: 'dash-account' }
+      ];
+
+      dashboardMapping.forEach(item => {
+        if (iconMap[item.key]) {
+          const url = addCacheBuster(iconMap[item.key]);
+          // ค้นหาข้อความในหน้าเว็บ
+          document.querySelectorAll('.quota-details span, .stat-label').forEach(span => {
+            if (span.textContent.trim() === item.text) {
+              const quotaItem = span.closest('.quota-item');
+              if (quotaItem) {
+                const iconBox = quotaItem.querySelector('.quota-icon-box');
+                if (iconBox) {
+                  iconBox.innerHTML = `<img src="${url}" style="width: 32px; height: 32px; object-fit: contain;" />`;
+                  updatedCount++;
+                }
+              }
+            }
+          });
         }
       });
 
-      // 3. อัปเดต Dashboard Icons (ถ้ามีในหน้านั้น)
-      const dashMap = {
+      // 4. อัปเดต Preview ในหน้า Admin (ถ้ามี)
+      const adminPreviews = {
+        'site-logo': 'preview-site-logo',
+        'cat-mvp': 'preview-cat-mvp',
+        'cat-acc': 'preview-cat-acc',
+        'cat-fashion': 'preview-cat-fashion',
         'dash-sell': 'preview-dash-sell',
         'dash-buy': 'preview-dash-buy',
         'dash-service': 'preview-dash-service',
         'dash-account': 'preview-dash-account'
       };
 
-      Object.entries(dashMap).forEach(([key, previewId]) => {
+      Object.entries(adminPreviews).forEach(([key, id]) => {
         if (iconMap[key]) {
-          const el = document.getElementById(previewId);
+          const el = document.getElementById(id);
           if (el) {
             const url = addCacheBuster(iconMap[key]);
             if (el.tagName === 'IMG') el.src = url;
             else el.innerHTML = `<img src="${url}" style="max-width: 24px; max-height: 24px;" />`;
+            updatedCount++;
           }
         }
       });
