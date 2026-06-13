@@ -64,6 +64,29 @@
           </div>
         </div>
 
+        <!-- Step Progress Indicator -->
+        <div class="step-progress">
+          <div class="step-item active" data-step="1">
+            <div class="step-number">1</div>
+            <div class="step-label">ประเภท</div>
+          </div>
+          <div class="step-divider"></div>
+          <div class="step-item" data-step="2">
+            <div class="step-number">2</div>
+            <div class="step-label">หมวด</div>
+          </div>
+          <div class="step-divider"></div>
+          <div class="step-item" data-step="3">
+            <div class="step-number">3</div>
+            <div class="step-label">ไอเทม</div>
+          </div>
+          <div class="step-divider"></div>
+          <div class="step-item" data-step="4">
+            <div class="step-number">4</div>
+            <div class="step-label">ข้อมูล</div>
+          </div>
+        </div>
+
         <div class="post-layout">
           <div class="login-required" id="loginRequiredPanel" hidden>
             <h3>ต้องเข้าสู่ระบบก่อนลงประกาศ</h3>
@@ -82,9 +105,9 @@
               </div>
 
               <div class="category-picker listing-type-picker" role="tablist" aria-label="ประเภทประกาศ">
-                <button class="is-active" type="button" data-listing-type="sell">ประกาศขาย</button>
-                <button type="button" data-listing-type="buy">ประกาศรับซื้อ</button>
-                <button type="button" data-listing-type="service">รับจ้างลงดัน</button>
+                <button class="is-active" type="button" data-listing-type="sell" title="ขายไอเทมหรือบัญชี">ประกาศขาย</button>
+                <button type="button" data-listing-type="buy" title="รับซื้อไอเทมหรือบัญชี">ประกาศรับซื้อ</button>
+                <button type="button" data-listing-type="service" title="บริการลงดันหรือช่วยเหลือ">รับจ้างลงดัน</button>
               </div>
             </div>
 
@@ -98,10 +121,10 @@
               </div>
 
               <div class="category-picker" role="tablist" aria-label="หมวดประกาศ">
-                <button class="is-active" type="button" data-category="mvp">MVP Cards</button>
-                <button type="button" data-category="accessories">Accessories</button>
-                <button type="button" data-category="fashion">Fashion</button>
-                <button type="button" data-category="account">Account</button>
+                <button class="is-active" type="button" data-category="mvp" title="การ์ด MVP และการ์ดพิเศษ">MVP Cards</button>
+                <button type="button" data-category="accessories" title="เครื่องประดับและอุปกรณ์">Accessories</button>
+                <button type="button" data-category="fashion" title="เสื้อผ้าและอุปกรณ์ตกแต่ง">Fashion</button>
+                <button type="button" data-category="account" title="บัญชีเกมหรือตัวละคร">Account</button>
               </div>
             </div>
 
@@ -661,14 +684,16 @@
         setPreviewImage(image, group.mediaClass);
         previewMedia.classList.toggle("is-hidden", activeListingType === "service");
         
+        // Update step progress when form fields are filled
+        if (listingTitle.value.trim() || listingPrice.value || listingDescription.value) {
+          updateStepProgress(4);
+        }
+        
         // Update preview card theme
         const previewCard = document.querySelector('.preview-card');
         if (previewCard) {
           const selectedTheme = document.querySelector('#themePickerInline .theme-option.active')?.dataset.theme || 'default';
           let newClass = 'listing-card preview-card';
-          
-
-          
           if (selectedTheme && selectedTheme !== 'default') {
             newClass += " " + selectedTheme;
           }
@@ -689,6 +714,8 @@
             itemSelect.append(option);
           }
         });
+        itemSelect.addEventListener('change', () => updateStepProgress(3));
+        dungeonSelect.addEventListener('change', () => updateStepProgress(3));
 
         itemSelectTitle.textContent = group.title;
         itemSelectLabel.textContent = group.field;
@@ -703,11 +730,20 @@
         syncPreview();
       }
 
+      function updateStepProgress(step) {
+        const stepItems = document.querySelectorAll('.step-item');
+        stepItems.forEach((item) => {
+          const itemStep = parseInt(item.dataset.step);
+          item.classList.toggle('active', itemStep === step);
+        });
+      }
+
       function syncListingTypeUi(type) {
         activeListingType = type === "buy" ? "buy" : type === "service" ? "service" : "sell";
         listingTypeButtons.forEach((button) => {
           button.classList.toggle("is-active", button.dataset.listingType === activeListingType);
         });
+        updateStepProgress(1);
         listingPriceField.classList.remove("is-hidden");
         listingPrice.required = true;
         categoryButtons.forEach((button) => {
@@ -717,6 +753,7 @@
             button.hidden = !accountListingEnabled;
             button.title = accountListingEnabled ? "" : "Admin ปิดการลงประกาศขาย Account ชั่วคราว";
           }
+          button.addEventListener('click', () => updateStepProgress(2));
         });
         if (activeListingType === "service") {
           activeCategory = "dungeon";
