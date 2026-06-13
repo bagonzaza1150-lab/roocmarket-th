@@ -6865,13 +6865,16 @@ html, body {
   position: absolute !important;
   top: 50% !important;
   left: 50% !important;
-  width: 72% !important;
-  height: 72% !important;
+  width: 100% !important;
+  height: 100% !important;
   transform: translate(-50%, -50%);
   z-index: 2;
 }
 
 .store-avatar .store-profile-frame-image {
+  inset: -10px;
+  width: calc(100% + 20px);
+  height: calc(100% + 20px);
   z-index: 1;
 }
 
