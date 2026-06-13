@@ -4051,41 +4051,48 @@ h1 {
 
 /* --- Seller Storefront Styles --- */
 .store-header {
-  padding: 64px 0 48px;
+  padding: 32px 0 24px;
   border-bottom: 1px solid var(--line);
   background: radial-gradient(circle at top right, color-mix(in srgb, var(--blue) 8%, transparent), transparent), linear-gradient(180deg, var(--paper-soft), var(--paper));
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .store-header-grid {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  text-align: center;
-  gap: 24px;
+  text-align: left;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .store-header-grid {
+    flex-direction: column;
+    text-align: center;
+  }
 }
 
 .store-profile {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
 }
 
 .store-avatar {
   position: relative;
-  width: 100px;
-  height: 100px;
+  width: 64px;
+  height: 64px;
 }
 
 .store-avatar img {
   width: 100%;
   height: 100%;
-  border-radius: 20px;
+  border-radius: 12px;
   object-fit: cover;
-  border: 3px solid var(--paper);
+  border: 2px solid var(--paper);
   background: var(--paper-soft);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 .status-indicator {

@@ -1325,12 +1325,12 @@ window.ROOC_SUPABASE = {
 	              </div>
 
 	              ${isOwner ? `
-	                <div class="owner-controls">
-	                  <button class="btn btn-small btn-light" data-toggle-offers="${listing.id}">${listing.offers_enabled ? "🔕 ปิดเสนอราคา" : "🔔 เปิดเสนอราคา"}</button>
-	                  <button class="btn btn-small btn-light" data-customize="${listing.id}">✨ พื้นหลัง</button>
-	                  <button class="btn btn-small btn-light" data-sold="${listing.id}">✅ ขายแล้ว</button>
-	                  <button class="btn btn-small btn-light" data-delete="${listing.id}" style="color: var(--expired);">🗑️ ลบ</button>
-	                </div>
+		                <div class="owner-controls">
+		                  <button class="btn btn-small btn-light" onclick="event.stopPropagation(); window.toggleOffers?.('${listing.id}')">${listing.offers_enabled ? "🔕 ปิดเสนอราคา" : "🔔 เปิดเสนอราคา"}</button>
+		                  <button class="btn btn-small btn-light" onclick="event.stopPropagation(); window.showThemePickerModal?.('${listing.id}')">✨ พื้นหลัง</button>
+		                  <button class="btn btn-small btn-light" onclick="event.stopPropagation(); window.markListingSold?.('${listing.id}')">✅ ขายแล้ว</button>
+		                  <button class="btn btn-small btn-light" onclick="event.stopPropagation(); window.deleteListing?.('${listing.id}')" style="color: var(--expired);">🗑️ ลบ</button>
+		                </div>
 	                ${offers.length > 0 ? `
 	                  <div class="offer-mailbox">
 	                    <strong>Mailbox (${offers.length})</strong>
