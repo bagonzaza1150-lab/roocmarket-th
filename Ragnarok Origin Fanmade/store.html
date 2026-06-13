@@ -70,18 +70,23 @@
         background-position: center;
       }
       .theme-option.active { border-color: var(--primary); transform: scale(1.05); }
-      .theme-option.locked { cursor: not-allowed; opacity: 0.6; }
+      .theme-option.locked { 
+        cursor: not-allowed; 
+        opacity: 0.8; 
+        position: relative;
+      }
       
-      /* Theme options in modal - no overlay/shadow */
-      .theme-picker-modal .theme-option::before,
-      .theme-picker-modal .theme-option::after {
-        content: '';
+      .theme-option.locked::after {
+        content: '🔒';
         position: absolute;
         inset: 0;
-        background: transparent !important;
-        z-index: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        z-index: 10;
         border-radius: inherit;
-        pointer-events: none;
       }
       
       .offer-mailbox {
@@ -598,7 +603,7 @@
           const isLocked = !isPremium && theme.id !== 'default';
           return `
             <button type="button"
-                 class="theme-option${isActive ? ' active' : ''}${isLocked ? ' locked' : ''}"
+                 class="theme-option ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}"
                  data-theme="${theme.id}"
                  style="position: relative; height: 220px; aspect-ratio: 3/4; border-radius: 14px; border: 3px solid transparent; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; font-weight: 600; color: white; transition: all 0.3s; padding: 12px; font-size: 13px; background-size: cover; background-position: center; background-repeat: no-repeat; overflow: hidden;"
                  onclick="window.selectThemeInModal(this)">
