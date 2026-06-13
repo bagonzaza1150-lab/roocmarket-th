@@ -114,6 +114,23 @@
         gap: 4px;
         margin-bottom: 8px;
       }
+      
+      /* ปรับแต่งปุ่มจัดการเจ้าของร้านให้ไม่ล้นการ์ด */
+      .owner-controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px dashed var(--line);
+      }
+      .owner-controls .btn {
+        width: 100%;
+        justify-content: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
       .listing-meta span {
         font-size: 10px;
         padding: 2px 6px;
@@ -344,8 +361,8 @@
         msgEl.classList.toggle("is-error", isError);
       }
 
-      // ฟังก์ชันจัดการประกาศ (ย้ายมาจาก my-listings.html)
-      async function toggleListing(id) {
+      // ฟังก์ชันจัดการประกาศ (ย้ายมาจาก my-listings.html) - ประกาศเป็น Global
+      window.toggleListing = async function(id) {
         const supabase = getSupabase();
         const listing = storeListings.find(l => l.id === id);
         if (!listing || !supabase) return;
@@ -357,9 +374,9 @@
           .eq("id", id);
         if (error) setMessage(error.message, true);
         else refreshStoreData();
-      }
+      };
 
-      async function editListingPrice(id) {
+      window.editListingPrice = async function(id) {
         const app = getApp();
         const supabase = getSupabase();
         const listing = storeListings.find(l => l.id === id);
@@ -374,9 +391,9 @@
           .eq("id", id);
         if (error) setMessage(error.message, true);
         else refreshStoreData();
-      }
+      };
 
-      async function markListingSold(id) {
+      window.markListingSold = async function(id) {
         const supabase = getSupabase();
         if (!confirm("ทำเครื่องหมายว่าประกาศนี้ขายออกแล้ว?") || !supabase) return;
         setMessage("กำลังย้ายไปขายออกแล้ว...");
@@ -386,9 +403,9 @@
           .eq("id", id);
         if (error) setMessage(error.message, true);
         else refreshStoreData();
-      }
+      };
 
-      async function deleteListing(id) {
+      window.deleteListing = async function(id) {
         const supabase = getSupabase();
         if (!confirm("ลบประกาศนี้ออกจากรายการ? โควต้าจะยังถูกนับอยู่") || !supabase) return;
         setMessage("กำลังลบประกาศ...");
@@ -398,9 +415,9 @@
           .eq("id", id);
         if (error) setMessage(error.message, true);
         else refreshStoreData();
-      }
+      };
 
-      async function toggleOffers(id) {
+      window.toggleOffers = async function(id) {
         const supabase = getSupabase();
         const listing = storeListings.find(l => l.id === id);
         if (!listing || !supabase) return;
@@ -412,7 +429,7 @@
           .eq("id", id);
         if (error) setMessage(error.message, true);
         else refreshStoreData();
-      }
+      };
 
       async function refreshStoreData() {
         const app = getApp();
