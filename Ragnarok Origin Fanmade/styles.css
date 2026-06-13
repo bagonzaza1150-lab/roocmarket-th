@@ -1101,13 +1101,12 @@ h1 {
   flex: 0 0 auto;
   border-radius: 18px;
   overflow: hidden;
-  background: #ffffff;
-  box-shadow: 0 10px 24px rgba(26, 83, 124, 0.12);
+  background: transparent;
   transition: all 250ms ease;
 }
 
 :root[data-theme="dark"] .category-icon {
-  background: #1a2638;
+  background: transparent;
 }
 
 .category-row article:hover .category-icon {

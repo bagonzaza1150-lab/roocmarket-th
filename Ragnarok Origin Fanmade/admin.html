@@ -2151,7 +2151,10 @@
             // บันทึกลงตาราง marketplace_settings
             const { error: settingsError } = await supabaseClient
               .from('marketplace_settings')
-              .upsert(results.map(r => ({ key: `icon_${r.type}`, value: r.url })), { onConflict: 'key' });
+              .upsert(results.map(r => ({ 
+                key: r.type === 'lock-icon' ? 'lock-icon' : `icon_${r.type}`, 
+                value: r.url 
+              })), { onConflict: 'key' });
 
             if (settingsError) throw settingsError;
 
