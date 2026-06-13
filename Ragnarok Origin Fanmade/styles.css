@@ -6861,6 +6861,24 @@ html, body {
   object-fit: cover;
 }
 
+.store-avatar #storeAvatar {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 72% !important;
+  height: 72% !important;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+.store-avatar .store-profile-frame-image {
+  z-index: 1;
+}
+
+.store-avatar .status-indicator {
+  z-index: 4;
+}
+
 .premium-badge {
   position: absolute;
   bottom: -5px;

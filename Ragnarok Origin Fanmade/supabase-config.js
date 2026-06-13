@@ -49,7 +49,7 @@ window.ROOC_SUPABASE = {
         const logoUrl = addCacheBuster(iconMap['site-logo']);
         document.querySelectorAll('img').forEach(img => {
           // ข้ามรูปภาพที่อยู่ในปุ่มโซเชียลมีเดีย และข้ามรูปโปรไฟล์ผู้ขาย (storeAvatar)
-          if (img.closest('.social-btn') || img.closest('.seller-socials') || img.id === 'storeAvatar') return;
+          if (img.closest('.social-btn') || img.closest('.seller-socials') || img.id === 'storeAvatar' || img.id === 'storeProfileFrame') return;
 
           // เปลี่ยนเฉพาะจุดที่เป็นแบรนด์เว็บไซต์
           if (img.src.includes('rooc-icon') || img.closest('.brand-mark') || img.closest('.brand')) {
