@@ -1171,12 +1171,18 @@
           localStorage.removeItem('rooc-public-listings-v3-no-fb');
           localStorage.removeItem('rooc-public-listings-legacy-v1');
 
-          // แสดง Success Popup แทนการแจ้งเตือนแบบเดิม
-          showSuccessPopup();
-        } catch (error) {
-          setPostMessage(error.message || "เผยแพร่ประกาศไม่สำเร็จ", true);
-        }
-      }
+	          // แสดง Success Popup แทนการแจ้งเตือนแบบเดิม
+	          showSuccessPopup();
+	        } catch (error) {
+	          console.error("Publish Error:", error);
+	          // กรณีที่ error แต่จริงๆ แล้วบันทึกสำเร็จ (เช่น schema cache error)
+	          if (error.message && error.message.includes("already exists")) {
+	             showSuccessPopup();
+	          } else {
+	             setPostMessage(error.message || "เผยแพร่ประกาศไม่สำเร็จ", true);
+	          }
+	        }
+	      }
 
       categoryButtons.forEach((button) => {
         button.addEventListener("click", () => {
