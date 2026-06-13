@@ -69,7 +69,8 @@ window.ROOC_SUPABASE = {
         }
       });
 
-      document.querySelectorAll('img').forEach(img => {
+      // จำกัดเฉพาะรูปภาพที่อยู่ในส่วนหมวดหมู่ (Category Row) เท่านั้น
+      document.querySelectorAll('.category-row img').forEach(img => {
         const src = img.src || '';
         if (src.includes('rooc-icon')) return;
         Object.entries(catPatterns).forEach(([key, patterns]) => {
