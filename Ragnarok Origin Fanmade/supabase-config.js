@@ -84,14 +84,15 @@ window.ROOC_SUPABASE = {
               if (quotaItem) {
                 const iconBox = quotaItem.querySelector('.quota-icon-box');
                 if (iconBox) {
-                  // ปรับขนาดไอคอนให้ใหญ่ขึ้น (จาก 32px เป็น 48px) และทำให้ดูเด่นชัดขึ้น
-                  iconBox.innerHTML = `<img src="${url}" style="width: 48px; height: 48px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));" />`;
-                  // ปรับขนาด icon-box ให้รองรับรูปที่ใหญ่ขึ้นด้วย
-                  iconBox.style.width = '60px';
-                  iconBox.style.height = '60px';
-                  iconBox.style.display = 'flex';
-                  iconBox.style.alignItems = 'center';
-                  iconBox.style.justifyContent = 'center';
+                  // ขยายไอคอนให้ใหญ่ขึ้นเป็น 64px
+                  iconBox.innerHTML = `<img src="${url}" style="width: 64px; height: 64px; object-fit: contain;" />`;
+                  // นำพื้นหลังและกรอบออกเพื่อให้ไอคอนลอยเด่น
+                  iconBox.style.background = 'none';
+                  iconBox.style.boxShadow = 'none';
+                  iconBox.style.border = 'none';
+                  iconBox.style.width = 'auto';
+                  iconBox.style.height = 'auto';
+                  iconBox.style.marginRight = '10px';
                   updatedCount++;
                 }
               }
