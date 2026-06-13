@@ -565,6 +565,20 @@ window.ROOC_SUPABASE = {
     if (serviceTarget) serviceTarget.textContent = serviceTotal.toLocaleString("th-TH");
   }
 
+  function renderListingSkeletons() {
+    const grid = document.querySelector("#latestListingGrid");
+    if (!grid) return;
+    const skeletons = Array.from({ length: 6 }, () => `
+      <div class="skeleton-card">
+        <div class="skeleton skeleton-image"></div>
+        <div class="skeleton skeleton-text"></div>
+        <div class="skeleton skeleton-text short"></div>
+        <div class="skeleton skeleton-btn"></div>
+      </div>
+    `).join("");
+    grid.innerHTML = skeletons;
+  }
+
   function renderListingCards(listings, isFiltered = false) {
     const grid = document.querySelector("#latestListingGrid");
     const emptyState = document.querySelector("#latestEmptyState");
@@ -974,6 +988,7 @@ window.ROOC_SUPABASE = {
     }
 
     try {
+      renderListingSkeletons();
       [publicListings, soldListings] = await Promise.all([
         fetchPublicListings(Boolean(force)),
         fetchSoldListings(Boolean(force)).catch((error) => {
