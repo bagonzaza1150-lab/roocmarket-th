@@ -1914,6 +1914,7 @@
           loadSupportSettings();
           loadAdminListings();
           loadBannedUsers();
+          loadCurrentIcons(); // โหลดไอคอนปัจจุบันเมื่อเข้า Admin
         } else if (!session) {
           window.location.replace("login.html");
         }
@@ -1971,6 +1972,50 @@
         });
       });
 
+      // ฟังก์ชันดึงไอคอนปัจจุบันจากฐานข้อมูล
+      async function loadCurrentIcons() {
+        if (!supabaseClient) return;
+        try {
+          const { data, error } = await supabaseClient
+            .from('marketplace_settings')
+            .select('key, value')
+            .in('key', ['icon_site-logo', 'icon_cat-mvp', 'icon_cat-acc', 'icon_cat-fashion']);
+          
+          if (error) {
+            console.warn('Error loading current icons:', error.message);
+            return;
+          }
+          
+          if (!data || data.length === 0) return;
+          
+          // สร้าง map ของ icon URLs
+          const iconMap = {};
+          data.forEach(row => {
+            const iconType = row.key.replace('icon_', '');
+            iconMap[iconType] = row.value;
+          });
+          
+          // อัปเดต Preview ของแต่ละไอคอน
+          const previewMap = {
+            'site-logo': 'preview-site-logo',
+            'cat-mvp': 'preview-cat-mvp',
+            'cat-acc': 'preview-cat-acc',
+            'cat-fashion': 'preview-cat-fashion'
+          };
+          
+          Object.entries(previewMap).forEach(([key, previewId]) => {
+            if (iconMap[key]) {
+              const previewEl = document.getElementById(previewId);
+              if (previewEl && previewEl.tagName === 'IMG') {
+                previewEl.src = iconMap[key];
+              }
+            }
+          });
+        } catch (err) {
+          console.warn('Failed to load current icons:', err);
+        }
+      }
+
       if (saveIconsBtn) {
         saveIconsBtn.addEventListener('click', async () => {
           if (Object.keys(iconFiles).length === 0) {
@@ -2008,6 +2053,7 @@
 
             setMessage(iconManagerMessage, "บันทึกไอคอนเรียบร้อยแล้ว! ระบบจะเริ่มใช้ไอคอนใหม่ทันที");
             iconFiles = {}; // Clear files
+            await loadCurrentIcons(); // โหลดไอคอนล่าสุดมาแสดง
           } catch (err) {
             setMessage(iconManagerMessage, "เกิดข้อผิดพลาด: " + err.message, true);
           } finally {

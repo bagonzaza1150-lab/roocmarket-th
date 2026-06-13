@@ -162,28 +162,39 @@ window.ROOC_SUPABASE = {
         iconMap[iconType] = row.value;
       });
       
+      // ฟังก์ชัน helper เพื่อเพิ่ม cache busting parameter
+      const addCacheBuster = (url) => {
+        if (!url) return url;
+        const separator = url.includes('?') ? '&' : '?';
+        return `${url}${separator}t=${Date.now()}`;
+      };
+      
       // อัปเดต Logo เว็บไซต์
       if (iconMap['site-logo']) {
         const logoImages = document.querySelectorAll('img[src*="rooc-icon"]');
         logoImages.forEach(img => {
           if (img.src.includes('rooc-icon-64') || img.src.includes('rooc-icon-32') || img.src.includes('rooc-icon-192')) {
-            img.src = iconMap['site-logo'];
+            img.src = addCacheBuster(iconMap['site-logo']);
           }
         });
       }
       
       // อัปเดต Category Icons
       const categoryMap = {
-        'cat-mvp': 'mvp-c.png',
-        'cat-acc': 'accessories-a.png',
-        'cat-fashion': 'fashion-c.png'
+        'cat-mvp': ['mvp-c.png', 'mvp'],
+        'cat-acc': ['accessories-a.png', 'acc', 'account-b.png'],
+        'cat-fashion': ['fashion-c.png', 'fashion']
       };
       
-      Object.entries(categoryMap).forEach(([key, filename]) => {
+      Object.entries(categoryMap).forEach(([key, patterns]) => {
         if (iconMap[key]) {
-          const categoryImages = document.querySelectorAll(`img[src*="${filename}"]`);
+          const categoryImages = document.querySelectorAll('img');
           categoryImages.forEach(img => {
-            img.src = iconMap[key];
+            const src = img.src || '';
+            const shouldUpdate = patterns.some(pattern => src.includes(pattern));
+            if (shouldUpdate && !src.includes('rooc-icon')) {
+              img.src = addCacheBuster(iconMap[key]);
+            }
           });
         }
       });
@@ -1822,18 +1833,20 @@ window.ROOC_SUPABASE = {
     document.addEventListener("DOMContentLoaded", () => {
       initTheme();
       initFloatingElements();
-      loadDynamicIcons();
       hydratePublicListings();
       hydrateAuthUi();
       trackPageView();
+      // โหลดไอคอนหลังจากที่หน้าโหลดเสร็จแล้ว
+      setTimeout(loadDynamicIcons, 500);
     });
   } else {
     initTheme();
     initFloatingElements();
-    loadDynamicIcons();
     hydratePublicListings();
     hydrateAuthUi();
     trackPageView();
+    // โหลดไอคอนหลังจากที่หน้าโหลดเสร็จแล้ว
+    setTimeout(loadDynamicIcons, 500);
   }
 })();
 
