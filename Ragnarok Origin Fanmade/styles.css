@@ -1703,46 +1703,43 @@ h1 {
 
 .listing-meta span {
   display: inline-flex;
-  min-height: 18px;
+  min-height: 20px;
   align-items: center;
-  border-radius: 3px;
+  border-radius: 6px;
   background: var(--paper-soft);
   color: var(--blue);
-  padding: 0 6px;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
+  padding: 3px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
-  border: 1px solid rgba(0, 0, 0, 0.03);
+  border: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 :root[data-theme="dark"] .listing-meta span {
-  border-color: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .listing-meta .verified {
-  background: rgba(24, 166, 106, 0.08);
+  background: rgba(24, 166, 106, 0.12);
   color: var(--green);
-  border-color: rgba(24, 166, 106, 0.2);
 }
 
 .listing-meta .fast {
-  background: rgba(240, 173, 36, 0.1);
+  background: rgba(240, 173, 36, 0.12);
   color: var(--gold);
-  border-color: rgba(240, 173, 36, 0.25);
 }
 
 .listing-meta .buy {
-  background: rgba(55, 160, 236, 0.08);
+  background: rgba(55, 160, 236, 0.12);
   color: var(--blue);
-  border-color: rgba(55, 160, 236, 0.2);
 }
 
 .listing-meta .mvp {
-  background: rgba(240, 70, 70, 0.08);
+  background: rgba(240, 70, 70, 0.12);
   color: #ff5f5f;
-  border-color: rgba(240, 70, 70, 0.25);
 }
 
 .listing-meta .time-left {
