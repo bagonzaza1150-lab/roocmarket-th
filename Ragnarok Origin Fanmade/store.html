@@ -493,11 +493,13 @@
         };
         
         modal.querySelector('#confirmTheme').addEventListener('click', async () => {
+          const supabase = getSupabase();
           if (!isPremium && selectedTheme !== 'default') {
             setMessage('ฟีเจอร์นี้เปิดให้ Premium เท่านั้น', true);
             modal.remove();
             return;
           }
+          if (!supabase) return;
           setMessage('กำลังบันทึกพื้นหลัง...');
           const { error } = await supabase.from('marketplace_listings').update({ card_background: selectedTheme }).eq('id', listingId);
           if (error) setMessage(error.message, true);
@@ -515,15 +517,21 @@
         const target = event.target;
         
         // Management Actions
-        if (target.dataset.toggle) toggleListing(target.dataset.toggle);
-        if (target.dataset.editPrice) editListingPrice(target.dataset.editPrice);
-        if (target.dataset.toggleOffers) toggleOffers(target.dataset.toggleOffers);
-        if (target.dataset.sold) markListingSold(target.dataset.sold);
-        if (target.dataset.delete) deleteListing(target.dataset.delete);
-        if (target.dataset.customize) {
-          // เรียกใช้ฟังก์ชัน Theme Picker ถ้ามีในระบบ
+        const editPriceId = target.dataset.editPrice;
+        const toggleId = target.dataset.toggle;
+        const toggleOffersId = target.dataset.toggleOffers;
+        const soldId = target.dataset.sold;
+        const deleteId = target.dataset.delete;
+        const customizeId = target.dataset.customize;
+
+        if (toggleId) toggleListing(toggleId);
+        if (editPriceId) editListingPrice(editPriceId);
+        if (toggleOffersId) toggleOffers(toggleOffersId);
+        if (soldId) markListingSold(soldId);
+        if (deleteId) deleteListing(deleteId);
+        if (customizeId) {
           if (typeof window.showThemePickerModal === 'function') {
-            window.showThemePickerModal(target.dataset.customize);
+            window.showThemePickerModal(customizeId);
           } else {
             alert("ฟีเจอร์นี้กำลังปรับปรุง");
           }

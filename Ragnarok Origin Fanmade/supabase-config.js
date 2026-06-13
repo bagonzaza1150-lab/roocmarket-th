@@ -1352,21 +1352,27 @@ window.ROOC_SUPABASE = {
           return;
         }
         
-        // ฟังก์ชันช่วยดึงข้อมูลแบบปลอดภัย
-        const safeFetch = async (columns, idValue, idColumn = "user_id") => {
-          try {
-            const { data, error } = await supabaseClient
-              .from("marketplace_listings")
-              .select(columns)
-              .eq(idColumn, idValue)
-              .eq("active", true)
-              .not("sale_status", "in", '("closed","sold","deleted")')
-              .order("created_at", { ascending: false });
-            return { data, error };
-          } catch (e) {
-            return { data: null, error: e };
-          }
-        };
+	        // ฟังก์ชันช่วยดึงข้อมูลแบบปลอดภัย
+	        const safeFetch = async (columns, idValue, idColumn = "user_id") => {
+	          try {
+	            const query = supabaseClient
+	              .from("marketplace_listings")
+	              .select(columns)
+	              .eq(idColumn, idValue)
+	              .neq("sale_status", "deleted")
+	              .order("created_at", { ascending: false });
+	            
+	            // ถ้าไม่ใช่เจ้าของร้าน ให้ดูได้เฉพาะที่ active และไม่ขายแล้ว/ปิดอยู่
+	            if (!isOwner) {
+	              query.eq("active", true).not("sale_status", "in", '("closed","sold")');
+	            }
+	            
+	            const { data, error } = await query;
+	            return { data, error };
+	          } catch (e) {
+	            return { data: null, error: e };
+	          }
+	        };
 
         // ลองดึงด้วย user_id ก่อน
         let result = await safeFetch(storeListingSelectColumns.includes("user_id") ? storeListingSelectColumns : storeListingSelectColumns + ",user_id", sellerId);
