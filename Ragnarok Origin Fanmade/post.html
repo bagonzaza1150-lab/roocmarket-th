@@ -1478,11 +1478,12 @@
       function showSuccessPopup() {
         const overlay = document.getElementById('successPopupOverlay');
         if (overlay) {
-          // บังคับเลื่อนหน้าจอขึ้นไปบนสุดทันทีเพื่อให้เห็น Pop-up แน่นอน
-          window.scrollTo({ top: 0, behavior: 'auto' }); 
-          
           overlay.classList.add('show');
-          document.body.style.overflow = 'hidden'; // ล็อคหน้าจอไว้ที่ด้านบน
+          
+          // เลื่อนหน้าจอมาที่ Pop-up โดยตรงและจัดให้อยู่กึ่งกลางหน้าจอพอดี
+          overlay.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          
+          document.body.style.overflow = 'hidden'; // ล็อคหน้าจอไว้ชั่วคราว
           
           const fill = document.getElementById('successProgress');
           if (fill) {
