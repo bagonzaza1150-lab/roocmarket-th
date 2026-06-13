@@ -1564,11 +1564,11 @@ window.ROOC_SUPABASE = {
 	              .neq("sale_status", "deleted")
 	              .order("created_at", { ascending: false });
 	            
-			            // ถ้าไม่ใช่เจ้าของร้าน ให้ดูได้เฉพาะที่ active หรือขายแล้ว
-			            if (!isOwner) {
-			              query.eq('active', true).neq('sale_status', 'closed').neq('sale_status', 'sold');
-			              // หมายเหตุ: หน้า Store สาธารณะจะแสดงเฉพาะของที่ยังขายอยู่
-			            }
+				            // ถ้าไม่ใช่เจ้าของร้าน ให้ดูได้เฉพาะที่ active หรือขายแล้ว
+				            if (!isOwner) {
+				              // อนุญาตให้แสดงทั้งรายการที่กำลังขาย (active=true) และรายการที่ขายแล้ว (sale_status=sold)
+				              query.or(`active.eq.true,sale_status.eq.sold`);
+				            }
 	            
 	            const { data, error } = await query;
 	            return { data, error };
@@ -1631,7 +1631,7 @@ window.ROOC_SUPABASE = {
 		          }
 			          if (storeDiscordText) storeDiscordText.textContent = seller.discord_id || seller.seller_discord_id || seller.contact || "N/A";
 	          
-			          storeTotalListings.textContent = storeListings.filter(l => l.sale_status === 'active').length;
+				          storeTotalListings.textContent = storeListings.filter(l => l.sale_status !== 'deleted').length;
 			          storeSoldItems.textContent = storeListings.filter(l => l.sale_status === "sold").length;
 	          
 	          if (isOwner) {
