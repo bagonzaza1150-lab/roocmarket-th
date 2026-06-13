@@ -1388,16 +1388,19 @@ window.ROOC_SUPABASE = {
         storeListings = data || [];
         console.log("Store listings found:", storeListings.length);
         
-        if (storeListings.length > 0) {
-          const seller = storeListings[0];
-          storeName.textContent = seller.seller_name;
-          if (seller.seller_avatar_url) storeAvatar.src = seller.seller_avatar_url;
-          if (seller.facebook_url) {
-            storeFacebook.href = seller.facebook_url;
-            storeFacebook.hidden = false;
-          }
-          storeDiscordText.textContent = seller.seller_discord_id || seller.contact || "N/A";
-          
+	        // ดึงข้อมูลโปรไฟล์โดยตรง (เผื่อกรณีไม่มีประกาศสินค้าเลย)
+	        const { data: profile } = await supabaseClient.from("marketplace_profiles").select("*").eq("user_id", sellerId).maybeSingle();
+	        
+	        if (profile || storeListings.length > 0) {
+	          const seller = profile || storeListings[0];
+	          storeName.textContent = seller.display_name || seller.seller_name || "ผู้ขาย ROOC";
+	          if (seller.avatar_url || seller.seller_avatar_url) storeAvatar.src = seller.avatar_url || seller.seller_avatar_url;
+	          if (seller.facebook_url) {
+	            storeFacebook.href = seller.facebook_url;
+	            storeFacebook.hidden = false;
+	          }
+	          storeDiscordText.textContent = seller.discord_id || seller.seller_discord_id || seller.contact || "N/A";
+	          
 	          storeTotalListings.textContent = storeListings.filter(l => l.active).length;
 	          storeSoldItems.textContent = storeListings.filter(l => l.sale_status === "sold").length;
 	          

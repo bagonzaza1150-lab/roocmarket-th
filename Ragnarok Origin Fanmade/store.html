@@ -503,35 +503,47 @@
         alert("คัดลอกลิงก์ร้านค้าแล้ว!");
       });
 
-      // Initialize Page
-      window.addEventListener("DOMContentLoaded", async () => {
-        if (!supabase) return;
+      // Initialize Page with Retry Logic
+      async function initStore() {
+        const app = window.ROOC_APP;
+        const supabase = app?.getSupabaseClient?.();
         
-        const { data } = await supabase.auth.getSession();
-        currentSession = data.session;
-        
-        let sellerId = new URLSearchParams(window.location.search).get("id");
-        
-        // ถ้าไม่มี ID และล็อกอินอยู่ ให้แสดงหน้าของตัวเอง
-        if (!sellerId && currentSession) {
-          sellerId = currentSession.user.id;
-          window.history.replaceState(null, "", `?id=${sellerId}`);
-        } else if (!sellerId && !currentSession) {
-          window.location.href = "login.html?redirect=store.html";
+        if (!supabase || !app?.initStorePage) {
+          console.log("Waiting for Supabase/App to be ready...");
+          setTimeout(initStore, 500);
           return;
         }
 
-        isOwner = currentSession && currentSession.user.id === sellerId;
-        if (isOwner) {
-          document.body.classList.add("is-owner");
-          document.querySelector("#inventoryLabel").textContent = "My Inventory";
-          document.querySelector("#inventoryTitle").textContent = "จัดการสินค้าในร้าน";
-        }
+        try {
+          const { data } = await supabase.auth.getSession();
+          currentSession = data.session;
+          
+          let sellerId = new URLSearchParams(window.location.search).get("id");
+          
+          // ถ้าไม่มี ID และล็อกอินอยู่ ให้แสดงหน้าของตัวเอง
+          if (!sellerId && currentSession) {
+            sellerId = currentSession.user.id;
+            window.history.replaceState(null, "", `?id=${sellerId}`);
+          } else if (!sellerId && !currentSession) {
+            window.location.href = "login.html?redirect=store.html";
+            return;
+          }
 
-        if (app?.initStorePage) {
+          isOwner = currentSession && currentSession.user.id === sellerId;
+          if (isOwner) {
+            document.body.classList.add("is-owner");
+            document.querySelector("#inventoryLabel").textContent = "My Inventory";
+            document.querySelector("#inventoryTitle").textContent = "จัดการสินค้าในร้าน";
+          }
+
           app.initStorePage(sellerId);
+        } catch (err) {
+          console.error("Initialization error:", err);
+          document.querySelector("#storeName").textContent = "เกิดข้อผิดพลาดในการโหลด";
         }
-      });
+      }
+
+      window.addEventListener("DOMContentLoaded", initStore);
     </script>
   </body>
 </html>
