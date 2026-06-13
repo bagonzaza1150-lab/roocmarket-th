@@ -91,7 +91,14 @@ window.ROOC_SUPABASE = {
                 if (!existingOverlay) {
                   const overlay = document.createElement('div');
                   overlay.className = 'category-lock-overlay';
-                  overlay.innerHTML = '🔒';
+                  
+                  // ใช้รูปภาพกุญแจถ้ามีการอัปโหลดไว้ ถ้าไม่มีใช้ Emoji 🔒
+                  if (iconMap['lock-icon']) {
+                    overlay.innerHTML = `<img src="${addCacheBuster(iconMap['lock-icon'])}" style="max-width: 60%; max-height: 60%; object-fit: contain;" />`;
+                  } else {
+                    overlay.innerHTML = '🔒';
+                  }
+                  
                   parent.style.position = 'relative';
                   parent.appendChild(overlay);
                   parent.style.pointerEvents = 'none';
