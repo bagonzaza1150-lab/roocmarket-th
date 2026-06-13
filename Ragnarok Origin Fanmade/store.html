@@ -76,20 +76,12 @@
         position: relative;
       }
       
+      /* ลบกุญแจที่มุมออก และปรับพื้นหลังให้เนียน */
+      .theme-option.locked {
+        background-color: #1a1a1a !important; /* บังคับสีพื้นหลังเข้มให้เท่ากัน */
+      }
       .theme-option.locked::after {
-        content: '🔒';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        font-size: 48px !important; /* ขยายขนาดกุญแจให้ใหญ่ขึ้น */
-        z-index: 999 !important; /* ให้อยู่หน้าสุดแน่นอน */
-        border-radius: inherit;
+        display: none !important; /* ปิดกุญแจอันเก่าที่มุม */
       }
       
       .offer-mailbox {
@@ -613,11 +605,11 @@
           ` : '';
 
           return `
-            <button type="button"
-                 class="theme-option ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}"
-                 data-theme="${theme.id}"
-                 style="position: relative; height: 220px; aspect-ratio: 3/4; border-radius: 14px; border: 3px solid transparent; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; font-weight: 600; color: white; transition: all 0.3s; padding: 12px; font-size: 13px; background-size: cover; background-position: center; background-repeat: no-repeat; overflow: hidden;"
-                 onclick="window.selectThemeInModal(this)">
+                  <button type="button"
+                       class="theme-option ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}"
+                       data-theme="${theme.id}"
+                       style="position: relative; height: 220px; aspect-ratio: 3/4; border-radius: 14px; border: 3px solid transparent; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; font-weight: 600; color: white; transition: all 0.3s; padding: 12px; font-size: 13px; background-size: cover; background-position: center; background-repeat: no-repeat; overflow: hidden; background-color: #1a1a1a; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"
+                       onclick="window.selectThemeInModal(this)">
               ${lockOverlay}
               <span style="background: transparent; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; letter-spacing: 0.5px; line-height: 1.4; text-shadow: 1px 1px 2px rgba(255,255,255,0.3); z-index: 6;">${theme.label}</span>
             </button>
