@@ -6891,3 +6891,33 @@ body {
 .listing-card:nth-child(4) { animation-delay: 0.2s; }
 .listing-card:nth-child(5) { animation-delay: 0.25s; }
 .listing-card:nth-child(6) { animation-delay: 0.3s; }
+
+/* สไตล์สำหรับรายการที่ขายแล้ว (Sold Items) */
+.listing-card.is-sold {
+  position: relative;
+}
+.listing-card.is-sold .item-media {
+  position: relative;
+  filter: grayscale(0.4);
+}
+.sold-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-15deg);
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: 2px;
+  border: 2px solid white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 2;
+  pointer-events: none;
+}
+.listing-card.is-closed {
+  opacity: 0.6;
+  filter: grayscale(0.8);
+}

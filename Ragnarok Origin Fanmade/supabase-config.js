@@ -1288,7 +1288,12 @@ window.ROOC_SUPABASE = {
         .join(",");
 
       const renderStoreGrid = () => {
-        let filtered = storeListings.filter(l => currentCategory === "all" || l.category === currentCategory);
+        // ให้แสดงรายการที่ active หรือขายแล้ว (sold)
+        let filtered = storeListings.filter(l => {
+          const categoryMatch = currentCategory === "all" || l.category === currentCategory;
+          const statusMatch = l.active || l.sale_status === "sold";
+          return categoryMatch && statusMatch;
+        });
         
         if (currentSort === "price-low") filtered.sort((a, b) => parsePrice(a.price_text) - parsePrice(b.price_text));
         else if (currentSort === "price-high") filtered.sort((a, b) => parsePrice(b.price_text) - parsePrice(a.price_text));
@@ -1313,14 +1318,16 @@ window.ROOC_SUPABASE = {
           const description = listing.description || "";
           const descriptionParts = getDescriptionParts(description);
 
-	          const status = listing.active && (listing.sale_status === "active") ? { label: "กำลังแสดง", className: "active" } : { label: "ปิดอยู่", className: "closed" };
-	          const offers = offerMailbox.get(listing.id) || [];
-	          
-	          return `
-	            <article class="listing-card${isServiceListing ? " service-listing-card" : ""}${listing.card_background && listing.card_background !== 'default' ? " " + listing.card_background : ""}${!listing.active ? " is-closed" : ""}">
-	              ${isServiceListing ? "" : `<div class="item-media">
-	                <img src="${escapeHtml(listingImages[0])}" alt="" loading="lazy" />
-	              </div>`}
+		          const isSold = listing.sale_status === "sold";
+		          const status = isSold ? { label: "ขายแล้ว", className: "mvp" } : (listing.active && (listing.sale_status === "active") ? { label: "กำลังแสดง", className: "active" } : { label: "ปิดอยู่", className: "closed" });
+		          const offers = offerMailbox.get(listing.id) || [];
+		          
+		          return `
+		            <article class="listing-card${isServiceListing ? " service-listing-card" : ""}${listing.card_background && listing.card_background !== 'default' ? " " + listing.card_background : ""}${(!listing.active && !isSold) ? " is-closed" : ""}${isSold ? " is-sold" : ""}">
+		              ${isServiceListing ? "" : `<div class="item-media">
+		                <img src="${escapeHtml(listingImages[0])}" alt="" loading="lazy" />
+		                ${isSold ? '<div class="sold-overlay">SOLD</div>' : ""}
+		              </div>`}
 		              <div class="listing-seller" style="display: flex; align-items: center; gap: 8px; min-width: 0;">
 		                <img src="${escapeHtml(sellerAvatar)}" alt="" style="flex-shrink: 0;" />
 		                <span style="display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden;">
@@ -1386,10 +1393,10 @@ window.ROOC_SUPABASE = {
 	              .neq("sale_status", "deleted")
 	              .order("created_at", { ascending: false });
 	            
-	            // ถ้าไม่ใช่เจ้าของร้าน ให้ดูได้เฉพาะที่ active และไม่ขายแล้ว/ปิดอยู่
-	            if (!isOwner) {
-	              query.eq("active", true).not("sale_status", "in", '("closed","sold")');
-	            }
+		            // ถ้าไม่ใช่เจ้าของร้าน ให้ดูได้เฉพาะที่ active หรือขายแล้ว (ไม่เอาที่ closed/deleted)
+		            if (!isOwner) {
+		              query.or('active.eq.true,sale_status.eq.sold').neq("sale_status", "closed");
+		            }
 	            
 	            const { data, error } = await query;
 	            return { data, error };
