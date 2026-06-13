@@ -6875,9 +6875,9 @@ html, body {
 }
 
 .store-avatar .store-profile-frame-image {
-  inset: -14px;
-  width: calc(100% + 28px);
-  height: calc(100% + 28px);
+  inset: -22px;
+  width: calc(100% + 44px);
+  height: calc(100% + 44px);
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
