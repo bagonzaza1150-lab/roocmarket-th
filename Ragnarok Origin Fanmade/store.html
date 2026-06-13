@@ -567,10 +567,12 @@
         if (soldBtn) window.markListingSold(soldBtn.dataset.sold);
         if (deleteBtn) window.deleteListing(deleteBtn.dataset.delete);
         if (customizeBtn) {
+          const id = customizeBtn.dataset.customize;
           if (typeof window.showThemePickerModal === 'function') {
-            window.showThemePickerModal(customizeBtn.dataset.customize);
+            window.showThemePickerModal(id);
           } else {
-            alert("ฟีเจอร์นี้กำลังปรับปรุง");
+            // Fallback กรณีเรียกผ่าน window ไม่ได้ ให้ลองเรียกตรงๆ
+            showThemePickerModal(id);
           }
         }
 

@@ -643,8 +643,8 @@ window.ROOC_SUPABASE = {
             <img src="${escapeHtml(sellerAvatar)}" alt="" loading="lazy" decoding="async" />
             <a href="store.html?id=${encodeURIComponent(listing.user_id)}" class="seller-store-link" title="ไปที่หน้าร้านค้า" onclick="event.stopPropagation();">
               <span>${escapeHtml(sellerName)}</span>
+              ${listing.seller_is_premium ? '<strong title="Premium" style="margin-left: 2px;">♛</strong>' : ""}
             </a>
-            ${listing.seller_is_premium ? '<strong title="Premium">♛</strong>' : ""}
             ${trustBadge}
           </div>
           <div class="listing-meta">${badges}</div>
