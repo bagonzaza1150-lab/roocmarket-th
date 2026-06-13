@@ -1347,9 +1347,9 @@ window.ROOC_SUPABASE = {
 	                    <button class="btn btn-small btn-light" data-edit-price="${listing.id}">✏️ แก้ราคา</button>
 	                    <button class="btn btn-small btn-light" data-toggle="${listing.id}">${listing.active ? "⏸️ ปิด" : "▶️ เปิด"}</button>
 	                  ` : `
-	                    ${listing.offers_enabled ? `<button class="btn btn-small btn-light offer-button" type="button" data-offer-listing-id="${escapeHtml(listing.id)}" data-offer-title="${escapeHtml(title)}" data-offer-price="${escapeHtml(listing.price_text)}">เสนอราคา</button>` : ""}
-	                    <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">ติดต่อ</button>
-	                  `}
+		                    ${listing.offers_enabled && !isSold ? `<button class="btn btn-small btn-light offer-button" type="button" data-offer-listing-id="${escapeHtml(listing.id)}" data-offer-title="${escapeHtml(title)}" data-offer-price="${escapeHtml(listing.price_text)}">เสนอราคา</button>` : ""}
+		                    <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">${listingType === "buy" ? "ติดต่อผู้รับซื้อ" : listingType === "service" ? "ติดต่อผู้รับจ้าง" : "ติดต่อผู้ขาย"}</button>
+		                  `}
 	                </span>
 	              </div>
 
@@ -1435,11 +1435,16 @@ window.ROOC_SUPABASE = {
 	          const seller = profile || storeListings[0];
 	          storeName.textContent = seller.display_name || seller.seller_name || "ผู้ขาย ROOC";
 	          if (seller.avatar_url || seller.seller_avatar_url) storeAvatar.src = seller.avatar_url || seller.seller_avatar_url;
-	          if (seller.facebook_url) {
-	            storeFacebook.href = seller.facebook_url;
-	            storeFacebook.hidden = false;
-	          }
-	          storeDiscordText.textContent = seller.discord_id || seller.seller_discord_id || seller.contact || "N/A";
+		          if (seller.facebook_url) {
+		            storeFacebook.href = seller.facebook_url;
+		            storeFacebook.hidden = false;
+		          }
+		          const storeInstagram = document.querySelector("#storeInstagram");
+		          if (seller.instagram_url && storeInstagram) {
+		            storeInstagram.href = seller.instagram_url;
+		            storeInstagram.hidden = false;
+		          }
+		          storeDiscordText.textContent = seller.discord_id || seller.seller_discord_id || seller.contact || "N/A";
 	          
 		          storeTotalListings.textContent = storeListings.filter(l => l.active && l.sale_status !== 'sold').length;
 		          storeSoldItems.textContent = storeListings.filter(l => l.sale_status === "sold").length;

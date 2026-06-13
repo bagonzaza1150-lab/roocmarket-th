@@ -231,11 +231,16 @@
               </div>
               <p class="store-tagline" id="storeDiscordText"></p>
               <div class="store-socials">
-                <a id="storeFacebook" href="#" target="_blank" class="social-btn facebook" hidden>
-                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.04c-5.5 0-10 4.49-10 10.02 0 5 3.66 9.15 8.44 9.9v-7h-2.54v-2.9h2.54v-2.2c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.23.19 2.23.19v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.9h-2.33v7a10 10 0 0 0 8.44-9.9c0-5.53-4.5-10.02-10-10.02z"/></svg>
-                  Facebook
-                </a>
-                <button class="btn btn-small btn-light management-only" id="copyStoreLink">🔗 แชร์ลิงก์ร้านค้า</button>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                  <a id="storeFacebook" href="#" target="_blank" class="social-btn facebook" hidden title="Facebook">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 2.04c-5.5 0-10 4.49-10 10.02 0 5 3.66 9.15 8.44 9.9v-7h-2.54v-2.9h2.54v-2.2c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.23.19 2.23.19v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.9h-2.33v7a10 10 0 0 0 8.44-9.9c0-5.53-4.5-10.02-10-10.02z"/></svg>
+                  </a>
+                  <a id="storeInstagram" href="#" target="_blank" class="social-btn instagram" hidden title="Instagram">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                  </a>
+                  <button class="btn btn-small btn-light management-only" id="editProfileBtn">⚙️ ตั้งค่าร้าน</button>
+                  <button class="btn btn-small btn-light management-only" id="copyStoreLink">🔗 แชร์</button>
+                </div>
               </div>
             </div>
           </div>
@@ -251,6 +256,34 @@
           </div>
         </div>
       </section>
+
+      <!-- Profile Edit Modal -->
+      <div class="contact-modal" id="editProfileModal" hidden>
+        <div class="contact-modal-backdrop" id="closeEditProfile"></div>
+        <section class="contact-modal-card" style="max-width: 500px;">
+          <button class="contact-modal-close" id="xCloseEditProfile">×</button>
+          <p class="eyebrow">Store Settings</p>
+          <h2>ตั้งค่าร้านค้า</h2>
+          <form id="editProfileForm" style="display: grid; gap: 15px; margin-top: 20px;">
+            <label>
+              <span style="display: block; margin-bottom: 5px; font-size: 14px;">ชื่อร้านค้า / ชื่อที่แสดง</span>
+              <input type="text" id="editDisplayName" placeholder="เช่น ROOC Trader" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper);" />
+            </label>
+            <label>
+              <span style="display: block; margin-bottom: 5px; font-size: 14px;">Facebook URL</span>
+              <input type="url" id="editFacebookUrl" placeholder="https://facebook.com/username" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper);" />
+            </label>
+            <label>
+              <span style="display: block; margin-bottom: 5px; font-size: 14px;">Instagram URL</span>
+              <input type="url" id="editInstagramUrl" placeholder="https://instagram.com/username" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper);" />
+            </label>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+              <button type="button" class="btn btn-light" id="cancelEditProfile" style="flex: 1;">ยกเลิก</button>
+              <button type="submit" class="btn btn-primary" style="flex: 2;">บันทึกการตั้งค่า</button>
+            </div>
+          </form>
+        </section>
+      </div>
 
       <!-- Dashboard สำหรับเจ้าของร้าน -->
       <section class="shell management-only" id="ownerDashboard" style="margin-top: 20px;">
@@ -707,6 +740,63 @@
         const url = window.location.href;
         navigator.clipboard.writeText(url);
         alert("คัดลอกลิงก์ร้านค้าแล้ว!");
+      });
+
+      // Profile Edit Logic
+      const editProfileModal = document.querySelector("#editProfileModal");
+      const editProfileForm = document.querySelector("#editProfileForm");
+      
+      document.querySelector("#editProfileBtn")?.addEventListener("click", async () => {
+        const supabase = getSupabase();
+        if (!supabase || !currentSession) return;
+        
+        // Load current data
+        const { data: profile } = await supabase.from("marketplace_profiles").select("*").eq("user_id", currentSession.user.id).maybeSingle();
+        if (profile) {
+          document.querySelector("#editDisplayName").value = profile.display_name || "";
+          document.querySelector("#editFacebookUrl").value = profile.facebook_url || "";
+          document.querySelector("#editInstagramUrl").value = profile.instagram_url || "";
+        }
+        
+        editProfileModal.hidden = false;
+        document.body.classList.add("modal-open");
+      });
+
+      const closeEditModal = () => {
+        editProfileModal.hidden = true;
+        document.body.classList.remove("modal-open");
+      };
+
+      document.querySelector("#closeEditProfile")?.addEventListener("click", closeEditModal);
+      document.querySelector("#xCloseEditProfile")?.addEventListener("click", closeEditModal);
+      document.querySelector("#cancelEditProfile")?.addEventListener("click", closeEditModal);
+
+      editProfileForm?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const supabase = getSupabase();
+        if (!supabase || !currentSession) return;
+
+        const displayName = document.querySelector("#editDisplayName").value.trim();
+        const facebookUrl = document.querySelector("#editFacebookUrl").value.trim();
+        const instagramUrl = document.querySelector("#editInstagramUrl").value.trim();
+
+        setMessage("กำลังบันทึกข้อมูล...");
+        
+        const { error } = await supabase.from("marketplace_profiles").upsert({
+          user_id: currentSession.user.id,
+          display_name: displayName,
+          facebook_url: facebookUrl,
+          instagram_url: instagramUrl,
+          updated_at: new Date().toISOString()
+        });
+
+        if (error) {
+          setMessage("เกิดข้อผิดพลาด: " + error.message, true);
+        } else {
+          setMessage("บันทึกข้อมูลโปรไฟล์เรียบร้อยแล้ว!");
+          closeEditModal();
+          setTimeout(() => window.location.reload(), 1000);
+        }
       });
 
       // Initialize Page with Retry Logic and Timeout
