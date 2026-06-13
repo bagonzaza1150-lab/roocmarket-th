@@ -1457,7 +1457,7 @@ window.ROOC_SUPABASE = {
 		            storeInstagram.removeAttribute('hidden');
 		            storeInstagram.style.display = 'flex';
 		          }
-		          storeDiscordText.textContent = seller.discord_id || seller.seller_discord_id || seller.contact || "N/A";
+			          if (storeDiscordText) storeDiscordText.textContent = seller.discord_id || seller.seller_discord_id || seller.contact || "N/A";
 	          
 		          storeTotalListings.textContent = storeListings.filter(l => l.active && l.sale_status !== 'sold').length;
 		          storeSoldItems.textContent = storeListings.filter(l => l.sale_status === "sold").length;
