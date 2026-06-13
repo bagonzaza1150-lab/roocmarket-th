@@ -119,9 +119,9 @@
       .owner-controls {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 6px;
-        margin-top: 12px;
-        padding-top: 12px;
+        gap: 4px;
+        margin-top: 10px;
+        padding-top: 10px;
         border-top: 1px dashed var(--line);
       }
       .owner-controls .btn {
@@ -130,11 +130,13 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        font-size: 11px;
+        padding: 6px 4px;
       }
       .listing-meta span {
-        font-size: 10px;
-        padding: 2px 6px;
-        border-radius: 4px;
+        font-size: 9px;
+        padding: 1px 5px;
+        border-radius: 3px;
         font-weight: 800;
         text-transform: uppercase;
       }
@@ -364,7 +366,8 @@
       // ฟังก์ชันจัดการประกาศ (ย้ายมาจาก my-listings.html) - ประกาศเป็น Global
       window.toggleListing = async function(id) {
         const supabase = getSupabase();
-        const listing = storeListings.find(l => l.id === id);
+        // ใช้ == แทน === เพื่อรองรับทั้ง string และ number ID
+        const listing = storeListings.find(l => l.id == id);
         if (!listing || !supabase) return;
         setMessage("กำลังอัปเดตประกาศ...");
         const nextActive = !listing.active;
@@ -379,7 +382,7 @@
       window.editListingPrice = async function(id) {
         const app = getApp();
         const supabase = getSupabase();
-        const listing = storeListings.find(l => l.id === id);
+        const listing = storeListings.find(l => l.id == id);
         if (!listing || !supabase || !app) return;
         const nextPrice = prompt("ใส่ราคาใหม่", app.formatListingPrice(listing.price_text));
         if (nextPrice === null) return;
@@ -419,7 +422,7 @@
 
       window.toggleOffers = async function(id) {
         const supabase = getSupabase();
-        const listing = storeListings.find(l => l.id === id);
+        const listing = storeListings.find(l => l.id == id);
         if (!listing || !supabase) return;
         const nextEnabled = !Boolean(listing.offers_enabled);
         setMessage("กำลังอัปเดตการเสนอราคา...");
@@ -444,7 +447,7 @@
 
       window.showThemePickerModal = async function(listingId) {
         const app = getApp();
-        const listing = storeListings.find(l => l.id === listingId);
+        const listing = storeListings.find(l => l.id == listingId);
         if (!listing || !app) return;
         
         const isPremium = (await app.getPremiumStatus(currentSession)).active;
@@ -543,11 +546,11 @@
         const deleteBtn = target.closest("[data-delete]");
         const customizeBtn = target.closest("[data-customize]");
 
-        if (toggleBtn) toggleListing(toggleBtn.dataset.toggle);
-        if (editPriceBtn) editListingPrice(editPriceBtn.dataset.editPrice);
-        if (toggleOffersBtn) toggleOffers(toggleOffersBtn.dataset.toggleOffers);
-        if (soldBtn) markListingSold(soldBtn.dataset.sold);
-        if (deleteBtn) deleteListing(deleteBtn.dataset.delete);
+        if (toggleBtn) window.toggleListing(toggleBtn.dataset.toggle);
+        if (editPriceBtn) window.editListingPrice(editPriceBtn.dataset.editPrice);
+        if (toggleOffersBtn) window.toggleOffers(toggleOffersBtn.dataset.toggleOffers);
+        if (soldBtn) window.markListingSold(soldBtn.dataset.sold);
+        if (deleteBtn) window.deleteListing(deleteBtn.dataset.delete);
         if (customizeBtn) {
           if (typeof window.showThemePickerModal === 'function') {
             window.showThemePickerModal(customizeBtn.dataset.customize);
