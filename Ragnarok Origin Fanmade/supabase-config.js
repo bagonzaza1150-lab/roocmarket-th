@@ -245,6 +245,27 @@ window.ROOC_SUPABASE = {
           categoryLocks[category] = row.value === 'true' || row.value === true;
         }
       });
+      window.ROOC_CATEGORY_LOCKS = categoryLocks;
+
+      document.querySelectorAll('.market-tabs [data-category]').forEach((button) => {
+        const category = button.dataset.category === 'accessories' ? 'acc' : button.dataset.category;
+        const locked = Boolean(categoryLocks[category]);
+        button.classList.toggle('is-category-locked', locked);
+        button.disabled = locked;
+        if (locked) {
+          button.title = `${button.textContent.trim()} ยังไม่เปิดใช้งาน`;
+          button.setAttribute('aria-label', `${button.textContent.trim()} ยังไม่เปิดใช้งาน`);
+          if (button.classList.contains('is-active')) syncCategoryUi('all');
+        }
+      });
+
+      document.querySelectorAll('select option[value]').forEach((option) => {
+        const category = option.value === 'accessories' ? 'acc' : option.value;
+        if (categoryLocks[category]) option.disabled = true;
+      });
+      if (document.querySelector("#categoryFilter")) {
+        syncCategoryUi(document.querySelector("#categoryFilter").value || "all");
+      }
 
       // จำกัดเฉพาะรูปภาพที่อยู่ในส่วนหมวดหมู่ (Category Row) เท่านั้น
       document.querySelectorAll('.category-row img').forEach(img => {
@@ -1000,7 +1021,9 @@ window.ROOC_SUPABASE = {
 
   function syncCategoryUi(category) {
     const controls = getFilterControls();
-    const normalizedCategory = category === "account" && !accountListingEnabled ? "all" : category;
+    const lockKey = category === "accessories" ? "acc" : category;
+    const categoryLocked = Boolean(window.ROOC_CATEGORY_LOCKS?.[lockKey]);
+    const normalizedCategory = categoryLocked || category === "account" && !accountListingEnabled ? "all" : category;
     if (controls.category) controls.category.value = normalizedCategory;
     if ((activeListingType === "service" || (activeListingType === "buy" && normalizedCategory === "account")) && controls.category) {
       controls.category.value = "all";
@@ -1014,9 +1037,12 @@ window.ROOC_SUPABASE = {
     }
     controls.tabs.forEach((button) => {
       const isAccount = button.dataset.category === "account";
+      const buttonLockKey = button.dataset.category === "accessories" ? "acc" : button.dataset.category;
+      const isLocked = Boolean(window.ROOC_CATEGORY_LOCKS?.[buttonLockKey]);
       button.hidden = isAccount && !accountListingEnabled;
       button.classList.toggle("is-active", button.dataset.category === normalizedCategory);
-      button.disabled = activeListingType === "service" || (isAccount && (!accountListingEnabled || activeListingType === "buy"));
+      button.classList.toggle("is-category-locked", isLocked);
+      button.disabled = isLocked || activeListingType === "service" || (isAccount && (!accountListingEnabled || activeListingType === "buy"));
     });
   }
 

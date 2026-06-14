@@ -1861,6 +1861,26 @@ h1 {
   opacity: 0.45;
 }
 
+.market-tabs button.is-category-locked {
+  position: relative;
+  padding-right: 34px;
+  opacity: 0.62;
+}
+
+.market-tabs button.is-category-locked::after {
+  position: absolute;
+  top: 50%;
+  right: 9px;
+  width: 17px;
+  height: 17px;
+  background-image: var(--rooc-lock-icon-image);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  content: "";
+  transform: translateY(-50%);
+}
+
 .listing-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
