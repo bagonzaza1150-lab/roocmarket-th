@@ -5830,7 +5830,7 @@ h1 {
   max-width: 100%;
   margin-top: 1px;
   gap: 3px;
-  font-size: 4px;
+  font-size: 10px;
   font-weight: 200;
   line-height: 1.2;
   overflow: visible;
@@ -5840,7 +5840,7 @@ h1 {
 .seller-name-stack .seller-presence-badge span {
   max-width: none;
   overflow: visible;
-  font-size: 4px;
+  font-size: 10px;
   font-weight: 200;
   line-height: 1.2;
   text-overflow: clip;
