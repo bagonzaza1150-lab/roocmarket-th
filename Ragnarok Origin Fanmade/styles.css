@@ -5821,18 +5821,33 @@ h1 {
   white-space: nowrap;
 }
 
+.listing-seller > .seller-name-stack {
+  max-width: none;
+}
+
 .seller-name-stack .seller-presence-badge {
+  width: 100%;
   max-width: 100%;
   margin-top: 1px;
   gap: 4px;
-  font-size: 8px;
+  font-size: 7px;
+  font-weight: 600;
   line-height: 1.25;
+  overflow: visible;
+  white-space: normal;
+}
+
+.seller-name-stack .seller-presence-badge span {
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .seller-name-stack .seller-presence-badge i {
-  width: 5px;
-  height: 5px;
-  flex-basis: 5px;
+  width: 4px;
+  height: 4px;
+  flex-basis: 4px;
 }
 
 .seller-push-badge {
