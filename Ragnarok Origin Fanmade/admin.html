@@ -12,10 +12,10 @@
     <title>Admin | ROOC Market TH</title>
     <link rel="icon" type="image/png" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
     <link rel="apple-touch-icon" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
-  <link rel="stylesheet" href="styles.css?v=20260614-empty-item-preview-v1" />
+  <link rel="stylesheet" href="styles.css?v=20260614-empty-previews-v2" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="supabase-config.js?v=20260614-empty-item-preview-v1"></script>
+  <script src="supabase-config.js?v=20260614-empty-previews-v2"></script>
   </head>
   <body>
     <header class="site-header">
@@ -483,7 +483,7 @@
                   <input id="profileFrameImage" type="file" accept="image/png,image/webp,image/gif,image/*" />
                 </label>
                 <div class="profile-frame-admin-preview">
-                  <img class="profile-frame-preview-avatar" src="assets/site-icons/rooc-icon-192.png" alt="" />
+                  <img id="profileFramePreviewAvatar" class="profile-frame-preview-avatar" alt="" hidden />
                   <img id="profileFramePreview" class="profile-frame-preview-frame" src="" alt="" hidden />
                 </div>
                 <label class="post-checks">
@@ -530,7 +530,7 @@
                     <div class="icon-upload-list" style="display: grid; gap: 12px; margin-top: 12px;">
                       <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
                         <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft);">
-                          <img id="preview-site-logo" src="assets/site-icons/rooc-icon-64.png" style="max-width: 32px; max-height: 32px;" />
+                          <img id="preview-site-logo" style="max-width: 32px; max-height: 32px;" hidden />
                         </div>
                         <div style="flex: 1;">
                           <span style="display: block; font-size: 13px; font-weight: bold;">Logo เว็บไซต์</span>
@@ -539,7 +539,7 @@
                       </div>
                       <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
                         <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft);">
-                          <img id="preview-cat-mvp" src="assets/category-icons/mvp-c.png" style="max-width: 32px; max-height: 32px;" />
+                          <img id="preview-cat-mvp" style="max-width: 32px; max-height: 32px;" hidden />
                         </div>
                         <div style="flex: 1;">
                           <span style="display: block; font-size: 13px; font-weight: bold;">MVP Cards Icon</span>
@@ -548,7 +548,7 @@
                       </div>
                       <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
                         <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft);">
-                          <img id="preview-cat-acc" src="assets/category-icons/acc.png" style="max-width: 32px; max-height: 32px;" />
+                          <img id="preview-cat-acc" style="max-width: 32px; max-height: 32px;" hidden />
                         </div>
                         <div style="flex: 1;">
                           <span style="display: block; font-size: 13px; font-weight: bold;">Accessories Icon</span>
@@ -557,7 +557,7 @@
                       </div>
                       <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
                         <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft);">
-                          <img id="preview-cat-fashion" src="assets/category-icons/fashion.png" style="max-width: 32px; max-height: 32px;" />
+                          <img id="preview-cat-fashion" style="max-width: 32px; max-height: 32px;" hidden />
                         </div>
                         <div style="flex: 1;">
                           <span style="display: block; font-size: 13px; font-weight: bold;">Fashion Icon</span>
@@ -566,7 +566,7 @@
                       </div>
                       <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
                         <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft);">
-                          <img id="preview-cat-auction" src="assets/category-icons/auction-a.png" style="max-width: 32px; max-height: 32px;" />
+                          <img id="preview-cat-auction" style="max-width: 32px; max-height: 32px;" hidden />
                         </div>
                         <div style="flex: 1;">
                           <span style="display: block; font-size: 13px; font-weight: bold;">Auction Icon</span>
@@ -575,7 +575,7 @@
                       </div>
                       <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
                         <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft);">
-                          <img id="preview-lock-icon" src="" style="max-width: 32px; max-height: 32px;" alt="🔒" />
+                          <img id="preview-lock-icon" style="max-width: 32px; max-height: 32px;" alt="" hidden />
                         </div>
                         <div style="flex: 1;">
                           <span style="display: block; font-size: 13px; font-weight: bold;">รูปภาพกุญแจล็อค (Lock Image)</span>
@@ -805,8 +805,8 @@
                     <small>แนะนำ 1200×520 หรือ 21:9</small>
                   </label>
                   <div class="auto-image-box admin-image-preview hero-sponsor-admin-preview">
-                    <img id="heroSponsorPreview" src="assets/hero-rooc.png" alt="" />
-                    <small>ตัวอย่างรูปโฆษณา</small>
+                    <img id="heroSponsorPreview" alt="" hidden />
+                    <small data-empty-preview>ยังไม่ได้ตั้งค่ารูป</small>
                   </div>
                 </div>
               </div>
@@ -847,8 +847,8 @@
                     <small>PNG หรือ JPG</small>
                   </label>
                   <div class="auto-image-box admin-image-preview">
-                    <img id="donateQrPreview" src="assets/site-icons/rooc-icon-192.png" alt="" />
-                    <small>ตัวอย่าง QR</small>
+                    <img id="donateQrPreview" alt="" hidden />
+                    <small data-empty-preview>ยังไม่ได้ตั้งค่า QR</small>
                   </div>
                 </div>
               </div>
@@ -928,8 +928,8 @@
                     <small>PNG หรือ JPG</small>
                   </label>
                   <div class="auto-image-box admin-image-preview">
-                    <img id="middlemanQrPreview" src="assets/site-icons/rooc-icon-192.png" alt="" />
-                    <small>ตัวอย่าง QR</small>
+                    <img id="middlemanQrPreview" alt="" hidden />
+                    <small data-empty-preview>ยังไม่ได้ตั้งค่า QR</small>
                   </div>
                 </div>
               </div>
@@ -1198,6 +1198,25 @@
         const image = preview.tagName === "IMG" ? preview : preview.querySelector("img");
         image?.addEventListener("load", () => updateImageSizeLabel(preview));
         updateImageSizeLabel(preview);
+      }
+
+      function setOptionalImagePreview(image, url, emptyText = "ยังไม่ได้เลือกรูป") {
+        if (!image) return;
+        const value = String(url || "").trim();
+        const emptyLabel = image.parentElement?.querySelector("[data-empty-preview]");
+        if (value) {
+          image.src = value;
+          image.hidden = false;
+          if (emptyLabel) emptyLabel.hidden = true;
+        } else {
+          image.removeAttribute("src");
+          image.hidden = true;
+          if (emptyLabel) {
+            emptyLabel.textContent = emptyText;
+            emptyLabel.hidden = false;
+          }
+        }
+        updateImageSizeLabel(image);
       }
 
       function initAdminImageSizeDisplays() {
@@ -1622,6 +1641,8 @@
         profileFrameFields.active.checked = true;
         profileFramePreview.src = "";
         profileFramePreview.hidden = true;
+        document.querySelector("#profileFramePreviewAvatar").removeAttribute("src");
+        document.querySelector("#profileFramePreviewAvatar").hidden = true;
         profileFrameEditorTitle.textContent = "เพิ่มกรอบโปรไฟล์";
         setMessage(profileFrameMessage, "");
       }
@@ -1684,6 +1705,9 @@
         profileFrameFields.active.checked = Boolean(frame.active);
         profileFramePreview.src = frame.image_url || "";
         profileFramePreview.hidden = !frame.image_url;
+        const frameAvatar = document.querySelector("#profileFramePreviewAvatar");
+        frameAvatar.src = "assets/site-icons/rooc-icon-192.png";
+        frameAvatar.hidden = false;
         profileFrameEditorTitle.textContent = "แก้ไขกรอบโปรไฟล์";
         setMessage(profileFrameMessage, "");
         profileFrameForm.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -2138,7 +2162,7 @@
         supportFields.donateButtonUrl.value = settings.donate_button_url || "";
         supportFields.donateQrUrl.value = settings.donate_qr_url || "";
         supportFields.donateQrPath.value = settings.donate_qr_path || "";
-        supportFields.donateQrPreview.src = settings.donate_qr_url || "assets/site-icons/rooc-icon-192.png";
+        setOptionalImagePreview(supportFields.donateQrPreview, settings.donate_qr_url, "ยังไม่ได้ตั้งค่า QR");
         supportFields.donateGoalEnabled.checked = settings.donate_goal_enabled !== false;
         supportFields.donateGoalTitle.value = settings.donate_goal_title || "";
         supportFields.donateGoalText.value = settings.donate_goal_text || "";
@@ -2153,7 +2177,7 @@
         supportFields.middlemanButtonUrl.value = settings.middleman_button_url || "";
         supportFields.middlemanQrUrl.value = settings.middleman_qr_url || "";
         supportFields.middlemanQrPath.value = settings.middleman_qr_path || "";
-        supportFields.middlemanQrPreview.src = settings.middleman_qr_url || "assets/site-icons/rooc-icon-192.png";
+        setOptionalImagePreview(supportFields.middlemanQrPreview, settings.middleman_qr_url, "ยังไม่ได้ตั้งค่า QR");
         supportFields.heroSponsorEnabled.checked = Boolean(settings.hero_sponsor_enabled);
         supportFields.heroSponsorTitle.value = settings.hero_sponsor_title || "";
         supportFields.heroSponsorText.value = settings.hero_sponsor_text || "";
@@ -2161,7 +2185,7 @@
         supportFields.heroSponsorButtonUrl.value = settings.hero_sponsor_button_url || "";
         supportFields.heroSponsorImageUrl.value = settings.hero_sponsor_image_url || "";
         supportFields.heroSponsorImagePath.value = settings.hero_sponsor_image_path || "";
-        supportFields.heroSponsorPreview.src = settings.hero_sponsor_image_url || "assets/hero-rooc.png";
+        setOptionalImagePreview(supportFields.heroSponsorPreview, settings.hero_sponsor_image_url, "ยังไม่ได้ตั้งค่ารูป");
       }
 
       async function loadSupportSettings() {
@@ -2194,21 +2218,21 @@
             const uploaded = await uploadSupportImage(supportFields.donateQrImage.files[0], "donate");
             supportFields.donateQrUrl.value = uploaded.imageUrl;
             supportFields.donateQrPath.value = uploaded.imagePath;
-            supportFields.donateQrPreview.src = uploaded.imageUrl;
+            setOptionalImagePreview(supportFields.donateQrPreview, uploaded.imageUrl);
           }
 
           if (supportFields.middlemanQrImage.files?.[0]) {
             const uploaded = await uploadSupportImage(supportFields.middlemanQrImage.files[0], "middleman");
             supportFields.middlemanQrUrl.value = uploaded.imageUrl;
             supportFields.middlemanQrPath.value = uploaded.imagePath;
-            supportFields.middlemanQrPreview.src = uploaded.imageUrl;
+            setOptionalImagePreview(supportFields.middlemanQrPreview, uploaded.imageUrl);
           }
 
           if (supportFields.heroSponsorImage.files?.[0]) {
             const uploaded = await uploadSupportImage(supportFields.heroSponsorImage.files[0], "hero-sponsor");
             supportFields.heroSponsorImageUrl.value = uploaded.imageUrl;
             supportFields.heroSponsorImagePath.value = uploaded.imagePath;
-            supportFields.heroSponsorPreview.src = uploaded.imageUrl;
+            setOptionalImagePreview(supportFields.heroSponsorPreview, uploaded.imageUrl);
           }
 
           const { error } = await supabaseClient
@@ -2477,6 +2501,7 @@
             if (previewEl) {
               if (previewEl.tagName === 'IMG') {
                 previewEl.src = URL.createObjectURL(file);
+                previewEl.hidden = false;
               } else {
                 previewEl.innerHTML = `<img src="${URL.createObjectURL(file)}" style="max-width: 32px; max-height: 32px;" />`;
               }
@@ -2503,6 +2528,7 @@
               const previewEl = document.getElementById('preview-lock-icon');
               if (previewEl) {
                 previewEl.src = data.value + '?t=' + Date.now();
+                previewEl.hidden = false;
               }
             }
           } catch (e) { console.log("No lock icon set yet"); }
@@ -2595,19 +2621,22 @@
       });
       supportFields.donateQrImage.addEventListener("change", () => {
         const file = supportFields.donateQrImage.files && supportFields.donateQrImage.files[0];
-        if (file) supportFields.donateQrPreview.src = URL.createObjectURL(file);
+        if (file) setOptionalImagePreview(supportFields.donateQrPreview, URL.createObjectURL(file));
       });
       supportFields.middlemanQrImage.addEventListener("change", () => {
         const file = supportFields.middlemanQrImage.files && supportFields.middlemanQrImage.files[0];
-        if (file) supportFields.middlemanQrPreview.src = URL.createObjectURL(file);
+        if (file) setOptionalImagePreview(supportFields.middlemanQrPreview, URL.createObjectURL(file));
       });
       supportFields.heroSponsorImage.addEventListener("change", () => {
         const file = supportFields.heroSponsorImage.files && supportFields.heroSponsorImage.files[0];
-        if (file) supportFields.heroSponsorPreview.src = URL.createObjectURL(file);
+        if (file) setOptionalImagePreview(supportFields.heroSponsorPreview, URL.createObjectURL(file));
       });
       profileFrameImage?.addEventListener("change", () => {
         const file = profileFrameImage.files && profileFrameImage.files[0];
         if (file) {
+          const frameAvatar = document.querySelector("#profileFramePreviewAvatar");
+          frameAvatar.src = "assets/site-icons/rooc-icon-192.png";
+          frameAvatar.hidden = false;
           profileFramePreview.src = URL.createObjectURL(file);
           profileFramePreview.hidden = false;
         }

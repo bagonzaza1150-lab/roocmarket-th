@@ -367,7 +367,10 @@ window.ROOC_SUPABASE = {
           const el = document.getElementById(id);
           if (el) {
             const url = addCacheBuster(iconMap[key]);
-            if (el.tagName === 'IMG') el.src = url;
+            if (el.tagName === 'IMG') {
+              el.src = url;
+              el.hidden = false;
+            }
             else el.innerHTML = `<img src="${url}" style="max-width: 24px; max-height: 24px;" />`;
             updatedCount++;
           }

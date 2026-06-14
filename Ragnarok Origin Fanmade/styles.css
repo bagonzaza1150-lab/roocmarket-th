@@ -4194,10 +4194,16 @@ h1 {
   display: none;
 }
 
-.admin-image-preview > #itemImagePreviewEmpty {
+.admin-image-preview > #itemImagePreviewEmpty,
+.admin-image-preview > [data-empty-preview] {
   color: var(--muted);
   font-size: 11px;
   font-weight: 600;
+}
+
+.preview-box > img[hidden],
+.profile-frame-admin-preview > img[hidden] {
+  display: none;
 }
 
 .preview-box + .admin-image-file-size {
