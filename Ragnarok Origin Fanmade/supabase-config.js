@@ -382,6 +382,10 @@ window.ROOC_SUPABASE = {
   let publicListings = [];
   let soldListings = [];
   let pushEnabledSellerIds = new Set();
+  let presenceByUserId = new Map();
+  let presenceHeartbeatTimer = null;
+  let lastPresenceWriteAt = 0;
+  let presenceVisibilityBound = false;
   let profileFramesCache = [];
   let profileFramesLoadedAt = 0;
   const listingsPerPage = 6;
@@ -728,6 +732,89 @@ window.ROOC_SUPABASE = {
     }
 
     pushEnabledSellerIds = new Set((data || []).map((row) => String(row.user_id)));
+  }
+
+  async function hydratePresenceStatuses(listingsOrUserIds) {
+    const userIds = [...new Set((listingsOrUserIds || []).map((entry) => {
+      return typeof entry === "string" ? entry : entry?.user_id;
+    }).filter(Boolean))];
+    if (!userIds.length || !supabaseClient) return;
+
+    const { data, error } = await supabaseClient.rpc("marketplace_presence_for_users", {
+      p_user_ids: userIds
+    });
+    if (error) {
+      if (!/marketplace_presence_for_users|schema cache/i.test(error.message || "")) {
+        console.warn("ROOC presence status failed:", error);
+      }
+      return;
+    }
+
+    data?.forEach((row) => {
+      presenceByUserId.set(String(row.user_id), row.last_seen_at);
+    });
+  }
+
+  function getPresenceInfo(userId) {
+    const value = presenceByUserId.get(String(userId || ""));
+    if (!value) return null;
+    const elapsedMs = Math.max(0, Date.now() - new Date(value).getTime());
+    if (!Number.isFinite(elapsedMs)) return null;
+    const minutes = Math.floor(elapsedMs / 60000);
+    if (minutes < 5) return { online: true, label: "ออนไลน์" };
+    if (minutes < 60) return { online: false, label: `ใช้งาน ${minutes} นาทีที่แล้ว` };
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return { online: false, label: `ใช้งาน ${hours} ชม.ที่แล้ว` };
+    const days = Math.floor(hours / 24);
+    if (days <= 7) return { online: false, label: `ใช้งาน ${days} วันที่แล้ว` };
+    return null;
+  }
+
+  function renderPresenceBadge(userId, extraClass = "") {
+    const presence = getPresenceInfo(userId);
+    if (!presence) return "";
+    return `<div class="seller-presence-badge${presence.online ? " is-online" : ""}${extraClass ? ` ${extraClass}` : ""}" title="${escapeHtml(presence.label)}"><i></i>${escapeHtml(presence.label)}</div>`;
+  }
+
+  async function touchMarketplacePresence(session, force = false) {
+    if (!session || !supabaseClient || document.hidden) return;
+    const now = Date.now();
+    const cooldownMs = 120000;
+    const storageKey = `rooc_presence_touch_${session.user.id}`;
+    let storedTouchAt = 0;
+    try {
+      storedTouchAt = Number(localStorage.getItem(storageKey)) || 0;
+    } catch (_error) {
+      // Storage can be unavailable in private browsing.
+    }
+    if (now - storedTouchAt < cooldownMs) return;
+    if (!force && now - lastPresenceWriteAt < cooldownMs) return;
+    lastPresenceWriteAt = now;
+    try {
+      localStorage.setItem(storageKey, String(now));
+    } catch (_error) {
+      // The server-side cooldown still protects the database.
+    }
+    const { data, error } = await supabaseClient.rpc("touch_marketplace_presence");
+    if (!error && data) presenceByUserId.set(String(session.user.id), data);
+  }
+
+  function startPresenceHeartbeat(session) {
+    if (presenceHeartbeatTimer) {
+      clearInterval(presenceHeartbeatTimer);
+      presenceHeartbeatTimer = null;
+    }
+    if (!session) return;
+    touchMarketplacePresence(session, true);
+    presenceHeartbeatTimer = setInterval(() => touchMarketplacePresence(session), 180000);
+    if (!presenceVisibilityBound) {
+      presenceVisibilityBound = true;
+      document.addEventListener("visibilitychange", async () => {
+        if (document.hidden || !supabaseClient) return;
+        const { data } = await supabaseClient.auth.getSession();
+        if (data.session) touchMarketplacePresence(data.session, true);
+      });
+    }
   }
 
   async function fetchSiteSettings() {
@@ -1184,8 +1271,9 @@ window.ROOC_SUPABASE = {
       const pushBadge = pushEnabledSellerIds.has(String(listing.user_id))
         ? `<div class="seller-push-badge" title="ผู้ขายเปิดรับการแจ้งเตือนข้อความแชต"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg> เปิดแจ้งเตือนแชต</div>`
         : "";
-      const sellerSignals = trustBadge || pushBadge
-        ? `<div class="seller-signal-row">${trustBadge}${pushBadge}</div>`
+      const presenceBadge = renderPresenceBadge(listing.user_id);
+      const sellerSignals = trustBadge || pushBadge || presenceBadge
+        ? `<div class="seller-signal-row">${trustBadge}${pushBadge}${presenceBadge}</div>`
         : "";
       const listingType = listing.listing_type || "sell";
       const isServiceListing = listingType === "service";
@@ -1577,7 +1665,10 @@ window.ROOC_SUPABASE = {
         })
       ]);
       publicListings = await hydrateListingProfileFrames(publicListings, Boolean(force));
-      await hydrateSellerPushStatuses(publicListings);
+      await Promise.all([
+        hydrateSellerPushStatuses(publicListings),
+        hydratePresenceStatuses(publicListings)
+      ]);
       renderFilteredListings();
       renderSoldListings(soldListings);
       console.info(`ROOC listings refreshed ${publicListings.length} active rows, ${soldListings.length} sold rows`);
@@ -1743,7 +1834,17 @@ window.ROOC_SUPABASE = {
 
   async function upsertMarketplaceProfile(session) {
     if (!session || !supabaseClient) return;
-    await supabaseClient
+    const storageKey = `rooc_profile_sync_${session.user.id}`;
+    const cooldownMs = 600000;
+    let lastSyncAt = 0;
+    try {
+      lastSyncAt = Number(localStorage.getItem(storageKey)) || 0;
+    } catch (_error) {
+      // Storage can be unavailable in private browsing.
+    }
+    if (Date.now() - lastSyncAt < cooldownMs) return;
+
+    const { error } = await supabaseClient
       .from("marketplace_profiles")
       .upsert({
         user_id: session.user.id,
@@ -1752,6 +1853,13 @@ window.ROOC_SUPABASE = {
         avatar_url: getDiscordAvatarUrl(session),
         email: getSessionEmail(session)
       }, { onConflict: "user_id" });
+    if (!error) {
+      try {
+        localStorage.setItem(storageKey, String(Date.now()));
+      } catch (_error) {
+        // Profile sync remains functional without storage.
+      }
+    }
   }
 
   async function getPremiumStatus(session) {
@@ -2226,10 +2334,16 @@ window.ROOC_SUPABASE = {
         frame: ""
       }
     }));
+    const partnerId = session.user.id === room.buyer_user_id ? room.seller_user_id : room.buyer_user_id;
+    await hydratePresenceStatuses([partnerId]);
     const modal = ensureChatModal();
     const partnerName = session.user.id === room.buyer_user_id ? room.seller_name : room.buyer_name;
     modal.querySelector("#marketChatTitle").textContent = room.listing_title || "แชตประกาศ";
-    modal.querySelector("#marketChatPartner").textContent = `สนทนากับ ${partnerName || "คู่สนทนา"}`;
+    const partnerPresence = getPresenceInfo(partnerId);
+    modal.querySelector("#marketChatPartner").innerHTML = `
+      <span>สนทนากับ ${escapeHtml(partnerName || "คู่สนทนา")}</span>
+      ${partnerPresence ? `<span class="market-chat-partner-presence${partnerPresence.online ? " is-online" : ""}"><i></i>${escapeHtml(partnerPresence.label)}</span>` : ""}
+    `;
     const listingImage = modal.querySelector("#marketChatListingImage");
     if (listingImage) listingImage.src = room.listing_image_url || "assets/category-icons/mvp-c.png";
     modal.querySelector("#marketChatInput").value = "";
@@ -2496,6 +2610,7 @@ window.ROOC_SUPABASE = {
           const pushBadge = pushEnabledSellerIds.has(String(listing.user_id))
             ? `<div class="seller-push-badge store-seller-push-badge" title="ผู้ขายเปิดรับการแจ้งเตือนข้อความแชต"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg> เปิดแจ้งเตือนแชต</div>`
             : "";
+          const presenceBadge = renderPresenceBadge(listing.user_id, "store-listing-presence");
 	          const badges = [
 	            `<span class="${listingType === "buy" ? "buy" : listingType === "service" ? "verified" : "fast"} shine">${listingType === "buy" ? "รับซื้อ" : listingType === "service" ? "รับจ้าง" : "ขาย"}</span>`,
 	            `<span class="shine">${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
@@ -2523,6 +2638,7 @@ window.ROOC_SUPABASE = {
 		                  ${listing.seller_is_premium ? '<strong title="Premium" style="color: #f59e0b; font-size: 14px; text-shadow: 0 0 8px rgba(245, 158, 11, 0.3); flex-shrink: 0;">♛</strong>' : ""}
 		                </span>
 		                ${pushBadge}
+		                ${presenceBadge}
 		                ${isOwner ? `<span class="status-badge ${status.className}" style="margin-left: auto; flex-shrink: 0;">${status.label}</span>` : ""}
 		              </div>
 	              <div class="listing-meta">${badges}</div>
@@ -2632,7 +2748,10 @@ window.ROOC_SUPABASE = {
         if (result.error) throw result.error;
         const data = result.data;
         storeListings = data || [];
-        await hydrateSellerPushStatuses(storeListings);
+        await Promise.all([
+          hydrateSellerPushStatuses(storeListings),
+          hydratePresenceStatuses(storeListings.length ? storeListings : [sellerId])
+        ]);
         // อัปเดต global state หลังจาก fetch เสร็จ
         if (window._storeState) window._storeState.storeListings = storeListings;
         console.log("Store listings found:", storeListings.length);
@@ -2644,6 +2763,13 @@ window.ROOC_SUPABASE = {
 		        if (profile || storeListings.length > 0) {
 		          const seller = profile || storeListings[0];
 		          storeName.textContent = seller.display_name || seller.seller_name || "ผู้ขาย ROOC";
+		          const storePresence = document.querySelector("#storePresence");
+		          const presence = getPresenceInfo(sellerId);
+		          if (storePresence) {
+		            storePresence.hidden = !presence;
+		            storePresence.classList.toggle("is-online", Boolean(presence?.online));
+		            storePresence.innerHTML = presence ? `<i></i>${escapeHtml(presence.label)}` : "";
+		          }
 		          if (seller.avatar_url || seller.seller_avatar_url) storeAvatar.src = seller.avatar_url || seller.seller_avatar_url;
 		          
 		          // Reset Social Icons
@@ -3154,9 +3280,11 @@ window.ROOC_SUPABASE = {
     if (!supabaseClient) return;
     const { data } = await supabaseClient.auth.getSession();
     await upsertMarketplaceProfile(data.session);
+    startPresenceHeartbeat(data.session);
     await syncAuthUi(data.session);
-    supabaseClient.auth.onAuthStateChange((_event, session) => {
-      upsertMarketplaceProfile(session);
+    supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+      await upsertMarketplaceProfile(session);
+      startPresenceHeartbeat(session);
       syncAuthUi(session);
     });
   }

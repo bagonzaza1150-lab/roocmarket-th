@@ -186,12 +186,19 @@ create table if not exists public.marketplace_profiles (
   avatar_url text not null default '',
   email text not null default '',
   profile_frame_id uuid,
+  last_seen_at timestamptz,
   updated_at timestamptz not null default now(),
   created_at timestamptz not null default now()
 );
 
+alter table public.marketplace_profiles
+  add column if not exists last_seen_at timestamptz;
+
 create index if not exists marketplace_profiles_search_idx
   on public.marketplace_profiles (display_name, discord_id);
+
+create index if not exists marketplace_profiles_last_seen_idx
+  on public.marketplace_profiles (last_seen_at desc);
 
 create table if not exists public.marketplace_profile_frames (
   id uuid primary key default gen_random_uuid(),
@@ -697,6 +704,52 @@ as $$
 $$;
 revoke all on function public.marketplace_push_enabled_user_ids(uuid[]) from public;
 grant execute on function public.marketplace_push_enabled_user_ids(uuid[]) to anon, authenticated;
+create or replace function public.touch_marketplace_presence()
+returns timestamptz
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  touched_at timestamptz := now();
+  effective_last_seen timestamptz;
+begin
+  if auth.uid() is null then
+    raise exception 'Authentication required';
+  end if;
+  update public.marketplace_profiles
+  set last_seen_at = touched_at
+  where user_id = auth.uid()
+    and (
+      last_seen_at is null
+      or last_seen_at < touched_at - interval '2 minutes'
+    )
+  returning last_seen_at into effective_last_seen;
+  if effective_last_seen is null then
+    select profiles.last_seen_at
+    into effective_last_seen
+    from public.marketplace_profiles as profiles
+    where profiles.user_id = auth.uid();
+  end if;
+  return effective_last_seen;
+end;
+$$;
+create or replace function public.marketplace_presence_for_users(p_user_ids uuid[])
+returns table(user_id uuid, last_seen_at timestamptz)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select profiles.user_id, profiles.last_seen_at
+  from public.marketplace_profiles as profiles
+  where profiles.user_id = any(coalesce(p_user_ids, array[]::uuid[]))
+    and profiles.last_seen_at is not null;
+$$;
+revoke all on function public.touch_marketplace_presence() from public;
+grant execute on function public.touch_marketplace_presence() to authenticated;
+revoke all on function public.marketplace_presence_for_users(uuid[]) from public;
+grant execute on function public.marketplace_presence_for_users(uuid[]) to anon, authenticated;
 revoke all on function public.mark_marketplace_chat_room_read(uuid) from public;
 grant execute on function public.mark_marketplace_chat_room_read(uuid) to authenticated;
 grant select on table public.marketplace_admins to authenticated;

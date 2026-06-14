@@ -5820,6 +5820,53 @@ h1 {
   stroke-linejoin: round;
 }
 
+.seller-presence-badge,
+.store-presence,
+.market-chat-partner-presence {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.seller-presence-badge i,
+.store-presence i,
+.market-chat-partner-presence i {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.seller-presence-badge.is-online,
+.store-presence.is-online,
+.market-chat-partner-presence.is-online {
+  color: #28c98b;
+}
+
+.seller-presence-badge.is-online i,
+.store-presence.is-online i,
+.market-chat-partner-presence.is-online i {
+  box-shadow: 0 0 0 3px rgba(40, 201, 139, 0.14);
+}
+
+.store-presence {
+  margin-top: 2px;
+  font-size: 11px;
+}
+
+.market-chat-head small {
+  white-space: normal;
+}
+
+.market-chat-partner-presence {
+  margin-left: 8px;
+}
+
 .store-seller-push-badge {
   margin-left: auto;
 }
