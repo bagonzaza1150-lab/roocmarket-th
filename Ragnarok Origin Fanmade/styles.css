@@ -5786,7 +5786,7 @@ h1 {
   align-items: center;
   gap: 5px;
   min-width: 0;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .seller-signal-row .seller-trust-badge {
@@ -5829,6 +5829,14 @@ h1 {
   color: var(--muted);
   font-size: 10px;
   font-weight: 700;
+  white-space: nowrap;
+}
+
+.seller-presence-badge span,
+.store-presence span,
+.market-chat-partner-presence span {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

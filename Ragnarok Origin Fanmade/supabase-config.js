@@ -386,6 +386,8 @@ window.ROOC_SUPABASE = {
   let presenceHeartbeatTimer = null;
   let lastPresenceWriteAt = 0;
   let presenceVisibilityBound = false;
+  let presenceUiTimer = null;
+  let presencePollTimer = null;
   let profileFramesCache = [];
   let profileFramesLoadedAt = 0;
   const listingsPerPage = 6;
@@ -753,6 +755,8 @@ window.ROOC_SUPABASE = {
     data?.forEach((row) => {
       presenceByUserId.set(String(row.user_id), row.last_seen_at);
     });
+    updatePresenceElements();
+    startPresenceUiTimers();
   }
 
   function getPresenceInfo(userId) {
@@ -761,19 +765,56 @@ window.ROOC_SUPABASE = {
     const elapsedMs = Math.max(0, Date.now() - new Date(value).getTime());
     if (!Number.isFinite(elapsedMs)) return null;
     const minutes = Math.floor(elapsedMs / 60000);
-    if (minutes < 5) return { online: true, label: "ออนไลน์" };
-    if (minutes < 60) return { online: false, label: `ใช้งาน ${minutes} นาทีที่แล้ว` };
+    const lastSeen = new Date(value);
+    const timeText = lastSeen.toLocaleTimeString("th-TH", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+    if (minutes < 5) return { online: true, label: "ออนไลน์", lastSeenLabel: `ล่าสุด ${timeText}` };
+    if (minutes < 60) return { online: false, label: `ออฟไลน์ ${minutes} นาที`, lastSeenLabel: `ล่าสุด ${timeText}` };
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return { online: false, label: `ใช้งาน ${hours} ชม.ที่แล้ว` };
+    if (hours < 24) return { online: false, label: `ออฟไลน์ ${hours} ชม.`, lastSeenLabel: `ล่าสุด ${timeText}` };
     const days = Math.floor(hours / 24);
-    if (days <= 7) return { online: false, label: `ใช้งาน ${days} วันที่แล้ว` };
-    return null;
+    const dateText = lastSeen.toLocaleDateString("th-TH", {
+      day: "numeric",
+      month: "short"
+    });
+    return { online: false, label: `ออฟไลน์ ${days} วัน`, lastSeenLabel: `ล่าสุด ${dateText} ${timeText}` };
   }
 
   function renderPresenceBadge(userId, extraClass = "") {
     const presence = getPresenceInfo(userId);
     if (!presence) return "";
-    return `<div class="seller-presence-badge${presence.online ? " is-online" : ""}${extraClass ? ` ${extraClass}` : ""}" title="${escapeHtml(presence.label)}"><i></i>${escapeHtml(presence.label)}</div>`;
+    const fullLabel = presence.online ? presence.label : `${presence.label} • ${presence.lastSeenLabel}`;
+    return `<div class="seller-presence-badge${presence.online ? " is-online" : ""}${extraClass ? ` ${extraClass}` : ""}" data-presence-user-id="${escapeHtml(userId)}" title="${escapeHtml(fullLabel)}"><i></i><span>${escapeHtml(fullLabel)}</span></div>`;
+  }
+
+  function updatePresenceElements() {
+    document.querySelectorAll("[data-presence-user-id]").forEach((element) => {
+      const presence = getPresenceInfo(element.dataset.presenceUserId);
+      if (!presence) {
+        element.hidden = true;
+        return;
+      }
+      const fullLabel = presence.online ? presence.label : `${presence.label} • ${presence.lastSeenLabel}`;
+      element.hidden = false;
+      element.classList.toggle("is-online", presence.online);
+      element.title = fullLabel;
+      const label = element.querySelector("span");
+      if (label) label.textContent = fullLabel;
+    });
+  }
+
+  function startPresenceUiTimers() {
+    if (!presenceUiTimer) {
+      presenceUiTimer = setInterval(updatePresenceElements, 30000);
+    }
+    if (!presencePollTimer) {
+      presencePollTimer = setInterval(async () => {
+        if (document.hidden || !presenceByUserId.size) return;
+        await hydratePresenceStatuses([...presenceByUserId.keys()]);
+      }, 120000);
+    }
   }
 
   async function touchMarketplacePresence(session, force = false) {
@@ -2342,7 +2383,7 @@ window.ROOC_SUPABASE = {
     const partnerPresence = getPresenceInfo(partnerId);
     modal.querySelector("#marketChatPartner").innerHTML = `
       <span>สนทนากับ ${escapeHtml(partnerName || "คู่สนทนา")}</span>
-      ${partnerPresence ? `<span class="market-chat-partner-presence${partnerPresence.online ? " is-online" : ""}"><i></i>${escapeHtml(partnerPresence.label)}</span>` : ""}
+      ${partnerPresence ? `<span class="market-chat-partner-presence${partnerPresence.online ? " is-online" : ""}" data-presence-user-id="${escapeHtml(partnerId)}"><i></i><span>${escapeHtml(partnerPresence.online ? partnerPresence.label : `${partnerPresence.label} • ${partnerPresence.lastSeenLabel}`)}</span></span>` : ""}
     `;
     const listingImage = modal.querySelector("#marketChatListingImage");
     if (listingImage) listingImage.src = room.listing_image_url || "assets/category-icons/mvp-c.png";
@@ -2768,7 +2809,9 @@ window.ROOC_SUPABASE = {
 		          if (storePresence) {
 		            storePresence.hidden = !presence;
 		            storePresence.classList.toggle("is-online", Boolean(presence?.online));
-		            storePresence.innerHTML = presence ? `<i></i>${escapeHtml(presence.label)}` : "";
+		            storePresence.dataset.presenceUserId = sellerId;
+		            const presenceLabel = presence?.online ? presence.label : `${presence?.label} • ${presence?.lastSeenLabel}`;
+		            storePresence.innerHTML = presence ? `<i></i><span>${escapeHtml(presenceLabel)}</span>` : "";
 		          }
 		          if (seller.avatar_url || seller.seller_avatar_url) storeAvatar.src = seller.avatar_url || seller.seller_avatar_url;
 		          
