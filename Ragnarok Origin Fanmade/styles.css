@@ -2660,13 +2660,39 @@ h1 {
 }
 
 .market-chat-message-avatar {
+  position: relative;
+  display: block;
   width: 40px;
   height: 40px;
   margin-top: 18px;
+  overflow: visible;
+}
+
+.market-chat-message-avatar-image {
+  position: absolute;
+  inset: 0;
+  width: 40px;
+  height: 40px;
   border: 1px solid color-mix(in srgb, var(--blue) 28%, var(--line));
   border-radius: 8px;
   background: var(--paper);
   object-fit: cover;
+  z-index: 1;
+}
+
+.market-chat-message-avatar-frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 54px;
+  height: 56px;
+  max-width: none;
+  border: 0;
+  background: transparent;
+  object-fit: contain;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  z-index: 2;
 }
 
 .market-chat-message-content {
@@ -2728,7 +2754,7 @@ h1 {
   text-align: right;
 }
 
-.market-chat-message.is-own .market-chat-message-avatar {
+.market-chat-message.is-own > .market-chat-message-avatar {
   grid-column: 2;
   grid-row: 1;
 }

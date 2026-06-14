@@ -1867,7 +1867,8 @@ window.ROOC_SUPABASE = {
   function getChatParticipant(own) {
     const fallback = {
       name: own ? getDiscordDisplayName(activeChatSession) : "คู่สนทนา",
-      avatar: "assets/category-icons/account-b.png"
+      avatar: "assets/category-icons/account-b.png",
+      frame: ""
     };
     return (own ? activeChatParticipants?.own : activeChatParticipants?.partner) || fallback;
   }
@@ -1878,34 +1879,57 @@ window.ROOC_SUPABASE = {
     const participants = {
       own: {
         name: getDiscordDisplayName(session),
-        avatar: getDiscordAvatarUrl(session) || "assets/category-icons/account-b.png"
+        avatar: getDiscordAvatarUrl(session) || "assets/category-icons/account-b.png",
+        frame: ""
       },
       partner: {
         name: (ownIsBuyer ? room.seller_name : room.buyer_name) || "คู่สนทนา",
-        avatar: "assets/category-icons/account-b.png"
+        avatar: "assets/category-icons/account-b.png",
+        frame: ""
       }
     };
 
+    const frames = await fetchActiveProfileFrames();
+    const frameById = new Map(frames.map((frame) => [String(frame.id), frame.image_url]));
+    const { data: ownProfile } = await supabaseClient
+      .from("marketplace_profiles")
+      .select("display_name,avatar_url,profile_frame_id")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+    if (ownProfile) {
+      participants.own.name = ownProfile.display_name || participants.own.name;
+      participants.own.avatar = ownProfile.avatar_url || participants.own.avatar;
+      participants.own.frame = ownProfile.profile_frame_id
+        ? frameById.get(String(ownProfile.profile_frame_id)) || ""
+        : "";
+    }
+
     const { data: profile } = await supabaseClient
       .from("marketplace_profiles")
-      .select("display_name,avatar_url")
+      .select("display_name,avatar_url,profile_frame_id")
       .eq("user_id", partnerId)
       .maybeSingle();
     if (profile) {
       participants.partner.name = profile.display_name || participants.partner.name;
       participants.partner.avatar = profile.avatar_url || participants.partner.avatar;
+      participants.partner.frame = profile.profile_frame_id
+        ? frameById.get(String(profile.profile_frame_id)) || ""
+        : "";
     }
 
-    if (participants.partner.avatar === "assets/category-icons/account-b.png" && room.listing_id) {
+    if ((!participants.partner.frame || participants.partner.avatar === "assets/category-icons/account-b.png") && room.listing_id) {
       if (partnerId === room.seller_user_id) {
         const { data: listing } = await supabaseClient
           .from("marketplace_listings")
-          .select("seller_name,seller_avatar_url")
+          .select("seller_name,seller_avatar_url,seller_profile_frame_id")
           .eq("id", room.listing_id)
           .maybeSingle();
         if (listing) {
           participants.partner.name = listing.seller_name || participants.partner.name;
           participants.partner.avatar = listing.seller_avatar_url || participants.partner.avatar;
+          participants.partner.frame = listing.seller_profile_frame_id
+            ? frameById.get(String(listing.seller_profile_frame_id)) || participants.partner.frame
+            : participants.partner.frame;
         }
       } else {
         const { data: offer } = await supabaseClient
@@ -1987,7 +2011,10 @@ window.ROOC_SUPABASE = {
       const isRead = own && readAt && new Date(readAt) >= new Date(message.created_at);
       return `
         <div class="market-chat-message${own ? " is-own" : ""}" data-chat-message-id="${escapeHtml(message.id || "")}">
-          <img class="market-chat-message-avatar" src="${escapeHtml(participant.avatar)}" alt="" loading="lazy" />
+          <span class="market-chat-message-avatar${participant.frame ? " has-frame" : ""}">
+            <img class="market-chat-message-avatar-image" src="${escapeHtml(participant.avatar)}" alt="" loading="lazy" />
+            ${participant.frame ? `<img class="market-chat-message-avatar-frame" src="${escapeHtml(participant.frame)}" alt="" loading="lazy" />` : ""}
+          </span>
           <span class="market-chat-message-content">
             <strong class="market-chat-sender">${escapeHtml(participant.name)}</strong>
             <p>${escapeHtml(message.message)}</p>
@@ -2013,7 +2040,10 @@ window.ROOC_SUPABASE = {
     element.dataset.chatMessageId = String(message.id);
     const participant = getChatParticipant(true);
     element.innerHTML = `
-      <img class="market-chat-message-avatar" src="${escapeHtml(participant.avatar)}" alt="" loading="lazy" />
+      <span class="market-chat-message-avatar${participant.frame ? " has-frame" : ""}">
+        <img class="market-chat-message-avatar-image" src="${escapeHtml(participant.avatar)}" alt="" loading="lazy" />
+        ${participant.frame ? `<img class="market-chat-message-avatar-frame" src="${escapeHtml(participant.frame)}" alt="" loading="lazy" />` : ""}
+      </span>
       <span class="market-chat-message-content">
         <strong class="market-chat-sender">${escapeHtml(participant.name)}</strong>
         <p>${escapeHtml(message.message || "")}</p>
@@ -2126,11 +2156,13 @@ window.ROOC_SUPABASE = {
     activeChatParticipants = await loadChatParticipants(room, session).catch(() => ({
       own: {
         name: getDiscordDisplayName(session),
-        avatar: getDiscordAvatarUrl(session) || "assets/category-icons/account-b.png"
+        avatar: getDiscordAvatarUrl(session) || "assets/category-icons/account-b.png",
+        frame: ""
       },
       partner: {
         name: session.user.id === room.buyer_user_id ? room.seller_name : room.buyer_name,
-        avatar: "assets/category-icons/account-b.png"
+        avatar: "assets/category-icons/account-b.png",
+        frame: ""
       }
     }));
     const modal = ensureChatModal();
