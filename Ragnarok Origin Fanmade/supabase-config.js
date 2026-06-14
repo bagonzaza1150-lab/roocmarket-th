@@ -1636,6 +1636,7 @@ window.ROOC_SUPABASE = {
   let activeChatRoom = null;
   let activeChatSession = null;
   let activeChatChannel = null;
+  let chatNotificationChannel = null;
 
   function ensureChatModal() {
     let modal = document.querySelector("#marketChatModal");
@@ -1723,9 +1724,44 @@ window.ROOC_SUPABASE = {
           table: "marketplace_chat_messages",
           filter: `room_id=eq.${roomId}`
         },
-        () => {
+        async () => {
           loadChatMessages(roomId).catch((error) => setChatStatus(error.message, true));
-          renderIndexChatSidebar(activeChatSession);
+          await markChatRoomRead(roomId, activeChatSession);
+          await refreshChatSurfaces(activeChatSession);
+        }
+      )
+      .subscribe();
+  }
+
+  async function markChatRoomRead(roomId, session) {
+    if (!supabaseClient || !roomId || !session) return;
+    const { error } = await supabaseClient.rpc("mark_marketplace_chat_room_read", {
+      p_room_id: roomId
+    });
+    if (error && !/mark_marketplace_chat_room_read|schema cache/i.test(error.message || "")) {
+      console.warn("Unable to mark chat room as read:", error.message);
+    }
+  }
+
+  async function subscribeToChatNotifications(session) {
+    if (chatNotificationChannel && supabaseClient) {
+      await supabaseClient.removeChannel(chatNotificationChannel);
+      chatNotificationChannel = null;
+    }
+    if (!session?.user?.id) return;
+
+    chatNotificationChannel = supabaseClient
+      .channel(`market-chat-notifications:${session.user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "marketplace_chat_messages"
+        },
+        async (payload) => {
+          if (payload.new?.room_id === activeChatRoom?.id) return;
+          await refreshChatSurfaces(session);
         }
       )
       .subscribe();
@@ -1745,6 +1781,8 @@ window.ROOC_SUPABASE = {
 
     try {
       await loadChatMessages(room.id);
+      await markChatRoomRead(room.id, session);
+      await refreshChatSurfaces(session);
       await subscribeToChatRoom(room.id);
       modal.querySelector("#marketChatInput")?.focus();
     } catch (error) {
@@ -1833,7 +1871,7 @@ window.ROOC_SUPABASE = {
     }
     input.value = "";
     setChatStatus("");
-    window.setTimeout(() => renderIndexChatSidebar(activeChatSession), 250);
+    window.setTimeout(() => refreshChatSurfaces(activeChatSession), 250);
   }
 
   async function closeMarketChat() {
@@ -2295,11 +2333,23 @@ window.ROOC_SUPABASE = {
     }
     const { data: rooms, error } = await supabaseClient
       .from("marketplace_chat_rooms")
-      .select("id,buyer_user_id,seller_user_id,buyer_name,seller_name,listing_title,last_message,last_message_at")
+      .select("id,buyer_user_id,seller_user_id,buyer_name,seller_name,listing_title,last_message,last_message_at,buyer_unread_count,seller_unread_count")
       .or(`buyer_user_id.eq.${session.user.id},seller_user_id.eq.${session.user.id}`)
+      .neq("last_message", "")
       .order("last_message_at", { ascending: false })
       .limit(limit);
     return { rooms: rooms || [], error };
+  }
+
+  function getChatRoomUnreadCount(room, session) {
+    if (!room || !session?.user?.id) return 0;
+    return Number(session.user.id === room.buyer_user_id
+      ? room.buyer_unread_count
+      : room.seller_unread_count) || 0;
+  }
+
+  function getChatUnreadTotal(rooms, session) {
+    return (rooms || []).reduce((total, room) => total + getChatRoomUnreadCount(room, session), 0);
   }
 
   function formatChatRoomTime(value) {
@@ -2354,13 +2404,17 @@ window.ROOC_SUPABASE = {
     list.innerHTML = rooms.map((room) => {
       const partner = session.user.id === room.buyer_user_id ? room.seller_name : room.buyer_name;
       const partnerName = partner || "คู่สนทนา";
+      const unreadCount = getChatRoomUnreadCount(room, session);
       return `
-        <button class="index-chat-room" type="button" data-chat-room-id="${escapeHtml(room.id)}">
+        <button class="index-chat-room${unreadCount ? " is-unread" : ""}" type="button" data-chat-room-id="${escapeHtml(room.id)}">
           <span class="index-chat-avatar" aria-hidden="true">${escapeHtml(partnerName.trim().charAt(0).toUpperCase() || "?")}</span>
           <span class="index-chat-copy">
             <span class="index-chat-room-head">
               <strong>${escapeHtml(partnerName)}</strong>
-              <time>${escapeHtml(formatChatRoomTime(room.last_message_at))}</time>
+              <span class="index-chat-room-meta">
+                ${unreadCount ? `<b>${unreadCount > 99 ? "99+" : unreadCount}</b>` : ""}
+                <time>${escapeHtml(formatChatRoomTime(room.last_message_at))}</time>
+              </span>
             </span>
             <small>${escapeHtml(room.listing_title || "ประกาศสินค้า")}</small>
             <em>${escapeHtml(room.last_message || "เริ่มบทสนทนา")}</em>
@@ -2374,6 +2428,7 @@ window.ROOC_SUPABASE = {
     const chatMenu = document.createElement("div");
     chatMenu.className = "mailbox-menu chat-menu";
     const { rooms, error } = await fetchChatRooms(session, 12);
+    const unreadTotal = error ? 0 : getChatUnreadTotal(rooms, session);
 
     const roomItems = error
       ? '<p class="mailbox-empty">ยังไม่ได้เปิดระบบแชต</p>'
@@ -2381,13 +2436,17 @@ window.ROOC_SUPABASE = {
         ? '<p class="mailbox-empty">ยังไม่มีบทสนทนา</p>'
         : rooms.map((room) => {
           const partner = session.user.id === room.buyer_user_id ? room.seller_name : room.buyer_name;
+          const unreadCount = getChatRoomUnreadCount(room, session);
           return `
-            <button class="mailbox-item chat-room-item" type="button" data-chat-room-id="${escapeHtml(room.id)}">
+            <button class="mailbox-item chat-room-item${unreadCount ? " is-new" : ""}" type="button" data-chat-room-id="${escapeHtml(room.id)}">
               <span>
                 <strong>${escapeHtml(partner || "คู่สนทนา")}</strong>
                 <small>${escapeHtml(room.listing_title || "ประกาศ")}</small>
               </span>
-              <em>${escapeHtml(room.last_message || "เริ่มบทสนทนา")}</em>
+              <span class="chat-room-preview">
+                <em>${escapeHtml(room.last_message)}</em>
+                ${unreadCount ? `<b>${unreadCount > 99 ? "99+" : unreadCount}</b>` : ""}
+              </span>
             </button>
           `;
         }).join("");
@@ -2395,6 +2454,7 @@ window.ROOC_SUPABASE = {
     chatMenu.innerHTML = `
       <button class="mailbox-trigger chat-menu-trigger" type="button" aria-label="แชต" aria-expanded="false">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 9h8M8 13h5"/></svg>
+        ${unreadTotal ? `<b>${unreadTotal > 99 ? "99+" : unreadTotal}</b>` : ""}
       </button>
       <div class="mailbox-panel chat-menu-panel" hidden>
         <div class="mailbox-head">
@@ -2404,6 +2464,16 @@ window.ROOC_SUPABASE = {
       </div>
     `;
     return chatMenu;
+  }
+
+  async function refreshChatSurfaces(session) {
+    if (!session) return;
+    await renderIndexChatSidebar(session);
+    const currentMenu = document.querySelector(".chat-menu");
+    if (currentMenu) {
+      const nextMenu = await createChatMenu(session);
+      currentMenu.replaceWith(nextMenu);
+    }
   }
 
   async function syncAuthUi(session) {
@@ -2454,6 +2524,7 @@ window.ROOC_SUPABASE = {
     adminLinks.forEach((link) => {
       link.hidden = !isAdminSession(session);
     });
+    await subscribeToChatNotifications(session);
   }
 
   async function hydrateAuthUi() {

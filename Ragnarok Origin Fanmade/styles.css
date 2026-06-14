@@ -1205,6 +1205,15 @@ h1 {
   background: var(--paper-soft);
 }
 
+.index-chat-room.is-unread {
+  background: color-mix(in srgb, var(--blue) 8%, var(--paper));
+}
+
+.index-chat-room.is-unread .index-chat-copy em {
+  color: var(--ink);
+  font-weight: 800;
+}
+
 .index-chat-avatar {
   display: grid;
   width: 38px;
@@ -1247,6 +1256,27 @@ h1 {
   flex: 0 0 auto;
   color: var(--muted);
   font-size: 10px;
+}
+
+.index-chat-room-meta {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.index-chat-room-meta b,
+.chat-room-preview b {
+  display: inline-grid;
+  min-width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 999px;
+  background: #ff4d67;
+  color: #fff;
+  padding-inline: 4px;
+  font-size: 10px;
+  line-height: 1;
 }
 
 .index-chat-copy small {
@@ -2315,6 +2345,22 @@ h1 {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.chat-room-preview {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.chat-room-preview em {
+  min-width: 0;
+}
+
+.chat-room-preview b {
+  flex: 0 0 auto;
 }
 
 .chat-menu-trigger svg {

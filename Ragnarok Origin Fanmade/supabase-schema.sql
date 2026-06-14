@@ -107,10 +107,18 @@ create table if not exists public.marketplace_chat_rooms (
   seller_name text not null default '',
   last_message text not null default '',
   last_message_at timestamptz not null default now(),
+  buyer_unread_count integer not null default 0 check (buyer_unread_count >= 0),
+  seller_unread_count integer not null default 0 check (seller_unread_count >= 0),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (listing_id, buyer_user_id)
 );
+
+alter table public.marketplace_chat_rooms
+  add column if not exists buyer_unread_count integer not null default 0;
+
+alter table public.marketplace_chat_rooms
+  add column if not exists seller_unread_count integer not null default 0;
 
 create table if not exists public.marketplace_chat_messages (
   id uuid primary key default gen_random_uuid(),
@@ -422,9 +430,33 @@ begin
   update public.marketplace_chat_rooms
   set last_message = new.message,
       last_message_at = new.created_at,
+      buyer_unread_count = case
+        when new.sender_user_id = buyer_user_id then 0
+        else buyer_unread_count + 1
+      end,
+      seller_unread_count = case
+        when new.sender_user_id = seller_user_id then 0
+        else seller_unread_count + 1
+      end,
       updated_at = now()
   where id = new.room_id;
   return new;
+end;
+$$;
+
+create or replace function public.mark_marketplace_chat_room_read(p_room_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.marketplace_chat_rooms
+  set buyer_unread_count = case when auth.uid() = buyer_user_id then 0 else buyer_unread_count end,
+      seller_unread_count = case when auth.uid() = seller_user_id then 0 else seller_unread_count end,
+      updated_at = now()
+  where id = p_room_id
+    and (auth.uid() = buyer_user_id or auth.uid() = seller_user_id);
 end;
 $$;
 
@@ -558,6 +590,8 @@ grant select, insert on table public.marketplace_chat_rooms to authenticated;
 grant select, insert on table public.marketplace_chat_messages to authenticated;
 revoke update, delete on table public.marketplace_chat_rooms from authenticated;
 revoke update, delete on table public.marketplace_chat_messages from authenticated;
+revoke all on function public.mark_marketplace_chat_room_read(uuid) from public;
+grant execute on function public.mark_marketplace_chat_room_read(uuid) to authenticated;
 grant select on table public.marketplace_admins to authenticated;
 grant all privileges on table public.marketplace_profiles to authenticated;
 grant select on table public.marketplace_profile_frames to anon, authenticated;
