@@ -1922,7 +1922,7 @@ window.ROOC_SUPABASE = {
         : activeChatRoom?.buyer_last_read_at;
       const isRead = own && readAt && new Date(readAt) >= new Date(message.created_at);
       return `
-        <div class="market-chat-message${own ? " is-own" : ""}">
+        <div class="market-chat-message${own ? " is-own" : ""}" data-chat-message-id="${escapeHtml(message.id || "")}">
           <p>${escapeHtml(message.message)}</p>
           <span class="market-chat-meta">
             <time>${new Date(message.created_at).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" })}</time>
@@ -1931,6 +1931,26 @@ window.ROOC_SUPABASE = {
         </div>
       `;
     }).join("");
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function appendSentChatMessage(message) {
+    const container = document.querySelector("#marketChatMessages");
+    if (!container || !message?.id || !activeChatSession) return;
+    if (container.querySelector(`[data-chat-message-id="${CSS.escape(String(message.id))}"]`)) return;
+    container.querySelector(".market-chat-empty")?.remove();
+
+    const element = document.createElement("div");
+    element.className = "market-chat-message is-own";
+    element.dataset.chatMessageId = String(message.id);
+    element.innerHTML = `
+      <p>${escapeHtml(message.message || "")}</p>
+      <span class="market-chat-meta">
+        <time>${new Date(message.created_at || Date.now()).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" })}</time>
+        <span class="market-chat-read-status">ส่งแล้ว</span>
+      </span>
+    `;
+    container.appendChild(element);
     container.scrollTop = container.scrollHeight;
   }
 
@@ -2128,13 +2148,14 @@ window.ROOC_SUPABASE = {
         sender_user_id: activeChatSession.user.id,
         message
       })
-      .select("id")
+      .select("id,room_id,sender_user_id,message,created_at")
       .single();
     if (error) {
       setChatStatus(error.message, true);
       return;
     }
     input.value = "";
+    appendSentChatMessage(insertedMessage);
     setChatStatus("ส่งข้อความแล้ว กำลังส่งการแจ้งเตือน...");
     if (insertedMessage?.id) {
       try {
