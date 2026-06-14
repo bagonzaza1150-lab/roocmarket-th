@@ -1995,13 +1995,32 @@ window.ROOC_SUPABASE = {
       return;
     }
     input.value = "";
-    setChatStatus("");
+    setChatStatus("ส่งข้อความแล้ว กำลังส่งการแจ้งเตือน...");
     if (insertedMessage?.id) {
-      supabaseClient.functions.invoke("send-chat-push", {
-        body: { messageId: insertedMessage.id }
-      }).then(({ error: pushError }) => {
-        if (pushError) console.warn("Unable to send push notification:", pushError.message);
-      }).catch((error) => console.warn("Unable to send push notification:", error.message));
+      try {
+        const { data: pushResult, error: pushError } = await supabaseClient.functions.invoke("send-chat-push", {
+          body: { messageId: insertedMessage.id }
+        });
+        if (pushError) {
+          let details = pushError.message || "Edge Function error";
+          try {
+            const contextBody = await pushError.context?.json();
+            details = contextBody?.error || details;
+          } catch (_error) {
+            // Keep the original function error.
+          }
+          setChatStatus(`ส่งข้อความแล้ว แต่แจ้งเตือนไม่สำเร็จ: ${details}`, true);
+        } else if (Number(pushResult?.sent || 0) < 1) {
+          const deliveryError = pushResult?.error ? `: ${pushResult.error}` : "";
+          setChatStatus(`ส่งข้อความแล้ว แต่ส่งแจ้งเตือนไม่ถึงอุปกรณ์ผู้รับ${deliveryError}`, true);
+        } else {
+          setChatStatus(`ส่งข้อความและแจ้งเตือนแล้ว ${pushResult.sent} อุปกรณ์`);
+        }
+      } catch (error) {
+        setChatStatus(`ส่งข้อความแล้ว แต่แจ้งเตือนไม่สำเร็จ: ${error.message}`, true);
+      }
+    } else {
+      setChatStatus("ส่งข้อความแล้ว");
     }
     window.setTimeout(() => refreshChatSurfaces(activeChatSession), 250);
   }
