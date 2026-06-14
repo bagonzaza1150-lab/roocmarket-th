@@ -10,7 +10,7 @@
     <title>ROOC Market TH</title>
     <link rel="icon" type="image/png" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
     <link rel="apple-touch-icon" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
-    <link rel="stylesheet" href="styles.css?v=20260614-chat-unread-v1" />
+    <link rel="stylesheet" href="styles.css?v=20260614-chat-receipts-v1" />
     <style>
       body {
         animation: pageFadeIn 0.6s ease-out forwards;
@@ -21,7 +21,7 @@
       }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20260614-chat-unread-v1"></script>
+    <script src="supabase-config.js?v=20260614-chat-receipts-v1"></script>
   </head>
   <body>
     <div class="floating-elements" id="floatingElements"></div>
@@ -580,8 +580,10 @@
                     <strong>฿ ${formattedPrice}</strong>
                     ${sellerUserId ? `<a href="store.html?id=${sellerUserId}" class="seller-store-link" style="font-size: 11px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 4px;">🏪 ดูร้านค้า: ${escapeHtml(sellerName)}</a>` : `<span style="font-size: 11px; color: var(--muted);">👤 ${escapeHtml(sellerName)}</span>`}
                   </div>
-                  <button class="btn btn-small btn-light chat-seller-button" type="button" data-chat-listing-id="${escapeHtml(listing.id)}" data-chat-seller-id="${escapeHtml(sellerUserId)}" data-chat-title="${escapeHtml(title)}" data-chat-seller-name="${escapeHtml(sellerName)}">แชต</button>
                   <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">ติดต่อผู้ขาย</button>
+                  <button class="btn btn-small btn-light chat-seller-button" type="button" title="แชต" aria-label="แชตกับผู้ขาย" data-chat-listing-id="${escapeHtml(listing.id)}" data-chat-seller-id="${escapeHtml(sellerUserId)}" data-chat-title="${escapeHtml(title)}" data-chat-image="${escapeHtml(listingImages[0])}" data-chat-seller-name="${escapeHtml(sellerName)}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 9h8M8 13h5"/></svg>
+                  </button>
                 </div>
               </article>
             `;

@@ -105,10 +105,13 @@ create table if not exists public.marketplace_chat_rooms (
   listing_title text not null default '',
   buyer_name text not null default '',
   seller_name text not null default '',
+  listing_image_url text not null default '',
   last_message text not null default '',
   last_message_at timestamptz not null default now(),
   buyer_unread_count integer not null default 0 check (buyer_unread_count >= 0),
   seller_unread_count integer not null default 0 check (seller_unread_count >= 0),
+  buyer_last_read_at timestamptz,
+  seller_last_read_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (listing_id, buyer_user_id)
@@ -119,6 +122,25 @@ alter table public.marketplace_chat_rooms
 
 alter table public.marketplace_chat_rooms
   add column if not exists seller_unread_count integer not null default 0;
+
+alter table public.marketplace_chat_rooms
+  add column if not exists listing_image_url text not null default '';
+
+alter table public.marketplace_chat_rooms
+  add column if not exists buyer_last_read_at timestamptz;
+
+alter table public.marketplace_chat_rooms
+  add column if not exists seller_last_read_at timestamptz;
+
+update public.marketplace_chat_rooms rooms
+set listing_image_url = coalesce(
+  nullif(listings.image_url, ''),
+  listings.image_urls ->> 0,
+  ''
+)
+from public.marketplace_listings listings
+where listings.id = rooms.listing_id
+  and rooms.listing_image_url = '';
 
 create table if not exists public.marketplace_chat_messages (
   id uuid primary key default gen_random_uuid(),
@@ -438,6 +460,14 @@ begin
         when new.sender_user_id = seller_user_id then 0
         else seller_unread_count + 1
       end,
+      buyer_last_read_at = case
+        when new.sender_user_id = buyer_user_id then new.created_at
+        else buyer_last_read_at
+      end,
+      seller_last_read_at = case
+        when new.sender_user_id = seller_user_id then new.created_at
+        else seller_last_read_at
+      end,
       updated_at = now()
   where id = new.room_id;
   return new;
@@ -454,6 +484,8 @@ begin
   update public.marketplace_chat_rooms
   set buyer_unread_count = case when auth.uid() = buyer_user_id then 0 else buyer_unread_count end,
       seller_unread_count = case when auth.uid() = seller_user_id then 0 else seller_unread_count end,
+      buyer_last_read_at = case when auth.uid() = buyer_user_id then now() else buyer_last_read_at end,
+      seller_last_read_at = case when auth.uid() = seller_user_id then now() else seller_last_read_at end,
       updated_at = now()
   where id = p_room_id
     and (auth.uid() = buyer_user_id or auth.uid() = seller_user_id);
@@ -1060,6 +1092,15 @@ begin
       and tablename = 'marketplace_chat_messages'
   ) then
     alter publication supabase_realtime add table public.marketplace_chat_messages;
+  end if;
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'marketplace_chat_rooms'
+  ) then
+    alter publication supabase_realtime add table public.marketplace_chat_rooms;
   end if;
 end $$;
 

@@ -973,8 +973,10 @@ window.ROOC_SUPABASE = {
                 </svg>
               </a>` : ""}
               ${listing.offers_enabled ? `<button class="btn btn-small btn-light offer-button" type="button" data-offer-listing-id="${escapeHtml(listing.id)}" data-offer-title="${escapeHtml(title)}" data-offer-price="${escapeHtml(listing.price_text)}">เสนอราคา</button>` : ""}
-              <button class="btn btn-small btn-light chat-seller-button" type="button" data-chat-listing-id="${escapeHtml(listing.id)}" data-chat-seller-id="${escapeHtml(listing.user_id)}" data-chat-title="${escapeHtml(title)}" data-chat-seller-name="${escapeHtml(sellerName)}">แชต</button>
               <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">${listingType === "buy" ? "ติดต่อผู้รับซื้อ" : listingType === "service" ? "ติดต่อผู้รับจ้าง" : "ติดต่อผู้ขาย"}</button>
+              <button class="btn btn-small btn-light chat-seller-button" type="button" title="แชต" aria-label="แชตกับผู้ขาย" data-chat-listing-id="${escapeHtml(listing.id)}" data-chat-seller-id="${escapeHtml(listing.user_id)}" data-chat-title="${escapeHtml(title)}" data-chat-image="${escapeHtml(listingImages[0])}" data-chat-seller-name="${escapeHtml(sellerName)}">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 9h8M8 13h5"/></svg>
+              </button>
             </div>
           </div>
         </article>
@@ -1685,10 +1687,15 @@ window.ROOC_SUPABASE = {
 
     container.innerHTML = messages.map((message) => {
       const own = message.sender_user_id === activeChatSession.user.id;
+      const readAt = activeChatSession.user.id === activeChatRoom?.buyer_user_id
+        ? activeChatRoom?.seller_last_read_at
+        : activeChatRoom?.buyer_last_read_at;
+      const isRead = own && readAt && new Date(readAt) >= new Date(message.created_at);
       return `
         <div class="market-chat-message${own ? " is-own" : ""}">
           <p>${escapeHtml(message.message)}</p>
           <time>${new Date(message.created_at).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" })}</time>
+          ${own ? `<span class="market-chat-read-status${isRead ? " is-read" : ""}">${isRead ? "อ่านแล้ว" : "ยังไม่ได้อ่าน"}</span>` : ""}
         </div>
       `;
     }).join("");
@@ -1725,9 +1732,22 @@ window.ROOC_SUPABASE = {
           filter: `room_id=eq.${roomId}`
         },
         async () => {
-          loadChatMessages(roomId).catch((error) => setChatStatus(error.message, true));
           await markChatRoomRead(roomId, activeChatSession);
+          loadChatMessages(roomId).catch((error) => setChatStatus(error.message, true));
           await refreshChatSurfaces(activeChatSession);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "marketplace_chat_rooms",
+          filter: `id=eq.${roomId}`
+        },
+        (payload) => {
+          activeChatRoom = { ...activeChatRoom, ...payload.new };
+          loadChatMessages(roomId).catch((error) => setChatStatus(error.message, true));
         }
       )
       .subscribe();
@@ -1740,6 +1760,14 @@ window.ROOC_SUPABASE = {
     });
     if (error && !/mark_marketplace_chat_room_read|schema cache/i.test(error.message || "")) {
       console.warn("Unable to mark chat room as read:", error.message);
+    }
+    if (!error) {
+      const { data: room } = await supabaseClient
+        .from("marketplace_chat_rooms")
+        .select("*")
+        .eq("id", roomId)
+        .single();
+      if (room && activeChatRoom?.id === roomId) activeChatRoom = room;
     }
   }
 
@@ -1780,8 +1808,8 @@ window.ROOC_SUPABASE = {
     document.body.classList.add("modal-open");
 
     try {
-      await loadChatMessages(room.id);
       await markChatRoomRead(room.id, session);
+      await loadChatMessages(room.id);
       await refreshChatSurfaces(session);
       await subscribeToChatRoom(room.id);
       modal.querySelector("#marketChatInput")?.focus();
@@ -1823,6 +1851,7 @@ window.ROOC_SUPABASE = {
           buyer_user_id: session.user.id,
           seller_user_id: sellerUserId,
           listing_title: button.dataset.chatTitle || "",
+          listing_image_url: button.dataset.chatImage || "",
           buyer_name: getDiscordDisplayName(session),
           seller_name: button.dataset.chatSellerName || "ผู้ขาย"
         })
@@ -2043,8 +2072,10 @@ window.ROOC_SUPABASE = {
 	                    <button class="btn btn-small btn-light" data-toggle="${listing.id}">${listing.active ? "⏸️ ปิด" : "▶️ เปิด"}</button>
 	                  ` : `
 		                    ${listing.offers_enabled && !isSold ? `<button class="btn btn-small btn-light offer-button" type="button" data-offer-listing-id="${escapeHtml(listing.id)}" data-offer-title="${escapeHtml(title)}" data-offer-price="${escapeHtml(listing.price_text)}">เสนอราคา</button>` : ""}
-		                    <button class="btn btn-small btn-light chat-seller-button" type="button" data-chat-listing-id="${escapeHtml(listing.id)}" data-chat-seller-id="${escapeHtml(listing.user_id)}" data-chat-title="${escapeHtml(title)}" data-chat-seller-name="${escapeHtml(sellerName)}">แชต</button>
 		                    <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">${listingType === "buy" ? "ติดต่อผู้รับซื้อ" : listingType === "service" ? "ติดต่อผู้รับจ้าง" : "ติดต่อผู้ขาย"}</button>
+		                    <button class="btn btn-small btn-light chat-seller-button" type="button" title="แชต" aria-label="แชตกับผู้ขาย" data-chat-listing-id="${escapeHtml(listing.id)}" data-chat-seller-id="${escapeHtml(listing.user_id)}" data-chat-title="${escapeHtml(title)}" data-chat-image="${escapeHtml(listingImages[0])}" data-chat-seller-name="${escapeHtml(sellerName)}">
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 9h8M8 13h5"/></svg>
+                        </button>
 		                  `}
 	                </span>
 	              </div>
@@ -2333,7 +2364,7 @@ window.ROOC_SUPABASE = {
     }
     const { data: rooms, error } = await supabaseClient
       .from("marketplace_chat_rooms")
-      .select("id,buyer_user_id,seller_user_id,buyer_name,seller_name,listing_title,last_message,last_message_at,buyer_unread_count,seller_unread_count")
+      .select("id,buyer_user_id,seller_user_id,buyer_name,seller_name,listing_title,listing_image_url,last_message,last_message_at,buyer_unread_count,seller_unread_count,buyer_last_read_at,seller_last_read_at")
       .or(`buyer_user_id.eq.${session.user.id},seller_user_id.eq.${session.user.id}`)
       .neq("last_message", "")
       .order("last_message_at", { ascending: false })
@@ -2405,9 +2436,10 @@ window.ROOC_SUPABASE = {
       const partner = session.user.id === room.buyer_user_id ? room.seller_name : room.buyer_name;
       const partnerName = partner || "คู่สนทนา";
       const unreadCount = getChatRoomUnreadCount(room, session);
+      const itemImage = room.listing_image_url || "assets/category-icons/mvp-c.png";
       return `
         <button class="index-chat-room${unreadCount ? " is-unread" : ""}" type="button" data-chat-room-id="${escapeHtml(room.id)}">
-          <span class="index-chat-avatar" aria-hidden="true">${escapeHtml(partnerName.trim().charAt(0).toUpperCase() || "?")}</span>
+          <span class="index-chat-avatar" aria-hidden="true"><img src="${escapeHtml(itemImage)}" alt="" loading="lazy" /></span>
           <span class="index-chat-copy">
             <span class="index-chat-room-head">
               <strong>${escapeHtml(partnerName)}</strong>
