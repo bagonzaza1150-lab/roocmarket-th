@@ -1274,7 +1274,7 @@ window.ROOC_SUPABASE = {
           <div>
             <h3>${escapeHtml(title)}</h3>
             <p>${escapeHtml(price)} · ${escapeHtml(sellerName)}</p>
-            <strong>${completedLabel}</strong>
+            <strong class="${(listing.listing_type || "sell") === "buy" ? "is-buy-completed" : ""}">${completedLabel}</strong>
           </div>
         </article>
       `;
@@ -2448,7 +2448,7 @@ window.ROOC_SUPABASE = {
 
 		          const isSold = listing.sale_status === "sold";
 		          const completedLabel = getCompletedListingLabel(listing);
-		          const status = isSold ? { label: completedLabel, className: "mvp" } : (listing.active && (listing.sale_status === "active") ? { label: "กำลังแสดง", className: "active" } : { label: "ปิดอยู่", className: "closed" });
+		          const status = isSold ? { label: completedLabel, className: listingType === "buy" ? "buy-completed" : "mvp" } : (listing.active && (listing.sale_status === "active") ? { label: "กำลังแสดง", className: "active" } : { label: "ปิดอยู่", className: "closed" });
 		          const offers = offerMailbox.get(listing.id) || [];
 		          
 		          return `
