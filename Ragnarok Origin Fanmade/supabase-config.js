@@ -1723,7 +1723,10 @@ window.ROOC_SUPABASE = {
           table: "marketplace_chat_messages",
           filter: `room_id=eq.${roomId}`
         },
-        () => loadChatMessages(roomId).catch((error) => setChatStatus(error.message, true))
+        () => {
+          loadChatMessages(roomId).catch((error) => setChatStatus(error.message, true));
+          renderIndexChatSidebar(activeChatSession);
+        }
       )
       .subscribe();
   }
@@ -1830,6 +1833,7 @@ window.ROOC_SUPABASE = {
     }
     input.value = "";
     setChatStatus("");
+    window.setTimeout(() => renderIndexChatSidebar(activeChatSession), 250);
   }
 
   async function closeMarketChat() {
@@ -2285,15 +2289,91 @@ window.ROOC_SUPABASE = {
     return mailbox;
   }
 
-  async function createChatMenu(session) {
-    const chatMenu = document.createElement("div");
-    chatMenu.className = "mailbox-menu chat-menu";
+  async function fetchChatRooms(session, limit = 12) {
+    if (!supabaseClient || !session?.user?.id) {
+      return { rooms: [], error: null };
+    }
     const { data: rooms, error } = await supabaseClient
       .from("marketplace_chat_rooms")
       .select("id,buyer_user_id,seller_user_id,buyer_name,seller_name,listing_title,last_message,last_message_at")
       .or(`buyer_user_id.eq.${session.user.id},seller_user_id.eq.${session.user.id}`)
       .order("last_message_at", { ascending: false })
-      .limit(12);
+      .limit(limit);
+    return { rooms: rooms || [], error };
+  }
+
+  function formatChatRoomTime(value) {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    const today = new Date();
+    const sameDay = date.toDateString() === today.toDateString();
+    return date.toLocaleString("th-TH", sameDay
+      ? { hour: "2-digit", minute: "2-digit" }
+      : { day: "numeric", month: "short" });
+  }
+
+  async function renderIndexChatSidebar(session) {
+    const list = document.querySelector("#indexChatList");
+    if (!list) return;
+    const status = document.querySelector("#indexChatStatus");
+    if (status) {
+      status.classList.toggle("is-online", Boolean(session));
+      status.innerHTML = `<i></i> ${session ? "ออนไลน์" : "ออฟไลน์"}`;
+    }
+
+    if (!session) {
+      list.innerHTML = `
+        <div class="index-chat-empty">
+          <strong>เข้าสู่ระบบเพื่อเริ่มแชต</strong>
+          <span>คุยกับผู้ซื้อและผู้ขายได้จากหน้านี้</span>
+          <a class="btn btn-primary" href="login.html">เข้าสู่ระบบ</a>
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = '<p class="index-chat-empty">กำลังโหลดแชต...</p>';
+    const { rooms, error } = await fetchChatRooms(session, 16);
+
+    if (error) {
+      list.innerHTML = '<p class="index-chat-empty">ยังไม่ได้เปิดระบบแชต</p>';
+      return;
+    }
+
+    if (!rooms.length) {
+      list.innerHTML = `
+        <div class="index-chat-empty">
+          <strong>ยังไม่มีบทสนทนา</strong>
+          <span>กดปุ่มแชตในการ์ดสินค้าเพื่อเริ่มคุยกับผู้ขาย</span>
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = rooms.map((room) => {
+      const partner = session.user.id === room.buyer_user_id ? room.seller_name : room.buyer_name;
+      const partnerName = partner || "คู่สนทนา";
+      return `
+        <button class="index-chat-room" type="button" data-chat-room-id="${escapeHtml(room.id)}">
+          <span class="index-chat-avatar" aria-hidden="true">${escapeHtml(partnerName.trim().charAt(0).toUpperCase() || "?")}</span>
+          <span class="index-chat-copy">
+            <span class="index-chat-room-head">
+              <strong>${escapeHtml(partnerName)}</strong>
+              <time>${escapeHtml(formatChatRoomTime(room.last_message_at))}</time>
+            </span>
+            <small>${escapeHtml(room.listing_title || "ประกาศสินค้า")}</small>
+            <em>${escapeHtml(room.last_message || "เริ่มบทสนทนา")}</em>
+          </span>
+        </button>
+      `;
+    }).join("");
+  }
+
+  async function createChatMenu(session) {
+    const chatMenu = document.createElement("div");
+    chatMenu.className = "mailbox-menu chat-menu";
+    const { rooms, error } = await fetchChatRooms(session, 12);
 
     const roomItems = error
       ? '<p class="mailbox-empty">ยังไม่ได้เปิดระบบแชต</p>'
@@ -2333,6 +2413,7 @@ window.ROOC_SUPABASE = {
     const displayName = session ? getDiscordDisplayName(session) : "";
     const avatarUrl = session ? getDiscordAvatarUrl(session) : "";
     const isPremium = await getPremiumStatus(session);
+    await renderIndexChatSidebar(session);
 
     for (const link of authLinks) {
       if (!link.dataset.defaultAuthHref) {

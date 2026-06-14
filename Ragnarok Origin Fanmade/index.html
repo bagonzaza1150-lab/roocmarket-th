@@ -21,7 +21,7 @@
       }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20260614-chat-v1"></script>
+    <script src="supabase-config.js?v=20260614-chat-sidebar-v1"></script>
   </head>
   <body>
     <div class="floating-elements" id="floatingElements"></div>
@@ -294,6 +294,21 @@
             <a class="btn btn-primary" href="post.html">ลงประกาศแรก</a>
           </div>
         </section>
+
+        <aside class="index-chat-sidebar" aria-label="แชตล่าสุด">
+          <section class="index-chat-panel">
+            <div class="index-chat-head">
+              <div>
+                <p class="eyebrow">MARKET CHAT</p>
+                <h2>แชตล่าสุด</h2>
+              </div>
+              <span class="index-chat-status" id="indexChatStatus"><i></i> ออฟไลน์</span>
+            </div>
+            <div class="index-chat-list" id="indexChatList">
+              <p class="index-chat-empty">กำลังโหลดแชต...</p>
+            </div>
+          </section>
+        </aside>
       </section>
 
           </main>
