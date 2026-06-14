@@ -5958,17 +5958,26 @@ h1 {
 .filter-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap; /* เปลี่ยนเป็น wrap เพื่อให้พอดีกับหน้าจอ */
-  padding: 5px 0;
+  gap: 10px;
+  flex-wrap: nowrap;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 5px 0 8px;
   margin-top: 10px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.filter-row::-webkit-scrollbar {
+  display: none;
 }
 
 .filter-divider {
   width: 1px;
   height: 24px;
   background: rgba(255, 255, 255, 0.1);
-  margin: 0 5px;
+  margin: 0 3px;
   flex-shrink: 0;
 }
 
