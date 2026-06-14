@@ -5823,7 +5823,16 @@ h1 {
 
 .seller-name-stack .seller-presence-badge {
   max-width: 100%;
-  margin-top: 2px;
+  margin-top: 1px;
+  gap: 4px;
+  font-size: 8px;
+  line-height: 1.25;
+}
+
+.seller-name-stack .seller-presence-badge i {
+  width: 5px;
+  height: 5px;
+  flex-basis: 5px;
 }
 
 .seller-push-badge {
