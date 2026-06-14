@@ -1313,8 +1313,8 @@ window.ROOC_SUPABASE = {
         ? `<div class="seller-push-badge" title="ผู้ขายเปิดรับการแจ้งเตือนข้อความแชต"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg> เปิดแจ้งเตือนแชต</div>`
         : "";
       const presenceBadge = renderPresenceBadge(listing.user_id);
-      const sellerSignals = trustBadge || pushBadge || presenceBadge
-        ? `<div class="seller-signal-row">${trustBadge}${pushBadge}${presenceBadge}</div>`
+      const sellerSignals = trustBadge || pushBadge
+        ? `<div class="seller-signal-row">${trustBadge}${pushBadge}</div>`
         : "";
       const listingType = listing.listing_type || "sell";
       const isServiceListing = listingType === "service";
@@ -1360,10 +1360,13 @@ window.ROOC_SUPABASE = {
               <img class="listing-seller-avatar-image" src="${escapeHtml(sellerAvatar)}" alt="" loading="lazy" decoding="async" />
               ${sellerFrame ? `<img class="listing-seller-avatar-frame" src="${escapeHtml(sellerFrame)}" alt="" loading="lazy" decoding="async" />` : ""}
             </span>
-		            <a href="store.html?id=${encodeURIComponent(listing.user_id)}" class="seller-store-link" title="ไปที่หน้าร้านค้า" onclick="event.stopPropagation();" style="display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden;">
-	              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(sellerName)}</span>
-	              ${listing.seller_is_premium ? '<strong title="Premium" style="color: #f59e0b; font-size: 14px; text-shadow: 0 0 8px rgba(245, 158, 11, 0.3); flex-shrink: 0;">♛</strong>' : ""}
-	            </a>
+            <div class="seller-name-stack">
+		            <a href="store.html?id=${encodeURIComponent(listing.user_id)}" class="seller-store-link" title="ไปที่หน้าร้านค้า" onclick="event.stopPropagation();">
+	                <span>${escapeHtml(sellerName)}</span>
+	                ${listing.seller_is_premium ? '<strong title="Premium" style="color: #f59e0b; font-size: 14px; text-shadow: 0 0 8px rgba(245, 158, 11, 0.3); flex-shrink: 0;">♛</strong>' : ""}
+	              </a>
+              ${presenceBadge}
+            </div>
             ${sellerSignals}
           </div>
           <div class="listing-meta">${badges}</div>
@@ -2674,12 +2677,14 @@ window.ROOC_SUPABASE = {
 		              </div>`}
 		              <div class="listing-seller" style="display: flex; align-items: center; gap: 8px; min-width: 0;">
 		                <img src="${escapeHtml(sellerAvatar)}" alt="" style="flex-shrink: 0;" />
-		                <span style="display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden;">
-		                  <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(sellerName)}</span>
-		                  ${listing.seller_is_premium ? '<strong title="Premium" style="color: #f59e0b; font-size: 14px; text-shadow: 0 0 8px rgba(245, 158, 11, 0.3); flex-shrink: 0;">♛</strong>' : ""}
+		                <span class="seller-name-stack">
+		                  <span class="seller-name-line">
+		                    <span>${escapeHtml(sellerName)}</span>
+		                    ${listing.seller_is_premium ? '<strong title="Premium" style="color: #f59e0b; font-size: 14px; text-shadow: 0 0 8px rgba(245, 158, 11, 0.3); flex-shrink: 0;">♛</strong>' : ""}
+		                  </span>
+		                  ${presenceBadge}
 		                </span>
 		                ${pushBadge}
-		                ${presenceBadge}
 		                ${isOwner ? `<span class="status-badge ${status.className}" style="margin-left: auto; flex-shrink: 0;">${status.label}</span>` : ""}
 		              </div>
 	              <div class="listing-meta">${badges}</div>

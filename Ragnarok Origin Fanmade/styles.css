@@ -5794,6 +5794,38 @@ h1 {
   margin-top: 0;
 }
 
+.seller-name-stack {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.seller-name-stack .seller-store-link,
+.seller-name-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.seller-name-stack .seller-store-link > span,
+.seller-name-line > span {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.seller-name-stack .seller-presence-badge {
+  max-width: 100%;
+  margin-top: 2px;
+}
+
 .seller-push-badge {
   display: inline-flex;
   align-items: center;
