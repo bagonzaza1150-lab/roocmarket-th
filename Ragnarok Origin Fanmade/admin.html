@@ -12,10 +12,10 @@
     <title>Admin | ROOC Market TH</title>
     <link rel="icon" type="image/png" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
     <link rel="apple-touch-icon" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
-  <link rel="stylesheet" href="styles.css?v=20260614-admin-image-size-v1" />
+  <link rel="stylesheet" href="styles.css?v=20260614-empty-item-preview-v1" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="supabase-config.js?v=20260614-admin-image-size-v1"></script>
+  <script src="supabase-config.js?v=20260614-empty-item-preview-v1"></script>
   </head>
   <body>
     <header class="site-header">
@@ -245,8 +245,8 @@
                     <small>PNG, JPG หรือ WebP</small>
                   </label>
                   <div class="auto-image-box admin-image-preview">
-                    <img id="itemImagePreview" src="assets/category-icons/mvp-c.png" alt="" />
-                    <small>ตัวอย่างรูป</small>
+                    <img id="itemImagePreview" alt="" hidden />
+                    <small id="itemImagePreviewEmpty">ยังไม่ได้เลือกรูป</small>
                   </div>
                 </div>
 
@@ -1166,12 +1166,19 @@
         const label = getImageSizeLabel(preview);
         if (!label) return;
         if (file) {
+          label.hidden = false;
           label.textContent = `ขนาดไฟล์: ${formatImageFileSize(file.size)}`;
           return;
         }
 
-        const url = image.currentSrc || image.src;
-        if (!url || url.startsWith("blob:") || url.startsWith("data:")) return;
+        const url = image.getAttribute("src") || "";
+        if (!url) {
+          label.hidden = true;
+          label.textContent = "";
+          return;
+        }
+        if (url.startsWith("blob:") || url.startsWith("data:")) return;
+        label.hidden = false;
         label.textContent = "กำลังตรวจขนาดไฟล์...";
         try {
           const response = await fetch(url, { method: "HEAD", cache: "no-store" });
@@ -1245,7 +1252,10 @@
         fields.imagePath.value = "";
         fields.sortOrder.value = "0";
         fields.active.checked = true;
-        itemImagePreview.src = "assets/category-icons/mvp-c.png";
+        itemImagePreview.removeAttribute("src");
+        itemImagePreview.hidden = true;
+        document.querySelector("#itemImagePreviewEmpty").hidden = false;
+        updateImageSizeLabel(itemImagePreview);
         editorMode.textContent = "+";
         editorTitle.textContent = "เพิ่มไอเท็มใหม่";
         setMessage(editorMessage, "");
@@ -2033,6 +2043,8 @@
         fields.imagePath.value = item.image_path || "";
         fields.active.checked = item.active;
         itemImagePreview.src = item.image_url;
+        itemImagePreview.hidden = !item.image_url;
+        document.querySelector("#itemImagePreviewEmpty").hidden = Boolean(item.image_url);
         editorMode.textContent = "แก้";
         editorTitle.textContent = "แก้ไขไอเท็ม";
         setMessage(editorMessage, "");
@@ -2570,7 +2582,16 @@
       });
       itemImage.addEventListener("change", () => {
         const file = itemImage.files && itemImage.files[0];
-        if (file) itemImagePreview.src = URL.createObjectURL(file);
+        if (file) {
+          itemImagePreview.src = URL.createObjectURL(file);
+          itemImagePreview.hidden = false;
+          document.querySelector("#itemImagePreviewEmpty").hidden = true;
+        } else {
+          itemImagePreview.removeAttribute("src");
+          itemImagePreview.hidden = true;
+          document.querySelector("#itemImagePreviewEmpty").hidden = false;
+          updateImageSizeLabel(itemImagePreview);
+        }
       });
       supportFields.donateQrImage.addEventListener("change", () => {
         const file = supportFields.donateQrImage.files && supportFields.donateQrImage.files[0];
