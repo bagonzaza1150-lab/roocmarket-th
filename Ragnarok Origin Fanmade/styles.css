@@ -4180,6 +4180,23 @@ h1 {
   min-height: 160px;
 }
 
+.admin-image-file-size {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.preview-box + .admin-image-file-size {
+  max-width: 74px;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+}
+
 .admin-image-preview img {
   max-width: 128px;
   max-height: 128px;

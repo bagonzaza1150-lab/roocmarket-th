@@ -12,10 +12,10 @@
     <title>Admin | ROOC Market TH</title>
     <link rel="icon" type="image/png" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
     <link rel="apple-touch-icon" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
-  <link rel="stylesheet" href="styles.css?v=20260614-presence-v12" />
+  <link rel="stylesheet" href="styles.css?v=20260614-admin-image-size-v1" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="supabase-config.js?v=20260614-presence-v12"></script>
+  <script src="supabase-config.js?v=20260614-admin-image-size-v1"></script>
   </head>
   <body>
     <header class="site-header">
@@ -1139,6 +1139,81 @@
           .replace(/>/g, "&gt;")
           .replace(/"/g, "&quot;")
           .replace(/'/g, "&#039;");
+      }
+
+      function formatImageFileSize(bytes) {
+        const size = Number(bytes);
+        if (!Number.isFinite(size) || size < 0) return "ไม่ทราบขนาด";
+        if (size < 1024) return `${size} B`;
+        if (size < 1024 * 1024) return `${(size / 1024).toFixed(size < 10240 ? 1 : 0)} KB`;
+        return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+      }
+
+      function getImageSizeLabel(preview) {
+        if (!preview) return null;
+        let label = preview.parentElement?.querySelector(":scope > .admin-image-file-size");
+        if (!label) {
+          label = document.createElement("small");
+          label.className = "admin-image-file-size";
+          preview.insertAdjacentElement("afterend", label);
+        }
+        return label;
+      }
+
+      async function updateImageSizeLabel(preview, file = null) {
+        const image = preview?.tagName === "IMG" ? preview : preview?.querySelector("img");
+        if (!image) return;
+        const label = getImageSizeLabel(preview);
+        if (!label) return;
+        if (file) {
+          label.textContent = `ขนาดไฟล์: ${formatImageFileSize(file.size)}`;
+          return;
+        }
+
+        const url = image.currentSrc || image.src;
+        if (!url || url.startsWith("blob:") || url.startsWith("data:")) return;
+        label.textContent = "กำลังตรวจขนาดไฟล์...";
+        try {
+          const response = await fetch(url, { method: "HEAD", cache: "no-store" });
+          const bytes = response.headers.get("content-length");
+          label.textContent = `ขนาดไฟล์: ${bytes ? formatImageFileSize(bytes) : "ไม่ทราบขนาด"}`;
+        } catch (_error) {
+          label.textContent = "ขนาดไฟล์: ไม่ทราบขนาด";
+        }
+      }
+
+      function bindImageSizeDisplay(input, preview) {
+        if (!input || !preview) return;
+        input.addEventListener("change", () => {
+          const file = input.files?.[0];
+          if (file) updateImageSizeLabel(preview, file);
+        });
+        const image = preview.tagName === "IMG" ? preview : preview.querySelector("img");
+        image?.addEventListener("load", () => updateImageSizeLabel(preview));
+        updateImageSizeLabel(preview);
+      }
+
+      function initAdminImageSizeDisplays() {
+        bindImageSizeDisplay(itemImage, itemImagePreview);
+        bindImageSizeDisplay(profileFrameImage, profileFramePreview);
+        bindImageSizeDisplay(supportFields.heroSponsorImage, supportFields.heroSponsorPreview);
+        bindImageSizeDisplay(supportFields.donateQrImage, supportFields.donateQrPreview);
+        bindImageSizeDisplay(supportFields.middlemanQrImage, supportFields.middlemanQrPreview);
+
+        iconInputs.forEach((input) => {
+          bindImageSizeDisplay(input, document.getElementById(`preview-${input.dataset.iconType}`));
+        });
+      }
+
+      function refreshAdminImageSizeDisplays() {
+        updateImageSizeLabel(itemImagePreview);
+        updateImageSizeLabel(profileFramePreview);
+        updateImageSizeLabel(supportFields.heroSponsorPreview);
+        updateImageSizeLabel(supportFields.donateQrPreview);
+        updateImageSizeLabel(supportFields.middlemanQrPreview);
+        iconInputs.forEach((input) => {
+          updateImageSizeLabel(document.getElementById(`preview-${input.dataset.iconType}`));
+        });
       }
 
       function categoryLabel(category) {
@@ -2397,6 +2472,7 @@
           }
         });
       });
+      initAdminImageSizeDisplays();
 
       // ใช้ฟังก์ชันโหลดไอคอนกลางจาก supabase-config.js
       async function loadCurrentIconsForAdmin() {
@@ -2418,6 +2494,7 @@
               }
             }
           } catch (e) { console.log("No lock icon set yet"); }
+          refreshAdminImageSizeDisplays();
         } else {
           setTimeout(loadCurrentIconsForAdmin, 500);
         }
