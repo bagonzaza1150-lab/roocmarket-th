@@ -1184,7 +1184,8 @@ h1 {
   gap: 9px;
 }
 
-.index-chat-minimize {
+.index-chat-minimize,
+.index-chat-notification {
   display: grid;
   width: 30px;
   height: 30px;
@@ -1195,12 +1196,14 @@ h1 {
   color: var(--ink);
 }
 
-.index-chat-minimize:hover {
+.index-chat-minimize:hover,
+.index-chat-notification:hover {
   border-color: color-mix(in srgb, var(--blue) 45%, var(--line));
   color: var(--blue);
 }
 
 .index-chat-minimize svg,
+.index-chat-notification svg,
 .index-chat-launcher svg {
   width: 18px;
   height: 18px;
@@ -1209,6 +1212,28 @@ h1 {
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 2;
+}
+
+.index-chat-notification .bell-off {
+  display: none;
+}
+
+.index-chat-notification.is-enabled {
+  border-color: color-mix(in srgb, #20c997 48%, var(--line));
+  background: color-mix(in srgb, #20c997 13%, var(--paper));
+  color: #20a77f;
+}
+
+.index-chat-notification.is-denied {
+  color: #ff5c70;
+}
+
+.index-chat-notification.is-denied .bell-on {
+  display: none;
+}
+
+.index-chat-notification.is-denied .bell-off {
+  display: block;
 }
 
 .index-chat-status {

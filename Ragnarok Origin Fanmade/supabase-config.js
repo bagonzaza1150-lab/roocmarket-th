@@ -110,6 +110,28 @@ window.ROOC_SUPABASE = {
     return "เปิดแจ้งเตือนอุปกรณ์";
   }
 
+  function updateIndexPushButton(state) {
+    const button = document.querySelector("[data-index-push-toggle]");
+    if (!button) return;
+    button.hidden = state === "unsupported";
+    button.classList.toggle("is-enabled", state === "enabled");
+    button.classList.toggle("is-denied", state === "denied");
+    const label = getPushToggleLabel(state);
+    button.title = label;
+    button.setAttribute("aria-label", label);
+    button.dataset.pushState = state;
+  }
+
+  function updatePushToggleControl(button, state) {
+    if (!button) return;
+    if (button.matches("[data-index-push-toggle]")) {
+      updateIndexPushButton(state);
+      return;
+    }
+    button.dataset.pushState = state;
+    button.textContent = getPushToggleLabel(state);
+  }
+
   function applySiteLogo(url) {
     if (!url) return;
     document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach((link) => {
@@ -2665,6 +2687,7 @@ window.ROOC_SUPABASE = {
   async function refreshChatSurfaces(session) {
     if (!session) return;
     await renderIndexChatSidebar(session);
+    updateIndexPushButton(pushState);
     const currentMenu = document.querySelector(".chat-menu");
     if (currentMenu) {
       const nextMenu = await createChatMenu(session);
@@ -2794,7 +2817,7 @@ window.ROOC_SUPABASE = {
     const closeChatButton = event.target.closest("[data-close-market-chat]");
     const offerMessageButton = event.target.closest("[data-offer-message]");
     const closeOfferMessageButton = event.target.closest("[data-close-offer-message]");
-    const pushToggle = event.target.closest("[data-push-toggle]");
+    const pushToggle = event.target.closest("[data-push-toggle], [data-index-push-toggle]");
     const indexChatToggle = event.target.closest("[data-index-chat-toggle]");
     const offerRead = event.target.closest("[data-offer-read]");
     const logout = event.target.closest("[data-user-logout]");
@@ -2823,8 +2846,9 @@ window.ROOC_SUPABASE = {
           await enablePushNotifications(data.session);
         }
         const nextState = await getPushNotificationState();
-        pushToggle.dataset.pushState = nextState;
-        pushToggle.textContent = getPushToggleLabel(nextState);
+        document.querySelectorAll("[data-push-toggle], [data-index-push-toggle]").forEach((control) => {
+          updatePushToggleControl(control, nextState);
+        });
       } catch (error) {
         const needsMigration = /marketplace_push_subscriptions|schema cache|relation/i.test(error.message || "");
         alert(needsMigration ? "กรุณารัน supabase-push-migration.sql ใน Supabase ก่อน" : error.message);
