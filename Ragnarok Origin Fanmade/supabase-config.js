@@ -14,6 +14,30 @@ window.ROOC_SUPABASE = {
   const supabaseClient = canUseSupabase ? window.supabase.createClient(config.url, config.anonKey) : null;
   window.roocSupabaseClient = supabaseClient;
 
+  const siteLogoCacheKey = "rooc-site-logo-url-v1";
+
+  function applySiteLogo(url) {
+    if (!url) return;
+    document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach((link) => {
+      link.href = url;
+    });
+    document.querySelectorAll(".brand-mark img, .brand > img").forEach((img) => {
+      img.src = url;
+    });
+  }
+
+  try {
+    const cachedSiteLogo = localStorage.getItem(siteLogoCacheKey);
+    if (cachedSiteLogo) {
+      applySiteLogo(cachedSiteLogo);
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => applySiteLogo(cachedSiteLogo), { once: true });
+      }
+    }
+  } catch (_error) {
+    // Storage can be unavailable in private browsing.
+  }
+
   // ฟังก์ชันกลางสำหรับโหลดไอคอนจากฐานข้อมูล (ใช้กับทุกหน้า)
   window.ROOC_LOAD_ICONS = async function() {
     if (!supabaseClient) return;
@@ -46,7 +70,13 @@ window.ROOC_SUPABASE = {
 
       // 1. อัปเดต Logo (เปลี่ยนเฉพาะโลโก้เว็บไซต์ ไม่ทับรูปโปรไฟล์ผู้ขาย)
       if (iconMap['site-logo']) {
+        try {
+          localStorage.setItem(siteLogoCacheKey, iconMap['site-logo']);
+        } catch (_error) {
+          // Ignore storage failures.
+        }
         const logoUrl = addCacheBuster(iconMap['site-logo']);
+        applySiteLogo(logoUrl);
         document.querySelectorAll('img').forEach(img => {
           // ข้ามรูปภาพที่อยู่ในปุ่มโซเชียลมีเดีย และข้ามรูปโปรไฟล์ผู้ขาย (storeAvatar)
           if (img.closest('.social-btn') || img.closest('.seller-socials') || img.id === 'storeAvatar' || img.id === 'storeProfileFrame') return;
@@ -2247,7 +2277,7 @@ window.ROOC_SUPABASE = {
       hydrateAuthUi();
       trackPageView();
       // โหลดไอคอนแบบ Dynamic
-      setTimeout(window.ROOC_LOAD_ICONS, 500);
+      window.ROOC_LOAD_ICONS();
     });
   } else {
     initTheme();
@@ -2256,7 +2286,7 @@ window.ROOC_SUPABASE = {
     hydrateAuthUi();
     trackPageView();
     // โหลดไอคอนแบบ Dynamic
-    setTimeout(window.ROOC_LOAD_ICONS, 500);
+    window.ROOC_LOAD_ICONS();
   }
 })();
 
