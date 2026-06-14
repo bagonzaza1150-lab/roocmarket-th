@@ -675,6 +675,89 @@ window.ROOC_SUPABASE = {
     return rows?.[0]?.value || {};
   }
 
+  function closeSiteAnnouncementPopup(dismiss = false) {
+    const popup = document.querySelector("#siteAnnouncementPopup");
+    if (!popup) return;
+    if (dismiss && popup.dataset.announcementId) {
+      try {
+        localStorage.setItem(
+          `rooc-dismissed-announcement:${popup.dataset.announcementId}`,
+          "1"
+        );
+      } catch (_error) {
+        // Storage can be unavailable in private browsing.
+      }
+    }
+    popup.hidden = true;
+    if (!document.querySelector(".contact-modal:not([hidden]), .modal-overlay:not([hidden])")) {
+      document.body.classList.remove("modal-open");
+    }
+  }
+
+  function showSiteAnnouncementPopup(settings = {}) {
+    const enabled = Boolean(settings.popup_announcement_enabled);
+    const announcementId = String(settings.popup_announcement_id || "").trim();
+    const title = String(settings.popup_announcement_title || "").trim();
+    const message = String(settings.popup_announcement_text || "").trim();
+    if (!enabled || !announcementId || (!title && !message)) return;
+
+    try {
+      if (localStorage.getItem(`rooc-dismissed-announcement:${announcementId}`) === "1") return;
+    } catch (_error) {
+      // Show the announcement when storage is unavailable.
+    }
+
+    let popup = document.querySelector("#siteAnnouncementPopup");
+    if (!popup) {
+      popup = document.createElement("div");
+      popup.id = "siteAnnouncementPopup";
+      popup.className = "contact-modal site-announcement-popup";
+      popup.hidden = true;
+      popup.innerHTML = `
+        <div class="contact-modal-backdrop" data-close-site-announcement></div>
+        <section class="contact-modal-card site-announcement-card" role="dialog" aria-modal="true" aria-labelledby="siteAnnouncementTitle">
+          <button class="contact-modal-close" type="button" data-close-site-announcement aria-label="ปิด">×</button>
+          <div class="site-announcement-mark" aria-hidden="true">!</div>
+          <p class="eyebrow">ANNOUNCEMENT</p>
+          <h2 id="siteAnnouncementTitle"></h2>
+          <p class="site-announcement-text" id="siteAnnouncementText"></p>
+          <div class="site-announcement-actions">
+            <a class="btn btn-primary" id="siteAnnouncementLink" target="_blank" rel="noopener" hidden></a>
+            <button class="btn btn-light" type="button" data-dismiss-site-announcement>ไม่ต้องแสดงประกาศนี้อีก</button>
+          </div>
+        </section>
+      `;
+      document.documentElement.appendChild(popup);
+    }
+
+    popup.dataset.announcementId = announcementId;
+    popup.querySelector("#siteAnnouncementTitle").textContent = title || "ประกาศจาก ROOC Market";
+    popup.querySelector("#siteAnnouncementText").textContent = message;
+    const link = popup.querySelector("#siteAnnouncementLink");
+    const linkUrl = String(settings.popup_announcement_button_url || "").trim();
+    const linkLabel = String(settings.popup_announcement_button_label || "").trim();
+    const safeLink = /^https?:\/\//i.test(linkUrl);
+    link.hidden = !safeLink;
+    if (safeLink) {
+      link.href = linkUrl;
+      link.textContent = linkLabel || "ดูรายละเอียด";
+    }
+
+    window.setTimeout(() => {
+      popup.hidden = false;
+      document.body.classList.add("modal-open");
+    }, 450);
+  }
+
+  async function initSiteAnnouncementPopup() {
+    if (!canUseSupabase || /(?:^|\/)admin\.html$/i.test(location.pathname)) return;
+    const settings = await fetchSiteSettings().catch((error) => {
+      console.warn("ROOC announcement settings failed:", error);
+      return {};
+    });
+    showSiteAnnouncementPopup(settings);
+  }
+
   async function fetchActiveServers() {
     const response = await fetch(`${config.url}/rest/v1/marketplace_servers?select=name&active=eq.true&order=sort_order.asc,name.asc`, {
       headers: {
@@ -2819,8 +2902,22 @@ window.ROOC_SUPABASE = {
     const closeOfferMessageButton = event.target.closest("[data-close-offer-message]");
     const pushToggle = event.target.closest("[data-push-toggle], [data-index-push-toggle]");
     const indexChatToggle = event.target.closest("[data-index-chat-toggle]");
+    const closeSiteAnnouncement = event.target.closest("[data-close-site-announcement]");
+    const dismissSiteAnnouncement = event.target.closest("[data-dismiss-site-announcement]");
     const offerRead = event.target.closest("[data-offer-read]");
     const logout = event.target.closest("[data-user-logout]");
+
+    if (dismissSiteAnnouncement) {
+      event.preventDefault();
+      closeSiteAnnouncementPopup(true);
+      return;
+    }
+
+    if (closeSiteAnnouncement) {
+      event.preventDefault();
+      closeSiteAnnouncementPopup(false);
+      return;
+    }
 
     if (indexChatToggle) {
       event.preventDefault();
@@ -2990,6 +3087,7 @@ window.ROOC_SUPABASE = {
       initFloatingElements();
       hydratePublicListings();
       hydrateAuthUi();
+      initSiteAnnouncementPopup();
       trackPageView();
       // โหลดไอคอนแบบ Dynamic
       window.ROOC_LOAD_ICONS();
@@ -2999,6 +3097,7 @@ window.ROOC_SUPABASE = {
     initFloatingElements();
     hydratePublicListings();
     hydrateAuthUi();
+    initSiteAnnouncementPopup();
     trackPageView();
     // โหลดไอคอนแบบ Dynamic
     window.ROOC_LOAD_ICONS();

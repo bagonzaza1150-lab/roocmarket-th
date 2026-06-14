@@ -12,10 +12,10 @@
     <title>Admin | ROOC Market TH</title>
     <link rel="icon" type="image/png" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
     <link rel="apple-touch-icon" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
-    <link rel="stylesheet" href="styles.css?v=20260614-chat-bell-v1" />
+    <link rel="stylesheet" href="styles.css?v=20260614-announcement-popup-v1" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-    <script src="supabase-config.js?v=20260614-chat-bell-v1"></script>
+    <script src="supabase-config.js?v=20260614-announcement-popup-v1"></script>
   </head>
   <body>
     <header class="site-header">
@@ -722,6 +722,42 @@
 
               <div class="support-admin-card announcement-admin-card">
                 <div class="form-block-head">
+                  <span>POP</span>
+                  <div>
+                    <h3>Popup ประกาศผู้ใช้</h3>
+                    <p>แสดงกลางหน้าจอเมื่อผู้ใช้เข้าเว็บ และซ่อนถาวรได้เฉพาะประกาศนั้น</p>
+                  </div>
+                </div>
+                <div class="post-checks">
+                  <label><input id="popupAnnouncementEnabled" type="checkbox" /> เปิดแสดง Popup ประกาศ</label>
+                </div>
+                <label class="post-field">
+                  <span>หัวข้อประกาศ</span>
+                  <input id="popupAnnouncementTitle" type="text" maxlength="120" placeholder="เช่น แจ้งเตือนจากทีมงาน ROOC Market" />
+                </label>
+                <label class="post-field">
+                  <span>ข้อความประกาศ</span>
+                  <textarea id="popupAnnouncementText" rows="5" maxlength="2000" placeholder="รายละเอียดที่ต้องการแจ้งให้ผู้ใช้ทราบ"></textarea>
+                </label>
+                <div class="post-grid two-columns">
+                  <label class="post-field">
+                    <span>ข้อความบนปุ่ม (ไม่บังคับ)</span>
+                    <input id="popupAnnouncementButtonLabel" type="text" maxlength="60" placeholder="ดูรายละเอียด" />
+                  </label>
+                  <label class="post-field">
+                    <span>ลิงก์ปุ่ม (ไม่บังคับ)</span>
+                    <input id="popupAnnouncementButtonUrl" type="url" placeholder="https://..." />
+                  </label>
+                </div>
+                <label class="post-field">
+                  <span>รหัสประกาศ</span>
+                  <input id="popupAnnouncementId" type="text" readonly placeholder="กดสร้างเป็นประกาศใหม่" />
+                </label>
+                <button class="btn btn-light" id="newPopupAnnouncementButton" type="button">สร้างเป็นประกาศใหม่</button>
+              </div>
+
+              <div class="support-admin-card announcement-admin-card">
+                <div class="form-block-head">
                   <span>A</span>
                   <div>
                     <h3>ประกาศขาย Account</h3>
@@ -975,9 +1011,16 @@
 
       const supportSettingsForm = document.querySelector("#supportSettingsForm");
       const supportSettingsMessage = document.querySelector("#supportSettingsMessage");
+      const newPopupAnnouncementButton = document.querySelector("#newPopupAnnouncementButton");
       const supportFields = {
         announcementEnabled: document.querySelector("#announcementEnabled"),
         announcementText: document.querySelector("#announcementText"),
+        popupAnnouncementEnabled: document.querySelector("#popupAnnouncementEnabled"),
+        popupAnnouncementId: document.querySelector("#popupAnnouncementId"),
+        popupAnnouncementTitle: document.querySelector("#popupAnnouncementTitle"),
+        popupAnnouncementText: document.querySelector("#popupAnnouncementText"),
+        popupAnnouncementButtonLabel: document.querySelector("#popupAnnouncementButtonLabel"),
+        popupAnnouncementButtonUrl: document.querySelector("#popupAnnouncementButtonUrl"),
         accountListingEnabled: document.querySelector("#accountListingEnabled"),
         donateEnabled: document.querySelector("#donateEnabled"),
         donateTitle: document.querySelector("#donateTitle"),
@@ -1953,6 +1996,12 @@
         return {
           announcement_enabled: supportFields.announcementEnabled.checked,
           announcement_text: supportFields.announcementText.value.trim(),
+          popup_announcement_enabled: supportFields.popupAnnouncementEnabled.checked,
+          popup_announcement_id: supportFields.popupAnnouncementId.value.trim(),
+          popup_announcement_title: supportFields.popupAnnouncementTitle.value.trim(),
+          popup_announcement_text: supportFields.popupAnnouncementText.value.trim(),
+          popup_announcement_button_label: supportFields.popupAnnouncementButtonLabel.value.trim(),
+          popup_announcement_button_url: supportFields.popupAnnouncementButtonUrl.value.trim(),
           account_listing_enabled: supportFields.accountListingEnabled.checked,
           donate_enabled: supportFields.donateEnabled.checked,
           donate_title: supportFields.donateTitle.value.trim(),
@@ -1988,6 +2037,12 @@
       function setSupportForm(settings = {}) {
         supportFields.announcementEnabled.checked = Boolean(settings.announcement_enabled);
         supportFields.announcementText.value = settings.announcement_text || "";
+        supportFields.popupAnnouncementEnabled.checked = Boolean(settings.popup_announcement_enabled);
+        supportFields.popupAnnouncementId.value = settings.popup_announcement_id || "";
+        supportFields.popupAnnouncementTitle.value = settings.popup_announcement_title || "";
+        supportFields.popupAnnouncementText.value = settings.popup_announcement_text || "";
+        supportFields.popupAnnouncementButtonLabel.value = settings.popup_announcement_button_label || "";
+        supportFields.popupAnnouncementButtonUrl.value = settings.popup_announcement_button_url || "";
         supportFields.accountListingEnabled.checked = settings.account_listing_enabled !== false;
         supportFields.donateEnabled.checked = Boolean(settings.donate_enabled);
         supportFields.donateTitle.value = settings.donate_title || "";
@@ -2042,6 +2097,12 @@
         setMessage(supportSettingsMessage, "กำลังบันทึกแถบข้อความ...");
 
         try {
+          if (
+            supportFields.popupAnnouncementEnabled.checked
+            && !supportFields.popupAnnouncementId.value
+          ) {
+            supportFields.popupAnnouncementId.value = crypto.randomUUID?.() || `announcement-${Date.now()}`;
+          }
           if (supportFields.donateQrImage.files?.[0]) {
             const uploaded = await uploadSupportImage(supportFields.donateQrImage.files[0], "donate");
             supportFields.donateQrUrl.value = uploaded.imageUrl;
@@ -2307,6 +2368,11 @@
       dungeonForm.addEventListener("submit", saveDungeon);
       premiumForm.addEventListener("submit", savePremiumUser);
       supportSettingsForm.addEventListener("submit", saveSupportSettings);
+      newPopupAnnouncementButton.addEventListener("click", () => {
+        supportFields.popupAnnouncementId.value = crypto.randomUUID?.() || `announcement-${Date.now()}`;
+        supportFields.popupAnnouncementEnabled.checked = true;
+        setMessage(supportSettingsMessage, "สร้างรหัสประกาศใหม่แล้ว กดบันทึกเพื่อเผยแพร่");
+      });
       serverResetButton.addEventListener("click", resetServerForm);
       dungeonResetButton.addEventListener("click", resetDungeonForm);
       premiumResetButton.addEventListener("click", resetPremiumForm);
