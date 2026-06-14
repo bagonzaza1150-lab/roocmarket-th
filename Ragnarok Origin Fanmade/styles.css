@@ -2652,16 +2652,17 @@ h1 {
 
 .market-chat-message {
   display: grid;
-  grid-template-columns: 30px minmax(0, 1fr);
+  grid-template-columns: 40px minmax(0, 1fr);
   gap: 8px;
-  align-items: end;
+  align-items: start;
   align-self: flex-start;
   max-width: min(84%, 460px);
 }
 
 .market-chat-message-avatar {
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
+  margin-top: 18px;
   border: 1px solid color-mix(in srgb, var(--blue) 28%, var(--line));
   border-radius: 8px;
   background: var(--paper);
@@ -2722,7 +2723,7 @@ h1 {
 }
 
 .market-chat-message.is-own {
-  grid-template-columns: minmax(0, 1fr) 30px;
+  grid-template-columns: minmax(0, 1fr) 40px;
   align-self: flex-end;
   text-align: right;
 }
