@@ -2726,7 +2726,14 @@ h1 {
   border-radius: 8px;
   background: var(--paper-soft);
   padding: 11px 13px;
+  color: var(--ink);
+  caret-color: var(--blue);
   resize: vertical;
+}
+
+.market-chat-form textarea::placeholder {
+  color: var(--muted);
+  opacity: 1;
 }
 
 .market-chat-form textarea:focus {

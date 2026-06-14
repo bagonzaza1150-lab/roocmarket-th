@@ -2888,7 +2888,9 @@ window.ROOC_SUPABASE = {
   async function refreshChatSurfaces(session) {
     if (!session) return;
     await renderIndexChatSidebar(session);
-    updateIndexPushButton(pushState);
+    const currentPushState = await getPushNotificationState().catch(() => "unsupported");
+    updateIndexPushButton(currentPushState);
+    updateChatNotificationBubble(currentPushState, true);
     const currentMenu = document.querySelector(".chat-menu");
     if (currentMenu) {
       const nextMenu = await createChatMenu(session);
