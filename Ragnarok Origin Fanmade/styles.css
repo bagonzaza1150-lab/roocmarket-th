@@ -8322,6 +8322,14 @@ body {
   z-index: 2;
   pointer-events: none;
 }
+
+.sold-overlay.is-buy-completed {
+  padding-inline: 9px;
+  font-size: 13px;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
 .listing-card.is-closed {
   opacity: 0.6;
   filter: grayscale(0.8);

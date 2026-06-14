@@ -814,6 +814,10 @@ window.ROOC_SUPABASE = {
     return price > 0 ? price.toLocaleString("th-TH", { maximumFractionDigits: 2 }) : "0";
   }
 
+  function getCompletedListingLabel(listing) {
+    return (listing?.listing_type || "sell") === "buy" ? "ได้รับของแล้ว" : "ขายแล้ว";
+  }
+
   function compareListingNewest(a, b) {
     return new Date(b.created_at || 0) - new Date(a.created_at || 0);
   }
@@ -1262,6 +1266,7 @@ window.ROOC_SUPABASE = {
       const sellerName = listing.seller_name || "ผู้ขาย ROOC";
       const listingImages = getListingImages(listing);
       const displayImage = listingImages[0];
+      const completedLabel = getCompletedListingLabel(listing);
 
       return `
         <article class="sold-card">
@@ -1269,7 +1274,7 @@ window.ROOC_SUPABASE = {
           <div>
             <h3>${escapeHtml(title)}</h3>
             <p>${escapeHtml(price)} · ${escapeHtml(sellerName)}</p>
-            <strong>ขายแล้ว</strong>
+            <strong>${completedLabel}</strong>
           </div>
         </article>
       `;
@@ -2442,14 +2447,15 @@ window.ROOC_SUPABASE = {
           const descriptionParts = getDescriptionParts(description);
 
 		          const isSold = listing.sale_status === "sold";
-		          const status = isSold ? { label: "ขายแล้ว", className: "mvp" } : (listing.active && (listing.sale_status === "active") ? { label: "กำลังแสดง", className: "active" } : { label: "ปิดอยู่", className: "closed" });
+		          const completedLabel = getCompletedListingLabel(listing);
+		          const status = isSold ? { label: completedLabel, className: "mvp" } : (listing.active && (listing.sale_status === "active") ? { label: "กำลังแสดง", className: "active" } : { label: "ปิดอยู่", className: "closed" });
 		          const offers = offerMailbox.get(listing.id) || [];
 		          
 		          return `
 		            <article class="listing-card${isServiceListing ? " service-listing-card" : ""}${listing.card_background && listing.card_background !== 'default' ? " " + listing.card_background : ""}${(!listing.active && !isSold) ? " is-closed" : ""}${isSold ? " is-sold" : ""}">
 		              ${isServiceListing ? "" : `<div class="item-media">
 		                <img src="${escapeHtml(listingImages[0])}" alt="" loading="lazy" />
-		                ${isSold ? '<div class="sold-overlay">SOLD</div>' : ""}
+		                ${isSold ? `<div class="sold-overlay${listingType === "buy" ? " is-buy-completed" : ""}">${completedLabel}</div>` : ""}
 		              </div>`}
 		              <div class="listing-seller" style="display: flex; align-items: center; gap: 8px; min-width: 0;">
 		                <img src="${escapeHtml(sellerAvatar)}" alt="" style="flex-shrink: 0;" />
@@ -2483,7 +2489,7 @@ window.ROOC_SUPABASE = {
 		                <div class="owner-controls">
 		                  <button class="btn btn-small btn-light" onclick="event.stopPropagation(); window.toggleOffers?.('${listing.id}')">${listing.offers_enabled ? "🔕 ปิดเสนอราคา" : "🔔 เปิดเสนอราคา"}</button>
 		                  <button class="btn btn-small btn-light" onclick="event.stopPropagation(); window.showThemePickerModal?.('${listing.id}')">✨ พื้นหลัง</button>
-		                  <button class="btn btn-small btn-light" onclick="event.stopPropagation(); window.markListingSold?.('${listing.id}')">✅ ขายแล้ว</button>
+		                  <button class="btn btn-small btn-light" onclick="event.stopPropagation(); window.markListingSold?.('${listing.id}')">✅ ${completedLabel}</button>
 		                  <button class="btn btn-small btn-light" onclick="event.stopPropagation(); window.deleteListing?.('${listing.id}')" style="color: var(--expired);">🗑️ ลบ</button>
 		                </div>
 	                ${offers.length > 0 ? `
