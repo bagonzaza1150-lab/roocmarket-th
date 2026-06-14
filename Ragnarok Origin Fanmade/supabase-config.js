@@ -77,6 +77,19 @@ window.ROOC_SUPABASE = {
       });
     }
     await savePushSubscription(subscription, session);
+    await registration.showNotification("ROOC Market", {
+      body: "เปิดแจ้งเตือนอุปกรณ์เรียบร้อยแล้ว",
+      icon: "assets/site-icons/rooc-icon-192.png",
+      badge: "assets/site-icons/rooc-icon-192.png",
+      tag: "rooc-push-enabled"
+    });
+  }
+
+  async function syncExistingPushSubscription(session) {
+    if (!session || !canUsePushNotifications() || Notification.permission !== "granted") return;
+    const registration = await getPushRegistration();
+    const subscription = await registration?.pushManager.getSubscription();
+    if (subscription) await savePushSubscription(subscription, session);
   }
 
   async function disablePushNotifications(session) {
@@ -2608,9 +2621,10 @@ window.ROOC_SUPABASE = {
     let pushState = "unsupported";
     if (session) {
       try {
+        await syncExistingPushSubscription(session);
         pushState = await getPushNotificationState();
       } catch (_error) {
-        pushState = "unsupported";
+        pushState = await getPushNotificationState().catch(() => "unsupported");
       }
     }
     await renderIndexChatSidebar(session);
