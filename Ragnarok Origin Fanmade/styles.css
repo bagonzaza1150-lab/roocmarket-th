@@ -2035,6 +2035,119 @@ h1 {
   color: var(--ink);
 }
 
+.market-chat-card {
+  display: grid;
+  grid-template-rows: auto minmax(220px, 52vh) auto auto;
+  width: min(560px, 100%);
+  padding: 20px;
+}
+
+.market-chat-head {
+  padding-right: 44px;
+}
+
+.market-chat-head h2 {
+  margin-bottom: 2px;
+  overflow-wrap: anywhere;
+  font-size: 21px;
+}
+
+.market-chat-head small {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.market-chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 220px;
+  margin: 14px 0;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-soft);
+  padding: 12px;
+  overscroll-behavior: contain;
+}
+
+.market-chat-empty {
+  margin: auto;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.market-chat-message {
+  align-self: flex-start;
+  max-width: min(82%, 420px);
+}
+
+.market-chat-message p {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px 8px 8px 2px;
+  background: var(--paper);
+  padding: 9px 11px;
+  color: var(--ink);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.market-chat-message time {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.market-chat-message.is-own {
+  align-self: flex-end;
+  text-align: right;
+}
+
+.market-chat-message.is-own p {
+  border-color: color-mix(in srgb, var(--blue) 48%, var(--line));
+  border-radius: 8px 8px 2px 8px;
+  background: color-mix(in srgb, var(--blue) 16%, var(--paper));
+  text-align: left;
+}
+
+.market-chat-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.market-chat-form textarea {
+  width: 100%;
+  min-height: 48px;
+  max-height: 120px;
+  resize: vertical;
+}
+
+.market-chat-form .btn {
+  min-height: 48px;
+}
+
+.chat-room-item em {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-menu-trigger svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
 .contact-modal-item {
   display: grid;
   gap: 6px;

@@ -973,6 +973,7 @@ window.ROOC_SUPABASE = {
                 </svg>
               </a>` : ""}
               ${listing.offers_enabled ? `<button class="btn btn-small btn-light offer-button" type="button" data-offer-listing-id="${escapeHtml(listing.id)}" data-offer-title="${escapeHtml(title)}" data-offer-price="${escapeHtml(listing.price_text)}">เสนอราคา</button>` : ""}
+              <button class="btn btn-small btn-light chat-seller-button" type="button" data-chat-listing-id="${escapeHtml(listing.id)}" data-chat-seller-id="${escapeHtml(listing.user_id)}" data-chat-title="${escapeHtml(title)}" data-chat-seller-name="${escapeHtml(sellerName)}">แชต</button>
               <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">${listingType === "buy" ? "ติดต่อผู้รับซื้อ" : listingType === "service" ? "ติดต่อผู้รับจ้าง" : "ติดต่อผู้ขาย"}</button>
             </div>
           </div>
@@ -1632,6 +1633,217 @@ window.ROOC_SUPABASE = {
     offerForm?.reset();
   }
 
+  let activeChatRoom = null;
+  let activeChatSession = null;
+  let activeChatChannel = null;
+
+  function ensureChatModal() {
+    let modal = document.querySelector("#marketChatModal");
+    if (modal) return modal;
+
+    modal = document.createElement("div");
+    modal.id = "marketChatModal";
+    modal.className = "contact-modal market-chat-modal";
+    modal.hidden = true;
+    modal.innerHTML = `
+      <div class="contact-modal-backdrop" data-close-market-chat></div>
+      <section class="contact-modal-card market-chat-card" role="dialog" aria-modal="true" aria-labelledby="marketChatTitle">
+        <button class="contact-modal-close" type="button" data-close-market-chat aria-label="ปิด">×</button>
+        <div class="market-chat-head">
+          <p class="eyebrow">MARKET CHAT</p>
+          <h2 id="marketChatTitle">แชต</h2>
+          <small id="marketChatPartner"></small>
+        </div>
+        <div class="market-chat-messages" id="marketChatMessages" aria-live="polite"></div>
+        <form class="market-chat-form" id="marketChatForm">
+          <textarea id="marketChatInput" rows="2" maxlength="1000" placeholder="พิมพ์ข้อความ..." required></textarea>
+          <button class="btn btn-primary" type="submit">ส่ง</button>
+        </form>
+        <p class="post-message" id="marketChatStatus"></p>
+      </section>
+    `;
+    document.documentElement.appendChild(modal);
+    modal.querySelector("#marketChatForm")?.addEventListener("submit", sendChatMessage);
+    return modal;
+  }
+
+  function setChatStatus(text, isError = false) {
+    const status = document.querySelector("#marketChatStatus");
+    if (!status) return;
+    status.textContent = text || "";
+    status.classList.toggle("is-error", isError);
+  }
+
+  function renderChatMessages(messages) {
+    const container = document.querySelector("#marketChatMessages");
+    if (!container || !activeChatSession) return;
+    if (!messages.length) {
+      container.innerHTML = '<p class="market-chat-empty">ยังไม่มีข้อความ เริ่มทักได้เลย</p>';
+      return;
+    }
+
+    container.innerHTML = messages.map((message) => {
+      const own = message.sender_user_id === activeChatSession.user.id;
+      return `
+        <div class="market-chat-message${own ? " is-own" : ""}">
+          <p>${escapeHtml(message.message)}</p>
+          <time>${new Date(message.created_at).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" })}</time>
+        </div>
+      `;
+    }).join("");
+    container.scrollTop = container.scrollHeight;
+  }
+
+  async function loadChatMessages(roomId) {
+    const { data, error } = await supabaseClient
+      .from("marketplace_chat_messages")
+      .select("id,room_id,sender_user_id,message,created_at")
+      .eq("room_id", roomId)
+      .order("created_at", { ascending: false })
+      .limit(30);
+    if (error) throw error;
+    const messages = (data || []).reverse();
+    renderChatMessages(messages);
+    return messages;
+  }
+
+  async function subscribeToChatRoom(roomId) {
+    if (activeChatChannel) {
+      await supabaseClient.removeChannel(activeChatChannel);
+      activeChatChannel = null;
+    }
+
+    activeChatChannel = supabaseClient
+      .channel(`market-chat:${roomId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "marketplace_chat_messages",
+          filter: `room_id=eq.${roomId}`
+        },
+        () => loadChatMessages(roomId).catch((error) => setChatStatus(error.message, true))
+      )
+      .subscribe();
+  }
+
+  async function openChatRoom(room, session) {
+    activeChatRoom = room;
+    activeChatSession = session;
+    const modal = ensureChatModal();
+    const partnerName = session.user.id === room.buyer_user_id ? room.seller_name : room.buyer_name;
+    modal.querySelector("#marketChatTitle").textContent = room.listing_title || "แชตประกาศ";
+    modal.querySelector("#marketChatPartner").textContent = partnerName || "คู่สนทนา";
+    modal.querySelector("#marketChatInput").value = "";
+    setChatStatus("");
+    modal.hidden = false;
+    document.body.classList.add("modal-open");
+
+    try {
+      await loadChatMessages(room.id);
+      await subscribeToChatRoom(room.id);
+      modal.querySelector("#marketChatInput")?.focus();
+    } catch (error) {
+      setChatStatus(/marketplace_chat/i.test(error.message || "") ? "กรุณารัน supabase-chat-migration.sql ก่อน" : error.message, true);
+    }
+  }
+
+  async function openListingChat(button) {
+    if (!supabaseClient) return;
+    const { data } = await supabaseClient.auth.getSession();
+    const session = data.session;
+    if (!session) {
+      const currentPage = `${location.pathname.split("/").pop() || "index.html"}${location.search || ""}`;
+      location.href = `login.html?redirect=${encodeURIComponent(currentPage)}`;
+      return;
+    }
+
+    const listingId = button.dataset.chatListingId || "";
+    const sellerUserId = button.dataset.chatSellerId || "";
+    if (!listingId || !sellerUserId) return;
+    if (sellerUserId === session.user.id) {
+      alert("ไม่สามารถเริ่มแชตกับประกาศของตัวเองได้");
+      return;
+    }
+
+    let { data: room, error } = await supabaseClient
+      .from("marketplace_chat_rooms")
+      .select("*")
+      .eq("listing_id", listingId)
+      .eq("buyer_user_id", session.user.id)
+      .maybeSingle();
+
+    if (!room && !error) {
+      const insertResult = await supabaseClient
+        .from("marketplace_chat_rooms")
+        .insert({
+          listing_id: listingId,
+          buyer_user_id: session.user.id,
+          seller_user_id: sellerUserId,
+          listing_title: button.dataset.chatTitle || "",
+          buyer_name: getDiscordDisplayName(session),
+          seller_name: button.dataset.chatSellerName || "ผู้ขาย"
+        })
+        .select("*")
+        .single();
+      room = insertResult.data;
+      error = insertResult.error;
+    }
+
+    if (error || !room) {
+      alert(/marketplace_chat/i.test(error?.message || "") ? "กรุณารัน supabase-chat-migration.sql ใน Supabase ก่อน" : error?.message || "เปิดแชตไม่สำเร็จ");
+      return;
+    }
+    await openChatRoom(room, session);
+  }
+
+  async function openExistingChatRoom(roomId) {
+    if (!supabaseClient || !roomId) return;
+    const { data: authData } = await supabaseClient.auth.getSession();
+    if (!authData.session) return;
+    const { data: room, error } = await supabaseClient
+      .from("marketplace_chat_rooms")
+      .select("*")
+      .eq("id", roomId)
+      .single();
+    if (error || !room) return;
+    await openChatRoom(room, authData.session);
+  }
+
+  async function sendChatMessage(event) {
+    event.preventDefault();
+    const input = document.querySelector("#marketChatInput");
+    const message = input?.value.trim() || "";
+    if (!message || !activeChatRoom || !activeChatSession) return;
+    setChatStatus("กำลังส่ง...");
+    const { error } = await supabaseClient
+      .from("marketplace_chat_messages")
+      .insert({
+        room_id: activeChatRoom.id,
+        sender_user_id: activeChatSession.user.id,
+        message
+      });
+    if (error) {
+      setChatStatus(error.message, true);
+      return;
+    }
+    input.value = "";
+    setChatStatus("");
+  }
+
+  async function closeMarketChat() {
+    const modal = document.querySelector("#marketChatModal");
+    if (modal) modal.hidden = true;
+    if (activeChatChannel && supabaseClient) {
+      await supabaseClient.removeChannel(activeChatChannel);
+    }
+    activeChatChannel = null;
+    activeChatRoom = null;
+    activeChatSession = null;
+    document.body.classList.remove("modal-open");
+  }
+
   window.ROOC_APP = {
     config,
     canUseSupabase,
@@ -1657,6 +1869,9 @@ window.ROOC_SUPABASE = {
     openOfferForm,
     closeSellerContact,
     copySellerContactName,
+    openListingChat,
+    openExistingChatRoom,
+    closeMarketChat,
 	      initStorePage: async (sellerId) => {
 	      console.log("initStorePage starting for seller:", sellerId);
 	      const grid = document.querySelector("#storeListingGrid");
@@ -1786,6 +2001,7 @@ window.ROOC_SUPABASE = {
 	                    <button class="btn btn-small btn-light" data-toggle="${listing.id}">${listing.active ? "⏸️ ปิด" : "▶️ เปิด"}</button>
 	                  ` : `
 		                    ${listing.offers_enabled && !isSold ? `<button class="btn btn-small btn-light offer-button" type="button" data-offer-listing-id="${escapeHtml(listing.id)}" data-offer-title="${escapeHtml(title)}" data-offer-price="${escapeHtml(listing.price_text)}">เสนอราคา</button>` : ""}
+		                    <button class="btn btn-small btn-light chat-seller-button" type="button" data-chat-listing-id="${escapeHtml(listing.id)}" data-chat-seller-id="${escapeHtml(listing.user_id)}" data-chat-title="${escapeHtml(title)}" data-chat-seller-name="${escapeHtml(sellerName)}">แชต</button>
 		                    <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">${listingType === "buy" ? "ติดต่อผู้รับซื้อ" : listingType === "service" ? "ติดต่อผู้รับจ้าง" : "ติดต่อผู้ขาย"}</button>
 		                  `}
 	                </span>
@@ -2069,6 +2285,47 @@ window.ROOC_SUPABASE = {
     return mailbox;
   }
 
+  async function createChatMenu(session) {
+    const chatMenu = document.createElement("div");
+    chatMenu.className = "mailbox-menu chat-menu";
+    const { data: rooms, error } = await supabaseClient
+      .from("marketplace_chat_rooms")
+      .select("id,buyer_user_id,seller_user_id,buyer_name,seller_name,listing_title,last_message,last_message_at")
+      .or(`buyer_user_id.eq.${session.user.id},seller_user_id.eq.${session.user.id}`)
+      .order("last_message_at", { ascending: false })
+      .limit(12);
+
+    const roomItems = error
+      ? '<p class="mailbox-empty">ยังไม่ได้เปิดระบบแชต</p>'
+      : !(rooms || []).length
+        ? '<p class="mailbox-empty">ยังไม่มีบทสนทนา</p>'
+        : rooms.map((room) => {
+          const partner = session.user.id === room.buyer_user_id ? room.seller_name : room.buyer_name;
+          return `
+            <button class="mailbox-item chat-room-item" type="button" data-chat-room-id="${escapeHtml(room.id)}">
+              <span>
+                <strong>${escapeHtml(partner || "คู่สนทนา")}</strong>
+                <small>${escapeHtml(room.listing_title || "ประกาศ")}</small>
+              </span>
+              <em>${escapeHtml(room.last_message || "เริ่มบทสนทนา")}</em>
+            </button>
+          `;
+        }).join("");
+
+    chatMenu.innerHTML = `
+      <button class="mailbox-trigger chat-menu-trigger" type="button" aria-label="แชต" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 9h8M8 13h5"/></svg>
+      </button>
+      <div class="mailbox-panel chat-menu-panel" hidden>
+        <div class="mailbox-head">
+          <strong>แชตล่าสุด</strong>
+        </div>
+        <div class="mailbox-list">${roomItems}</div>
+      </div>
+    `;
+    return chatMenu;
+  }
+
   async function syncAuthUi(session) {
     const authLinks = document.querySelectorAll(".auth-link");
     const myListingsLink = document.querySelector(".my-listings-link") || ensureAccountLink();
@@ -2085,7 +2342,10 @@ window.ROOC_SUPABASE = {
       if (session) {
         const tools = document.createElement("div");
         tools.className = "user-tools";
-        const mailbox = await createMailboxMenu(session);
+        const [mailbox, chatMenu] = await Promise.all([
+          createMailboxMenu(session),
+          createChatMenu(session)
+        ]);
         const menu = document.createElement("div");
         menu.className = "user-menu";
         menu.innerHTML = `
@@ -2101,7 +2361,7 @@ window.ROOC_SUPABASE = {
             <button type="button" data-user-logout>ออกจากระบบ</button>
           </div>
         `;
-        tools.append(mailbox, menu);
+        tools.append(mailbox, chatMenu, menu);
         link.replaceWith(tools);
       } else {
         link.textContent = "เข้าสู่ระบบ";
@@ -2165,10 +2425,33 @@ window.ROOC_SUPABASE = {
     const descriptionToggle = event.target.closest("[data-description-toggle]");
     const trigger = event.target.closest(".user-menu-trigger");
     const mailboxTrigger = event.target.closest(".mailbox-trigger");
+    const chatSellerButton = event.target.closest(".chat-seller-button");
+    const chatRoomButton = event.target.closest("[data-chat-room-id]");
+    const closeChatButton = event.target.closest("[data-close-market-chat]");
     const offerMessageButton = event.target.closest("[data-offer-message]");
     const closeOfferMessageButton = event.target.closest("[data-close-offer-message]");
     const offerRead = event.target.closest("[data-offer-read]");
     const logout = event.target.closest("[data-user-logout]");
+
+    if (chatSellerButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      await openListingChat(chatSellerButton);
+      return;
+    }
+
+    if (chatRoomButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      await openExistingChatRoom(chatRoomButton.dataset.chatRoomId);
+      return;
+    }
+
+    if (closeChatButton) {
+      event.preventDefault();
+      await closeMarketChat();
+      return;
+    }
 
     if (offerMessageButton) {
       event.preventDefault();
@@ -2233,6 +2516,12 @@ window.ROOC_SUPABASE = {
     if (logout && supabaseClient) {
       await supabaseClient.auth.signOut();
       window.location.href = "index.html";
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && activeChatRoom) {
+      closeMarketChat();
     }
   });
 
