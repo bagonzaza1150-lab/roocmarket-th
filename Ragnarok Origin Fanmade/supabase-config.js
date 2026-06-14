@@ -5,7 +5,8 @@ window.ROOC_SUPABASE = {
   listingBucket: "listing-images",
   adminEmails: ["bagonzaza1150@gmail.com"],
   adminUserIds: [],
-  adminDiscordIds: []
+  adminDiscordIds: [],
+  vapidPublicKey: "BBXFxwUBmg-WMvOM3tc144PJMzsG6mPhigVhyDOpO9S3mbRCyGZW-MsCNsKUuwftKUsDVR7qAYLQohqdYl90mys"
 };
 
 (() => {
@@ -15,6 +16,86 @@ window.ROOC_SUPABASE = {
   window.roocSupabaseClient = supabaseClient;
 
   const siteLogoCacheKey = "rooc-site-logo-url-v1";
+  let pushRegistration = null;
+  let pushToggleBusy = false;
+  let pendingPushRoomHandled = false;
+
+  function canUsePushNotifications() {
+    return Boolean(
+      window.isSecureContext
+      && "serviceWorker" in navigator
+      && "PushManager" in window
+      && "Notification" in window
+      && config.vapidPublicKey
+    );
+  }
+
+  function urlBase64ToUint8Array(value) {
+    const padding = "=".repeat((4 - (value.length % 4)) % 4);
+    const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const raw = atob(base64);
+    return Uint8Array.from([...raw].map((character) => character.charCodeAt(0)));
+  }
+
+  async function getPushRegistration() {
+    if (!canUsePushNotifications()) return null;
+    if (!pushRegistration) {
+      pushRegistration = await navigator.serviceWorker.register("service-worker.js", { scope: "./" });
+    }
+    return pushRegistration;
+  }
+
+  async function getPushNotificationState() {
+    if (!canUsePushNotifications()) return "unsupported";
+    if (Notification.permission === "denied") return "denied";
+    const registration = await getPushRegistration();
+    const subscription = await registration?.pushManager.getSubscription();
+    return subscription ? "enabled" : "disabled";
+  }
+
+  async function savePushSubscription(subscription, session) {
+    const json = subscription.toJSON();
+    const { error } = await supabaseClient.rpc("register_marketplace_push_subscription", {
+      p_endpoint: subscription.endpoint,
+      p_p256dh: json.keys?.p256dh || "",
+      p_auth: json.keys?.auth || "",
+      p_user_agent: navigator.userAgent || ""
+    });
+    if (error) throw error;
+  }
+
+  async function enablePushNotifications(session) {
+    const registration = await getPushRegistration();
+    if (!registration) throw new Error("อุปกรณ์นี้ไม่รองรับการแจ้งเตือน");
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") throw new Error("ยังไม่ได้อนุญาตการแจ้งเตือน");
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(config.vapidPublicKey)
+      });
+    }
+    await savePushSubscription(subscription, session);
+  }
+
+  async function disablePushNotifications(session) {
+    const registration = await getPushRegistration();
+    const subscription = await registration?.pushManager.getSubscription();
+    if (!subscription) return;
+    await supabaseClient
+      .from("marketplace_push_subscriptions")
+      .delete()
+      .eq("user_id", session.user.id)
+      .eq("endpoint", subscription.endpoint);
+    await subscription.unsubscribe();
+  }
+
+  function getPushToggleLabel(state) {
+    if (state === "enabled") return "ปิดแจ้งเตือนอุปกรณ์";
+    if (state === "denied") return "การแจ้งเตือนถูกปิด";
+    return "เปิดแจ้งเตือนอุปกรณ์";
+  }
 
   function applySiteLogo(url) {
     if (!url) return;
@@ -1887,19 +1968,28 @@ window.ROOC_SUPABASE = {
     const message = input?.value.trim() || "";
     if (!message || !activeChatRoom || !activeChatSession) return;
     setChatStatus("กำลังส่ง...");
-    const { error } = await supabaseClient
+    const { data: insertedMessage, error } = await supabaseClient
       .from("marketplace_chat_messages")
       .insert({
         room_id: activeChatRoom.id,
         sender_user_id: activeChatSession.user.id,
         message
-      });
+      })
+      .select("id")
+      .single();
     if (error) {
       setChatStatus(error.message, true);
       return;
     }
     input.value = "";
     setChatStatus("");
+    if (insertedMessage?.id) {
+      supabaseClient.functions.invoke("send-chat-push", {
+        body: { messageId: insertedMessage.id }
+      }).then(({ error: pushError }) => {
+        if (pushError) console.warn("Unable to send push notification:", pushError.message);
+      }).catch((error) => console.warn("Unable to send push notification:", error.message));
+    }
     window.setTimeout(() => refreshChatSurfaces(activeChatSession), 250);
   }
 
@@ -2515,6 +2605,14 @@ window.ROOC_SUPABASE = {
     const displayName = session ? getDiscordDisplayName(session) : "";
     const avatarUrl = session ? getDiscordAvatarUrl(session) : "";
     const isPremium = await getPremiumStatus(session);
+    let pushState = "unsupported";
+    if (session) {
+      try {
+        pushState = await getPushNotificationState();
+      } catch (_error) {
+        pushState = "unsupported";
+      }
+    }
     await renderIndexChatSidebar(session);
 
     for (const link of authLinks) {
@@ -2541,6 +2639,7 @@ window.ROOC_SUPABASE = {
           <div class="user-menu-panel" hidden>
             <a class="premium-link" href="premium.html">Premium</a>
             <a href="store.html">ร้านค้าของฉัน</a>
+            ${pushState !== "unsupported" ? `<button type="button" data-push-toggle data-push-state="${escapeHtml(pushState)}">${escapeHtml(getPushToggleLabel(pushState))}</button>` : ""}
             <button type="button" data-user-logout>ออกจากระบบ</button>
           </div>
         `;
@@ -2557,6 +2656,12 @@ window.ROOC_SUPABASE = {
       link.hidden = !isAdminSession(session);
     });
     await subscribeToChatNotifications(session);
+
+    const pushRoomId = new URLSearchParams(location.search).get("chat");
+    if (session && pushRoomId && !pendingPushRoomHandled) {
+      pendingPushRoomHandled = true;
+      window.setTimeout(() => openExistingChatRoom(pushRoomId), 0);
+    }
   }
 
   async function hydrateAuthUi() {
@@ -2614,8 +2719,38 @@ window.ROOC_SUPABASE = {
     const closeChatButton = event.target.closest("[data-close-market-chat]");
     const offerMessageButton = event.target.closest("[data-offer-message]");
     const closeOfferMessageButton = event.target.closest("[data-close-offer-message]");
+    const pushToggle = event.target.closest("[data-push-toggle]");
     const offerRead = event.target.closest("[data-offer-read]");
     const logout = event.target.closest("[data-user-logout]");
+
+    if (pushToggle) {
+      event.preventDefault();
+      if (pushToggleBusy) return;
+      pushToggleBusy = true;
+      pushToggle.disabled = true;
+      try {
+        const { data } = await supabaseClient.auth.getSession();
+        if (!data.session) return;
+        const currentState = await getPushNotificationState();
+        if (currentState === "enabled") {
+          await disablePushNotifications(data.session);
+        } else if (currentState === "denied") {
+          alert("กรุณาเปิดสิทธิ์แจ้งเตือนจากการตั้งค่าเว็บไซต์ของเบราว์เซอร์");
+        } else {
+          await enablePushNotifications(data.session);
+        }
+        const nextState = await getPushNotificationState();
+        pushToggle.dataset.pushState = nextState;
+        pushToggle.textContent = getPushToggleLabel(nextState);
+      } catch (error) {
+        const needsMigration = /marketplace_push_subscriptions|schema cache|relation/i.test(error.message || "");
+        alert(needsMigration ? "กรุณารัน supabase-push-migration.sql ใน Supabase ก่อน" : error.message);
+      } finally {
+        pushToggle.disabled = false;
+        pushToggleBusy = false;
+      }
+      return;
+    }
 
     if (chatSellerButton) {
       event.preventDefault();
