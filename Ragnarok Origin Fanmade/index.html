@@ -12,7 +12,7 @@
     <title>ROOC Market TH</title>
     <link rel="icon" type="image/png" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
     <link rel="apple-touch-icon" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
-    <link rel="stylesheet" href="styles.css?v=20260614-chat-receipts-v1" />
+    <link rel="stylesheet" href="styles.css?v=20260614-floating-chat-v1" />
     <style>
       body {
         animation: pageFadeIn 0.6s ease-out forwards;
@@ -23,7 +23,7 @@
       }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20260614-device-push-v3"></script>
+    <script src="supabase-config.js?v=20260614-floating-chat-v1"></script>
   </head>
   <body>
     <div class="floating-elements" id="floatingElements"></div>
@@ -304,12 +304,21 @@
                 <p class="eyebrow">MARKET CHAT</p>
                 <h2>แชตล่าสุด</h2>
               </div>
-              <span class="index-chat-status" id="indexChatStatus"><i></i> ออฟไลน์</span>
+              <div class="index-chat-head-actions">
+                <span class="index-chat-status" id="indexChatStatus"><i></i> ออฟไลน์</span>
+                <button class="index-chat-minimize" type="button" data-index-chat-toggle aria-label="ย่อแชต" title="ย่อแชต">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
+                </button>
+              </div>
             </div>
             <div class="index-chat-list" id="indexChatList">
               <p class="index-chat-empty">กำลังโหลดแชต...</p>
             </div>
           </section>
+          <button class="index-chat-launcher" type="button" data-index-chat-toggle aria-label="เปิดแชตล่าสุด" title="เปิดแชตล่าสุด">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 9h8M8 13h5"/></svg>
+            <b id="indexChatLauncherBadge" hidden>0</b>
+          </button>
         </aside>
       </section>
 

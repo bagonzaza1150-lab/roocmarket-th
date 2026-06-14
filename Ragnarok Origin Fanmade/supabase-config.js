@@ -2505,6 +2505,43 @@ window.ROOC_SUPABASE = {
     return (rooms || []).reduce((total, room) => total + getChatRoomUnreadCount(room, session), 0);
   }
 
+  function updateIndexChatLauncherBadge(total) {
+    const badge = document.querySelector("#indexChatLauncherBadge");
+    if (!badge) return;
+    const count = Number(total) || 0;
+    badge.hidden = count < 1;
+    badge.textContent = count > 99 ? "99+" : String(count);
+  }
+
+  function setIndexChatCollapsed(collapsed, persist = true) {
+    const widget = document.querySelector(".index-chat-sidebar");
+    if (!widget) return;
+    widget.classList.toggle("is-collapsed", collapsed);
+    widget.querySelector(".index-chat-minimize")?.setAttribute("aria-expanded", String(!collapsed));
+    widget.querySelector(".index-chat-launcher")?.setAttribute("aria-expanded", String(!collapsed));
+    if (persist) {
+      try {
+        localStorage.setItem("rooc-index-chat-collapsed", collapsed ? "1" : "0");
+      } catch (_error) {
+        // Storage can be unavailable in private browsing.
+      }
+    }
+  }
+
+  function initIndexChatWidget() {
+    const widget = document.querySelector(".index-chat-sidebar");
+    if (!widget || widget.dataset.initialized === "true") return;
+    widget.dataset.initialized = "true";
+    let collapsed = window.matchMedia("(max-width: 700px)").matches;
+    try {
+      const saved = localStorage.getItem("rooc-index-chat-collapsed");
+      if (saved !== null) collapsed = saved === "1";
+    } catch (_error) {
+      // Use the responsive default.
+    }
+    setIndexChatCollapsed(collapsed, false);
+  }
+
   function formatChatRoomTime(value) {
     if (!value) return "";
     const date = new Date(value);
@@ -2519,6 +2556,7 @@ window.ROOC_SUPABASE = {
   async function renderIndexChatSidebar(session) {
     const list = document.querySelector("#indexChatList");
     if (!list) return;
+    initIndexChatWidget();
     const status = document.querySelector("#indexChatStatus");
     if (status) {
       status.classList.toggle("is-online", Boolean(session));
@@ -2526,6 +2564,7 @@ window.ROOC_SUPABASE = {
     }
 
     if (!session) {
+      updateIndexChatLauncherBadge(0);
       list.innerHTML = `
         <div class="index-chat-empty">
           <strong>เข้าสู่ระบบเพื่อเริ่มแชต</strong>
@@ -2540,11 +2579,13 @@ window.ROOC_SUPABASE = {
     const { rooms, error } = await fetchChatRooms(session, 16);
 
     if (error) {
+      updateIndexChatLauncherBadge(0);
       list.innerHTML = '<p class="index-chat-empty">ยังไม่ได้เปิดระบบแชต</p>';
       return;
     }
 
     if (!rooms.length) {
+      updateIndexChatLauncherBadge(0);
       list.innerHTML = `
         <div class="index-chat-empty">
           <strong>ยังไม่มีบทสนทนา</strong>
@@ -2554,6 +2595,7 @@ window.ROOC_SUPABASE = {
       return;
     }
 
+    updateIndexChatLauncherBadge(getChatUnreadTotal(rooms, session));
     list.innerHTML = rooms.map((room) => {
       const partner = session.user.id === room.buyer_user_id ? room.seller_name : room.buyer_name;
       const partnerName = partner || "คู่สนทนา";
@@ -2753,8 +2795,16 @@ window.ROOC_SUPABASE = {
     const offerMessageButton = event.target.closest("[data-offer-message]");
     const closeOfferMessageButton = event.target.closest("[data-close-offer-message]");
     const pushToggle = event.target.closest("[data-push-toggle]");
+    const indexChatToggle = event.target.closest("[data-index-chat-toggle]");
     const offerRead = event.target.closest("[data-offer-read]");
     const logout = event.target.closest("[data-user-logout]");
+
+    if (indexChatToggle) {
+      event.preventDefault();
+      const widget = document.querySelector(".index-chat-sidebar");
+      if (widget) setIndexChatCollapsed(!widget.classList.contains("is-collapsed"));
+      return;
+    }
 
     if (pushToggle) {
       event.preventDefault();
