@@ -120,10 +120,34 @@ window.ROOC_SUPABASE = {
     button.title = label;
     button.setAttribute("aria-label", label);
     button.dataset.pushState = state;
+    updateChatNotificationBubble(state);
+  }
+
+  function updateChatNotificationBubble(state, hasSession = true) {
+    const bubble = document.querySelector("[data-chat-notification-bubble]");
+    if (!bubble) return;
+    const shouldShow = hasSession && (state === "disabled" || state === "denied");
+    bubble.hidden = !shouldShow;
+    bubble.classList.toggle("is-denied", state === "denied");
+    const message = bubble.querySelector("[data-chat-notification-message]");
+    const action = bubble.querySelector("[data-chat-notification-action]");
+    if (message) {
+      message.textContent = state === "denied"
+        ? "การแจ้งเตือนถูกปิดในเบราว์เซอร์"
+        : "การแจ้งเตือนปิดอยู่";
+    }
+    if (action) {
+      action.textContent = state === "denied" ? "วิธีเปิด" : "เปิดเลย";
+      action.dataset.pushState = state;
+    }
   }
 
   function updatePushToggleControl(button, state) {
     if (!button) return;
+    if (button.matches("[data-chat-notification-action]")) {
+      updateChatNotificationBubble(state);
+      return;
+    }
     if (button.matches("[data-index-push-toggle]")) {
       updateIndexPushButton(state);
       return;
@@ -2618,6 +2642,68 @@ window.ROOC_SUPABASE = {
     badge.textContent = count > 99 ? "99+" : String(count);
   }
 
+  function ensureGlobalChatWidget() {
+    if (/\/admin\.html$/i.test(location.pathname)) return null;
+    let widget = document.querySelector(".index-chat-sidebar");
+    if (!widget) {
+      widget = document.createElement("aside");
+      widget.className = "index-chat-sidebar";
+      widget.setAttribute("aria-label", "แชตล่าสุด");
+      widget.innerHTML = `
+        <div class="chat-notification-bubble" data-chat-notification-bubble hidden>
+          <span class="chat-notification-bubble-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="m2 2 20 20"/><path d="M6.3 6.3A6 6 0 0 0 6 8c0 7-3 7-3 9h14"/><path d="M18 8a6 6 0 0 0-8.3-5.5"/><path d="M18 13.7c.6 1.3 2 1.7 3 3.3"/><path d="M10 21h4"/></svg>
+          </span>
+          <span>
+            <strong data-chat-notification-message>การแจ้งเตือนปิดอยู่</strong>
+            <small>อาจพลาดข้อความจากผู้ซื้อและผู้ขาย</small>
+          </span>
+          <button type="button" data-chat-notification-action>เปิดเลย</button>
+        </div>
+        <section class="index-chat-panel">
+          <div class="index-chat-head">
+            <div>
+              <p class="eyebrow">MARKET CHAT</p>
+              <h2>แชตล่าสุด</h2>
+            </div>
+            <div class="index-chat-head-actions">
+              <span class="index-chat-status" id="indexChatStatus"><i></i> ออฟไลน์</span>
+              <button class="index-chat-notification" type="button" data-index-push-toggle aria-label="เปิดแจ้งเตือนอุปกรณ์" title="เปิดแจ้งเตือนอุปกรณ์">
+                <svg class="bell-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+                <svg class="bell-off" viewBox="0 0 24 24" aria-hidden="true"><path d="m2 2 20 20"/><path d="M6.3 6.3A6 6 0 0 0 6 8c0 7-3 7-3 9h14"/><path d="M18 8a6 6 0 0 0-8.3-5.5"/><path d="M18 13.7c.6 1.3 2 1.7 3 3.3"/><path d="M10 21h4"/></svg>
+              </button>
+              <button class="index-chat-minimize" type="button" data-index-chat-toggle aria-label="ย่อแชต" title="ย่อแชต">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="index-chat-list" id="indexChatList">
+            <p class="index-chat-empty">กำลังโหลดแชต...</p>
+          </div>
+        </section>
+        <button class="index-chat-launcher" type="button" data-index-chat-toggle aria-label="เปิดแชตล่าสุด" title="เปิดแชตล่าสุด">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 9h8M8 13h5"/></svg>
+          <b id="indexChatLauncherBadge" hidden>0</b>
+        </button>
+      `;
+      document.body.appendChild(widget);
+    } else if (!widget.querySelector("[data-chat-notification-bubble]")) {
+      widget.insertAdjacentHTML("afterbegin", `
+        <div class="chat-notification-bubble" data-chat-notification-bubble hidden>
+          <span class="chat-notification-bubble-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="m2 2 20 20"/><path d="M6.3 6.3A6 6 0 0 0 6 8c0 7-3 7-3 9h14"/><path d="M18 8a6 6 0 0 0-8.3-5.5"/><path d="M18 13.7c.6 1.3 2 1.7 3 3.3"/><path d="M10 21h4"/></svg>
+          </span>
+          <span>
+            <strong data-chat-notification-message>การแจ้งเตือนปิดอยู่</strong>
+            <small>อาจพลาดข้อความจากผู้ซื้อและผู้ขาย</small>
+          </span>
+          <button type="button" data-chat-notification-action>เปิดเลย</button>
+        </div>
+      `);
+    }
+    return widget;
+  }
+
   function setIndexChatCollapsed(collapsed, persist = true) {
     const widget = document.querySelector(".index-chat-sidebar");
     if (!widget) return;
@@ -2634,7 +2720,7 @@ window.ROOC_SUPABASE = {
   }
 
   function initIndexChatWidget() {
-    const widget = document.querySelector(".index-chat-sidebar");
+    const widget = ensureGlobalChatWidget();
     if (!widget || widget.dataset.initialized === "true") return;
     widget.dataset.initialized = "true";
     let collapsed = window.matchMedia("(max-width: 700px)").matches;
@@ -2795,6 +2881,8 @@ window.ROOC_SUPABASE = {
       }
     }
     await renderIndexChatSidebar(session);
+    updateIndexPushButton(pushState);
+    updateChatNotificationBubble(pushState, Boolean(session));
 
     for (const link of authLinks) {
       if (!link.dataset.defaultAuthHref) {
@@ -2900,7 +2988,7 @@ window.ROOC_SUPABASE = {
     const closeChatButton = event.target.closest("[data-close-market-chat]");
     const offerMessageButton = event.target.closest("[data-offer-message]");
     const closeOfferMessageButton = event.target.closest("[data-close-offer-message]");
-    const pushToggle = event.target.closest("[data-push-toggle], [data-index-push-toggle]");
+    const pushToggle = event.target.closest("[data-push-toggle], [data-index-push-toggle], [data-chat-notification-action]");
     const indexChatToggle = event.target.closest("[data-index-chat-toggle]");
     const closeSiteAnnouncement = event.target.closest("[data-close-site-announcement]");
     const dismissSiteAnnouncement = event.target.closest("[data-dismiss-site-announcement]");
@@ -2943,7 +3031,7 @@ window.ROOC_SUPABASE = {
           await enablePushNotifications(data.session);
         }
         const nextState = await getPushNotificationState();
-        document.querySelectorAll("[data-push-toggle], [data-index-push-toggle]").forEach((control) => {
+        document.querySelectorAll("[data-push-toggle], [data-index-push-toggle], [data-chat-notification-action]").forEach((control) => {
           updatePushToggleControl(control, nextState);
         });
       } catch (error) {
@@ -3085,6 +3173,7 @@ window.ROOC_SUPABASE = {
     document.addEventListener("DOMContentLoaded", () => {
       initTheme();
       initFloatingElements();
+      ensureGlobalChatWidget();
       hydratePublicListings();
       hydrateAuthUi();
       initSiteAnnouncementPopup();
@@ -3095,6 +3184,7 @@ window.ROOC_SUPABASE = {
   } else {
     initTheme();
     initFloatingElements();
+    ensureGlobalChatWidget();
     hydratePublicListings();
     hydrateAuthUi();
     initSiteAnnouncementPopup();
