@@ -5830,8 +5830,8 @@ h1 {
   max-width: 100%;
   margin-top: 1px;
   gap: 3px;
-  font-size: 6px;
-  font-weight: 400;
+  font-size: 4px;
+  font-weight: 200;
   line-height: 1.2;
   overflow: visible;
   white-space: normal;
@@ -5845,9 +5845,9 @@ h1 {
 }
 
 .seller-name-stack .seller-presence-badge i {
-  width: 3px;
-  height: 3px;
-  flex-basis: 3px;
+  width: 5px;
+  height: 5px;
+  flex-basis: 5px;
 }
 
 .seller-push-badge {
