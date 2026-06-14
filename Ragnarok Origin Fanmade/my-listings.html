@@ -20,7 +20,7 @@
       }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=20260614-empty-previews-v2"></script>
+  <script src="supabase-config.js?v=20260614-rate-limit-cleanup-v1"></script>
   </head>
   <body>
     <header class="site-header">
@@ -151,6 +151,30 @@
       let currentListings = [];
       let premiumResult = null;
       let offerMailbox = new Map();
+      const listingBucket = config.listingBucket || "listing-images";
+
+      function listingPathFromPublicUrl(url) {
+        const marker = `/storage/v1/object/public/${listingBucket}/`;
+        const index = String(url || "").indexOf(marker);
+        return index < 0 ? "" : decodeURIComponent(String(url).slice(index + marker.length).split("?")[0]);
+      }
+
+      function getListingStoragePaths(listing) {
+        const paths = [
+          listing?.image_path,
+          ...(Array.isArray(listing?.image_paths) ? listing.image_paths : []),
+          listingPathFromPublicUrl(listing?.image_url),
+          ...(Array.isArray(listing?.image_urls) ? listing.image_urls.map(listingPathFromPublicUrl) : [])
+        ];
+        return [...new Set(paths.filter((path) => typeof path === "string" && path.trim()))];
+      }
+
+      async function removeListingFiles(listing) {
+        const paths = getListingStoragePaths(listing);
+        if (!paths.length) return null;
+        const { error } = await supabaseClient.storage.from(listingBucket).remove(paths);
+        return error;
+      }
 
       function escapeHtml(value) {
         return String(value || "")
@@ -533,6 +557,7 @@
 
       async function deleteListing(id) {
         if (!confirm("ลบประกาศนี้ออกจากรายการของฉัน? โควต้าการลงประกาศจะยังถูกนับอยู่")) return;
+        const listing = currentListings.find((entry) => entry.id === id);
         setMessage("กำลังลบประกาศ...");
         const { data, error } = await supabaseClient
           .from("marketplace_listings")
@@ -550,6 +575,8 @@
           return;
         }
 
+        const cleanupError = await removeListingFiles(listing);
+        setMessage(cleanupError ? "ลบประกาศแล้ว แต่ลบรูปไม่สำเร็จ กรุณาแจ้ง Admin" : "ลบประกาศและรูปที่เกี่ยวข้องแล้ว", Boolean(cleanupError));
         await loadMyListings();
       }
 

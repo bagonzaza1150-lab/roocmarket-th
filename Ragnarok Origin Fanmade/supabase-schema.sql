@@ -174,6 +174,15 @@ create index if not exists marketplace_chat_rooms_seller_idx
 create index if not exists marketplace_chat_messages_room_idx
   on public.marketplace_chat_messages (room_id, created_at);
 
+create index if not exists marketplace_chat_messages_sender_created_idx
+  on public.marketplace_chat_messages (sender_user_id, created_at desc);
+
+create index if not exists marketplace_chat_rooms_buyer_created_idx
+  on public.marketplace_chat_rooms (buyer_user_id, created_at desc);
+
+create index if not exists marketplace_listings_user_created_idx
+  on public.marketplace_listings (user_id, created_at desc);
+
 create table if not exists public.marketplace_admins (
   user_id uuid primary key references auth.users(id) on delete cascade,
   created_at timestamptz not null default now()
@@ -636,6 +645,81 @@ as $$
     and (expires_at is null or expires_at > now())
     and (excluded_listing_id is null or id <> excluded_listing_id);
 $$;
+
+create or replace function public.enforce_marketplace_chat_message_rate_limit()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if (
+    select count(*)
+    from public.marketplace_chat_messages
+    where sender_user_id = new.sender_user_id
+      and created_at >= now() - interval '1 minute'
+  ) >= 15 then
+    raise exception using message = 'RATE_LIMIT_CHAT', errcode = 'P0001';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists marketplace_chat_message_rate_limit
+  on public.marketplace_chat_messages;
+create trigger marketplace_chat_message_rate_limit
+before insert on public.marketplace_chat_messages
+for each row execute function public.enforce_marketplace_chat_message_rate_limit();
+
+create or replace function public.enforce_marketplace_offer_rate_limit()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if (
+    select count(*)
+    from public.marketplace_listing_offers
+    where buyer_user_id = new.buyer_user_id
+      and created_at >= now() - interval '10 minutes'
+  ) >= 5 then
+    raise exception using message = 'RATE_LIMIT_OFFER', errcode = 'P0001';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists marketplace_offer_rate_limit
+  on public.marketplace_listing_offers;
+create trigger marketplace_offer_rate_limit
+before insert on public.marketplace_listing_offers
+for each row execute function public.enforce_marketplace_offer_rate_limit();
+
+create or replace function public.enforce_marketplace_chat_room_rate_limit()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if (
+    select count(*)
+    from public.marketplace_chat_rooms
+    where buyer_user_id = new.buyer_user_id
+      and created_at >= now() - interval '1 hour'
+  ) >= 10 then
+    raise exception using message = 'RATE_LIMIT_CHAT_ROOM', errcode = 'P0001';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists marketplace_chat_room_rate_limit
+  on public.marketplace_chat_rooms;
+create trigger marketplace_chat_room_rate_limit
+before insert on public.marketplace_chat_rooms
+for each row execute function public.enforce_marketplace_chat_room_rate_limit();
 
 grant usage on schema public to anon, authenticated;
 grant select on table public.marketplace_items to anon;

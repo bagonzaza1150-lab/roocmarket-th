@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="styles.css?v=20260614-empty-previews-v2" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="supabase-config.js?v=20260614-empty-previews-v2"></script>
+  <script src="supabase-config.js?v=20260614-rate-limit-cleanup-v1"></script>
   </head>
   <body>
     <header class="site-header">
@@ -373,7 +373,10 @@
               <p class="eyebrow">Listings</p>
               <h2>จัดการประกาศและผู้ใช้</h2>
             </div>
-            <button class="btn btn-light" id="refreshAdminListings" type="button">รีเฟรช</button>
+            <div class="admin-item-actions">
+              <button class="btn btn-light" id="cleanupStorageFiles" type="button">ล้างไฟล์ค้าง</button>
+              <button class="btn btn-light" id="refreshAdminListings" type="button">รีเฟรช</button>
+            </div>
           </div>
           <p class="admin-message" id="listingAdminMessage"></p>
           <div class="admin-items" id="adminListings"></div>
@@ -950,6 +953,7 @@
       const supabaseClient = app.getSupabaseClient?.() || null;
       const hasConfig = Boolean(supabaseClient);
       const bucketName = config.itemBucket || "item-images";
+      const listingBucketName = config.listingBucket || "listing-images";
 
       const setupPanel = document.querySelector("#setupPanel");
       const loginPanel = document.querySelector("#loginPanel");
@@ -979,6 +983,7 @@
       const adminListings = document.querySelector("#adminListings");
       const adminListingsPagination = document.querySelector("#adminListingsPagination");
       const refreshAdminListings = document.querySelector("#refreshAdminListings");
+      const cleanupStorageFiles = document.querySelector("#cleanupStorageFiles");
       const listingAdminMessage = document.querySelector("#listingAdminMessage");
       const bannedUsers = document.querySelector("#bannedUsers");
       const resetFormButton = document.querySelector("#resetFormButton");
@@ -1718,18 +1723,22 @@
         const file = profileFrameImage?.files?.[0];
         let imageUrl = profileFrameFields.imageUrl.value;
         let imagePath = profileFrameFields.imagePath.value;
+        const existingFrame = profileFrameCache.find((entry) => entry.id === profileFrameFields.id.value);
+        let uploadedPath = "";
+        let saved = false;
 
         try {
-          if (file) {
-            const uploaded = await uploadImage(file, "profile-frames");
-            imageUrl = uploaded.imageUrl;
-            imagePath = uploaded.imagePath;
-          }
-
           if (!profileFrameFields.name.value.trim()) {
             setMessage(profileFrameMessage, "กรุณาใส่ชื่อกรอบ", true);
             profileFrameFields.name.focus();
             return;
+          }
+
+          if (file) {
+            const uploaded = await uploadImage(file, "profile-frames");
+            imageUrl = uploaded.imageUrl;
+            imagePath = uploaded.imagePath;
+            uploadedPath = uploaded.imagePath;
           }
 
           if (!imageUrl) {
@@ -1750,11 +1759,19 @@
             : supabaseClient.from("marketplace_profile_frames").insert(payload);
           const { error } = await request;
           if (error) throw error;
+          saved = true;
+
+          if (existingFrame?.image_path && existingFrame.image_path !== imagePath) {
+            await removeStorageFiles(bucketName, [existingFrame.image_path]);
+          }
 
           setMessage(profileFrameMessage, "บันทึกกรอบโปรไฟล์เรียบร้อย");
           resetProfileFrameForm();
           await loadProfileFrames();
         } catch (error) {
+          if (uploadedPath && !saved) {
+            await removeStorageFiles(bucketName, [uploadedPath]);
+          }
           setMessage(profileFrameMessage, error.message || "บันทึกกรอบไม่สำเร็จ", true);
         }
       }
@@ -1866,6 +1883,7 @@
 
       async function deleteListingAdmin(listingId) {
         if (!confirm("ลบประกาศนี้ออกจากระบบ?")) return;
+        const listing = listingCache.find((entry) => entry.id === listingId);
         const { error } = await supabaseClient
           .from("marketplace_listings")
           .delete()
@@ -1874,7 +1892,12 @@
           setMessage(listingAdminMessage, error.message, true);
           return;
         }
-        setMessage(listingAdminMessage, "ลบประกาศเรียบร้อย");
+        const cleanupError = await removeStorageFiles(listingBucketName, getListingStoragePaths(listing));
+        setMessage(
+          listingAdminMessage,
+          cleanupError ? "ลบประกาศแล้ว แต่ลบรูปไม่สำเร็จ" : "ลบประกาศและรูปที่เกี่ยวข้องเรียบร้อย",
+          Boolean(cleanupError)
+        );
         await loadAdminListings();
       }
 
@@ -2103,6 +2126,150 @@
         return { imageUrl: data.publicUrl, imagePath: path };
       }
 
+      function getListingStoragePaths(listing) {
+        return [...new Set([
+          listing?.image_path,
+          ...(Array.isArray(listing?.image_paths) ? listing.image_paths : []),
+          storagePathFromPublicUrl(listing?.image_url, listingBucketName),
+          ...(Array.isArray(listing?.image_urls)
+            ? listing.image_urls.map((url) => storagePathFromPublicUrl(url, listingBucketName))
+            : [])
+        ].filter((path) => typeof path === "string" && path.trim()))];
+      }
+
+      async function removeStorageFiles(bucket, paths) {
+        const uniquePaths = [...new Set((paths || []).filter((path) => typeof path === "string" && path.trim()))];
+        if (!uniquePaths.length) return null;
+        const { error } = await supabaseClient.storage.from(bucket).remove(uniquePaths);
+        if (error) console.warn(`ROOC failed to remove files from ${bucket}:`, error);
+        return error;
+      }
+
+      async function listStorageFiles(bucket, prefix = "") {
+        const files = [];
+        let offset = 0;
+        const limit = 100;
+
+        while (true) {
+          const { data, error } = await supabaseClient.storage
+            .from(bucket)
+            .list(prefix, { limit, offset, sortBy: { column: "name", order: "asc" } });
+          if (error) throw error;
+
+          const entries = data || [];
+          for (const entry of entries) {
+            const path = prefix ? `${prefix}/${entry.name}` : entry.name;
+            if (entry.id) {
+              files.push({ path, size: Number(entry.metadata?.size || 0) });
+            } else {
+              files.push(...await listStorageFiles(bucket, path));
+            }
+          }
+
+          if (entries.length < limit) break;
+          offset += limit;
+        }
+
+        return files;
+      }
+
+      async function fetchAllStorageReferences(table, columns) {
+        const rows = [];
+        const pageSize = 1000;
+
+        for (let offset = 0; ; offset += pageSize) {
+          const { data, error } = await supabaseClient
+            .from(table)
+            .select(columns)
+            .range(offset, offset + pageSize - 1);
+          if (error) throw error;
+          rows.push(...(data || []));
+          if (!data || data.length < pageSize) break;
+        }
+
+        return rows;
+      }
+
+      async function cleanupOrphanedStorageFiles() {
+        if (!cleanupStorageFiles) return;
+        cleanupStorageFiles.disabled = true;
+        setMessage(listingAdminMessage, "กำลังตรวจสอบไฟล์ที่ไม่มีข้อมูลอ้างอิง...");
+
+        try {
+          const [allItems, allFrames, allListings] = await Promise.all([
+            fetchAllStorageReferences("marketplace_items", "image_path,image_url"),
+            fetchAllStorageReferences("marketplace_profile_frames", "image_path,image_url"),
+            fetchAllStorageReferences("marketplace_listings", "image_path,image_paths,image_url,image_urls,sale_status")
+          ]);
+          const itemReferences = new Set([
+            ...allItems.flatMap((item) => [
+              item.image_path,
+              storagePathFromPublicUrl(item.image_url, bucketName)
+            ]),
+            ...allFrames.flatMap((frame) => [
+              frame.image_path,
+              storagePathFromPublicUrl(frame.image_url, bucketName)
+            ]),
+            supportFields.donateQrPath.value,
+            storagePathFromPublicUrl(supportFields.donateQrUrl.value, bucketName),
+            supportFields.middlemanQrPath.value,
+            storagePathFromPublicUrl(supportFields.middlemanQrUrl.value, bucketName),
+            supportFields.heroSponsorImagePath.value,
+            storagePathFromPublicUrl(supportFields.heroSponsorImageUrl.value, bucketName)
+          ].filter(Boolean));
+          const listingReferences = new Set(
+            allListings
+              .filter((listing) => listing.sale_status !== "deleted")
+              .flatMap((listing) => getListingStoragePaths(listing))
+          );
+
+          const [itemFiles, listingFiles] = await Promise.all([
+            listStorageFiles(bucketName),
+            listStorageFiles(listingBucketName)
+          ]);
+          const orphanedItems = itemFiles.filter((file) => !itemReferences.has(file.path));
+          const orphanedListings = listingFiles.filter((file) => !listingReferences.has(file.path));
+          const orphanedFiles = [
+            ...orphanedItems.map((file) => ({ ...file, bucket: bucketName })),
+            ...orphanedListings.map((file) => ({ ...file, bucket: listingBucketName }))
+          ];
+
+          if (!orphanedFiles.length) {
+            setMessage(listingAdminMessage, "ไม่พบไฟล์ค้าง");
+            return;
+          }
+
+          const totalBytes = orphanedFiles.reduce((sum, file) => sum + file.size, 0);
+          const totalSize = formatImageFileSize(totalBytes);
+          if (!confirm(`พบไฟล์ค้าง ${orphanedFiles.length} ไฟล์ (${totalSize}) ต้องการลบหรือไม่?`)) {
+            setMessage(listingAdminMessage, `พบไฟล์ค้าง ${orphanedFiles.length} ไฟล์ แต่ยังไม่ได้ลบ`);
+            return;
+          }
+
+          for (const bucket of [bucketName, listingBucketName]) {
+            const paths = orphanedFiles.filter((file) => file.bucket === bucket).map((file) => file.path);
+            for (let index = 0; index < paths.length; index += 100) {
+              const cleanupError = await removeStorageFiles(bucket, paths.slice(index, index + 100));
+              if (cleanupError) throw cleanupError;
+            }
+          }
+
+          setMessage(listingAdminMessage, `ลบไฟล์ค้างแล้ว ${orphanedFiles.length} ไฟล์ (${totalSize})`);
+        } catch (error) {
+          setMessage(listingAdminMessage, error.message || "ตรวจสอบไฟล์ค้างไม่สำเร็จ", true);
+        } finally {
+          cleanupStorageFiles.disabled = false;
+        }
+      }
+
+      function storagePathFromPublicUrl(url, bucket) {
+        if (!url) return "";
+        const marker = `/storage/v1/object/public/${bucket}/`;
+        const index = String(url).indexOf(marker);
+        if (index < 0) return "";
+        return decodeURIComponent(String(url).slice(index + marker.length).split("?")[0]);
+      }
+
       function getSupportPayload() {
         return {
           announcement_enabled: supportFields.announcementEnabled.checked,
@@ -2206,6 +2373,13 @@
       async function saveSupportSettings(event) {
         event.preventDefault();
         setMessage(supportSettingsMessage, "กำลังบันทึกแถบข้อความ...");
+        const previousPaths = {
+          donate: supportFields.donateQrPath.value,
+          middleman: supportFields.middlemanQrPath.value,
+          heroSponsor: supportFields.heroSponsorImagePath.value
+        };
+        const uploadedPaths = [];
+        let saved = false;
 
         try {
           if (
@@ -2218,6 +2392,7 @@
             const uploaded = await uploadSupportImage(supportFields.donateQrImage.files[0], "donate");
             supportFields.donateQrUrl.value = uploaded.imageUrl;
             supportFields.donateQrPath.value = uploaded.imagePath;
+            uploadedPaths.push(uploaded.imagePath);
             setOptionalImagePreview(supportFields.donateQrPreview, uploaded.imageUrl);
           }
 
@@ -2225,6 +2400,7 @@
             const uploaded = await uploadSupportImage(supportFields.middlemanQrImage.files[0], "middleman");
             supportFields.middlemanQrUrl.value = uploaded.imageUrl;
             supportFields.middlemanQrPath.value = uploaded.imagePath;
+            uploadedPaths.push(uploaded.imagePath);
             setOptionalImagePreview(supportFields.middlemanQrPreview, uploaded.imageUrl);
           }
 
@@ -2232,6 +2408,7 @@
             const uploaded = await uploadSupportImage(supportFields.heroSponsorImage.files[0], "hero-sponsor");
             supportFields.heroSponsorImageUrl.value = uploaded.imageUrl;
             supportFields.heroSponsorImagePath.value = uploaded.imagePath;
+            uploadedPaths.push(uploaded.imagePath);
             setOptionalImagePreview(supportFields.heroSponsorPreview, uploaded.imageUrl);
           }
 
@@ -2244,11 +2421,20 @@
             }, { onConflict: "key" });
 
           if (error) throw error;
+          saved = true;
+          await removeStorageFiles(bucketName, [
+            previousPaths.donate && previousPaths.donate !== supportFields.donateQrPath.value ? previousPaths.donate : "",
+            previousPaths.middleman && previousPaths.middleman !== supportFields.middlemanQrPath.value ? previousPaths.middleman : "",
+            previousPaths.heroSponsor && previousPaths.heroSponsor !== supportFields.heroSponsorImagePath.value ? previousPaths.heroSponsor : ""
+          ]);
           supportFields.donateQrImage.value = "";
           supportFields.middlemanQrImage.value = "";
           supportFields.heroSponsorImage.value = "";
           setMessage(supportSettingsMessage, "บันทึกแถบข้อความเรียบร้อย");
         } catch (error) {
+          if (!saved) {
+            await removeStorageFiles(bucketName, uploadedPaths);
+          }
           setMessage(supportSettingsMessage, error.message || "บันทึกไม่สำเร็จ", true);
         }
       }
@@ -2267,11 +2453,14 @@
           const file = itemImage.files && itemImage.files[0];
           let imageUrl = fields.imageUrl.value;
           let imagePath = fields.imagePath.value;
+          const existingItem = itemCache.find((entry) => entry.id === fields.id.value);
+          let uploadedPath = "";
 
           if (file) {
             const uploaded = await uploadImage(file, fields.category.value);
             imageUrl = uploaded.imageUrl;
             imagePath = uploaded.imagePath;
+            uploadedPath = uploaded.imagePath;
           }
 
           if (!imageUrl) {
@@ -2295,7 +2484,14 @@
             : supabaseClient.from("marketplace_items").insert(payload);
 
           const { error } = await query;
-          if (error) throw error;
+          if (error) {
+            if (uploadedPath) await removeStorageFiles(bucketName, [uploadedPath]);
+            throw error;
+          }
+
+          if (existingItem?.image_path && existingItem.image_path !== imagePath) {
+            await removeStorageFiles(bucketName, [existingItem.image_path]);
+          }
 
           setMessage(editorMessage, "บันทึกเรียบร้อย");
           resetEditor();
@@ -2548,9 +2744,16 @@
           saveIconsBtn.disabled = true;
           saveIconsBtn.textContent = "⏳ กำลังอัปโหลด...";
           setMessage(iconManagerMessage, "กำลังอัปโหลดไอคอน...");
+          const uploadedIconPaths = [];
+          let iconsSaved = false;
 
           try {
             const results = [];
+            const settingKeys = Object.keys(iconFiles).map((type) => type === 'lock-icon' ? 'lock-icon' : `icon_${type}`);
+            const { data: previousSettings } = await supabaseClient
+              .from('marketplace_settings')
+              .select('key,value')
+              .in('key', settingKeys);
             for (const [type, file] of Object.entries(iconFiles)) {
               const fileName = `site_assets/${type}_${Date.now()}.${file.name.split('.').pop()}`;
               const { data, error } = await supabaseClient.storage
@@ -2558,6 +2761,7 @@
                 .upload(fileName, file, { upsert: true });
 
               if (error) throw error;
+              uploadedIconPaths.push(fileName);
 
               const { data: { publicUrl } } = supabaseClient.storage
                 .from('marketplace-assets')
@@ -2575,6 +2779,17 @@
               })), { onConflict: 'key' });
 
             if (settingsError) throw settingsError;
+            iconsSaved = true;
+
+            const replacementByKey = new Map(results.map((result) => [
+              result.type === 'lock-icon' ? 'lock-icon' : `icon_${result.type}`,
+              result.url
+            ]));
+            const oldIconPaths = (previousSettings || [])
+              .filter((setting) => replacementByKey.get(setting.key) !== setting.value)
+              .map((setting) => storagePathFromPublicUrl(setting.value, 'marketplace-assets'))
+              .filter(Boolean);
+            await removeStorageFiles('marketplace-assets', oldIconPaths);
 
             setMessage(iconManagerMessage, "บันทึกไอคอนเรียบร้อยแล้ว! ระบบจะเริ่มใช้ไอคอนใหม่ทันที");
             iconFiles = {}; // Clear files
@@ -2587,6 +2802,9 @@
               await window.ROOC_LOAD_ICONS();
             }
           } catch (err) {
+            if (!iconsSaved) {
+              await removeStorageFiles('marketplace-assets', uploadedIconPaths);
+            }
             setMessage(iconManagerMessage, "เกิดข้อผิดพลาด: " + err.message, true);
           } finally {
             saveIconsBtn.disabled = false;
@@ -2690,6 +2908,7 @@
         loadAdminListings();
         loadBannedUsers();
       });
+      cleanupStorageFiles?.addEventListener("click", cleanupOrphanedStorageFiles);
       adminListings.addEventListener("click", (event) => {
         const deleteId = event.target.dataset.listingDelete;
         const banId = event.target.dataset.userBan;

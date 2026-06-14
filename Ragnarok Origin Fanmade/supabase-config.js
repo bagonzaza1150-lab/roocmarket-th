@@ -2066,7 +2066,15 @@ window.ROOC_SUPABASE = {
 
     if (error) {
       const needsMigration = /marketplace_listing_offers|offers_enabled|schema cache|relation/i.test(error.message || "");
-      setOfferMessage(needsMigration ? "ยังไม่ได้รัน supabase-offers-migration.sql ใน Supabase" : error.message, true);
+      const isRateLimited = /RATE_LIMIT_OFFER/i.test(error.message || "");
+      setOfferMessage(
+        needsMigration
+          ? "ยังไม่ได้รัน supabase-offers-migration.sql ใน Supabase"
+          : isRateLimited
+            ? "เสนอราคาถี่เกินไป กรุณารอสักครู่แล้วลองใหม่ (สูงสุด 5 ครั้งต่อ 10 นาที)"
+            : error.message,
+        true
+      );
       return;
     }
 
@@ -2453,7 +2461,14 @@ window.ROOC_SUPABASE = {
     }
 
     if (error || !room) {
-      alert(/marketplace_chat/i.test(error?.message || "") ? "กรุณารัน supabase-chat-migration.sql ใน Supabase ก่อน" : error?.message || "เปิดแชตไม่สำเร็จ");
+      const errorMessage = error?.message || "";
+      alert(
+        /RATE_LIMIT_CHAT_ROOM/i.test(errorMessage)
+          ? "เปิดห้องแชตใหม่ถี่เกินไป กรุณารอแล้วลองใหม่ (สูงสุด 10 ห้องต่อชั่วโมง)"
+          : /marketplace_chat/i.test(errorMessage)
+            ? "กรุณารัน supabase-chat-migration.sql ใน Supabase ก่อน"
+            : errorMessage || "เปิดแชตไม่สำเร็จ"
+      );
       return;
     }
     await openChatRoom(room, session);
@@ -2488,7 +2503,12 @@ window.ROOC_SUPABASE = {
       .select("id,room_id,sender_user_id,message,created_at")
       .single();
     if (error) {
-      setChatStatus(error.message, true);
+      setChatStatus(
+        /RATE_LIMIT_CHAT/i.test(error.message || "")
+          ? "ส่งข้อความเร็วเกินไป กรุณารอสักครู่ (สูงสุด 15 ข้อความต่อนาที)"
+          : error.message,
+        true
+      );
       return;
     }
     input.value = "";

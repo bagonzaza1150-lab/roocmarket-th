@@ -14,7 +14,7 @@
     <link rel="apple-touch-icon" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
   <link rel="stylesheet" href="styles.css?v=20260614-empty-previews-v2" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=20260614-empty-previews-v2"></script>
+  <script src="supabase-config.js?v=20260614-rate-limit-cleanup-v1"></script>
     <style>
       body {
         animation: pageFadeIn 0.6s ease-out forwards;
@@ -504,12 +504,39 @@
         const supabase = getSupabase();
         if (!confirm("ลบประกาศนี้ออกจากรายการ? โควต้าจะยังถูกนับอยู่") || !supabase) return;
         setMessage("กำลังลบประกาศ...");
+        const { data: listing } = await supabase
+          .from("marketplace_listings")
+          .select("image_path,image_paths,image_url,image_urls")
+          .eq("id", id)
+          .maybeSingle();
         const { error } = await supabase
           .from("marketplace_listings")
           .update({ active: false, sale_status: "deleted" })
           .eq("id", id);
-        if (error) setMessage(error.message, true);
-        else refreshStoreData();
+        if (error) {
+          setMessage(error.message, true);
+          return;
+        }
+
+        const listingBucket = (window.ROOC_APP?.config || window.ROOC_SUPABASE || {}).listingBucket || "listing-images";
+        const pathFromUrl = (url) => {
+          const marker = `/storage/v1/object/public/${listingBucket}/`;
+          const index = String(url || "").indexOf(marker);
+          return index < 0 ? "" : decodeURIComponent(String(url).slice(index + marker.length).split("?")[0]);
+        };
+        const paths = [...new Set([
+          listing?.image_path,
+          ...(Array.isArray(listing?.image_paths) ? listing.image_paths : []),
+          pathFromUrl(listing?.image_url),
+          ...(Array.isArray(listing?.image_urls) ? listing.image_urls.map(pathFromUrl) : [])
+        ].filter((path) => typeof path === "string" && path.trim()))];
+        if (paths.length) {
+          const { error: cleanupError } = await supabase.storage.from(listingBucket).remove(paths);
+          if (cleanupError) {
+            setMessage("ลบประกาศแล้ว แต่ลบรูปไม่สำเร็จ กรุณาแจ้ง Admin", true);
+          }
+        }
+        refreshStoreData();
       };
 
       window.toggleOffers = async function(id) {

@@ -14,7 +14,7 @@
     <link rel="apple-touch-icon" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
   <link rel="stylesheet" href="styles.css?v=20260614-empty-previews-v2" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=20260614-empty-previews-v2"></script>
+  <script src="supabase-config.js?v=20260614-rate-limit-cleanup-v1"></script>
   </head>
   <style>
     /* Success Popup Animation */
@@ -996,7 +996,13 @@
             upsert: false
           });
 
-          if (error) throw error;
+          if (error) {
+            const uploadedPaths = uploadedImages.map((item) => item.imagePath);
+            if (uploadedPaths.length) {
+              await supabaseClient.storage.from(listingBucket).remove(uploadedPaths);
+            }
+            throw error;
+          }
 
           const { data } = supabaseClient.storage.from(listingBucket).getPublicUrl(path);
           uploadedImages.push({ imageUrl: data.publicUrl, imagePath: path });
@@ -1041,6 +1047,7 @@
         let imagePath = null;
         let imageUrls = [item.image];
         let imagePaths = [];
+        let pendingUploadedPaths = [];
 
         if (!characterText) {
           setPostMessage("กรุณาใส่ชื่อตัวละครก่อนเผยแพร่ประกาศ", true);
@@ -1109,6 +1116,7 @@
             imagePath = uploaded.imagePath;
             imageUrls = uploaded.imageUrls;
             imagePaths = uploaded.imagePaths;
+            pendingUploadedPaths = [...uploaded.imagePaths];
           }
 
           const selectedTheme = document.querySelector('#themePickerInline .theme-option.active')?.dataset.theme || 'default';
@@ -1175,6 +1183,7 @@
 	            error = fallbackResult.error;
 	            if (!error) {
 	              // บันทึกสำเร็จแบบ fallback
+              pendingUploadedPaths = [];
               localStorage.removeItem('rooc-public-listings-v3');
               localStorage.removeItem('rooc-public-listings-v3-no-frame');
               localStorage.removeItem('rooc-profile-frames-v1');
@@ -1184,6 +1193,7 @@
 	          }
 
           if (error) throw error;
+          pendingUploadedPaths = [];
 
           // Clear homepage cache so it shows the new listing with background immediately
           localStorage.removeItem('rooc-public-listings-v3');
@@ -1198,8 +1208,17 @@
 	          console.error("Publish Error:", error);
 	          // กรณีที่ error แต่จริงๆ แล้วบันทึกสำเร็จ (เช่น schema cache error)
 	          if (error.message && error.message.includes("already exists")) {
+             pendingUploadedPaths = [];
 	             showSuccessPopup();
 	          } else {
+             if (pendingUploadedPaths.length) {
+               const { error: cleanupError } = await supabaseClient.storage
+                 .from(listingBucket)
+                 .remove(pendingUploadedPaths);
+               if (cleanupError) {
+                 console.warn("ROOC failed to clean up uploaded listing images:", cleanupError);
+               }
+             }
 	             setPostMessage(error.message || "เผยแพร่ประกาศไม่สำเร็จ", true);
 	          }
 	        }
