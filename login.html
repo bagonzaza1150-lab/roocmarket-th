@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="เข้าสู่ระบบ ROOC Market TH" />
+    <title>เข้าสู่ระบบ | ROOC Market TH</title>
+    <link rel="icon" type="image/png" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
+    <link rel="apple-touch-icon" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js?v=20260614-logo-cache"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="shell nav">
+        <a class="brand" href="index.html" aria-label="ROOC Market TH">
+          <span class="brand-mark"><img src="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" alt="" /></span>
+          <span>
+            <strong>ROOC Market</strong>
+            <small>Thailand Marketplace</small>
+          </span>
+        </a>
+
+        <div class="nav-links" aria-label="เมนูหลัก">
+          <a href="index.html#market">ตลาด</a>
+          
+          <a href="post.html">ลงประกาศ</a>
+        </div>
+
+        <div class="nav-actions">
+          <label class="theme-switch" aria-label="สลับโหมดสว่างและมืด">
+            <input id="themeToggle" type="checkbox" />
+            <span class="switch-track">
+              <span class="switch-ball"></span>
+            </span>
+          </label>
+          <a class="btn btn-primary" href="post.html">ลงประกาศ</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="shell auth-page">
+      <section class="auth-card">
+        <div class="auth-copy">
+          <p class="eyebrow">ROOC Market TH</p>
+          <h1>เข้าสู่ระบบ</h1>
+          <p>ต้องเข้าสู่ระบบก่อนลงประกาศ เพื่อให้ประกาศผูกกับบัญชีผู้ขายและตรวจสอบย้อนหลังได้</p>
+        </div>
+
+        <form class="auth-form" id="authForm">
+          <button class="btn btn-primary discord-login" id="authSubmit" type="submit">
+            เข้าสู่ระบบด้วย Discord
+          </button>
+          <div class="auth-notice">
+            หากเข้าสู่ระบบไม่ได้ กรุณายืนยันอีเมลใน Discord ก่อน แล้วลองเข้าสู่ระบบใหม่
+          </div>
+          <p class="admin-message" id="authMessage"></p>
+        </form>
+
+      </section>
+    </main>
+
+    <script>
+      const app = window.ROOC_APP || {};
+      const config = app.config || window.ROOC_SUPABASE || {};
+      const supabaseClient = app.getSupabaseClient?.() || null;
+      const canUseSupabase = Boolean(supabaseClient);
+      const authForm = document.querySelector("#authForm");
+      const authMessage = document.querySelector("#authMessage");
+
+      function setAuthMessage(message, isError = false) {
+        authMessage.textContent = message;
+        authMessage.classList.toggle("is-error", isError);
+      }
+
+      function showSession(session) {
+        if (!session) return;
+        const redirect = new URLSearchParams(location.search).get("redirect") || "index.html";
+        location.href = new URL(redirect, location.href).href;
+      }
+
+      function getAuthErrorFromUrl() {
+        const params = new URLSearchParams(location.search);
+        const hashParams = new URLSearchParams(location.hash.replace(/^#/, ""));
+        const code = params.get("error_code") || hashParams.get("error_code") || "";
+        const error = params.get("error") || hashParams.get("error") || "";
+        const description = params.get("error_description") || hashParams.get("error_description") || "";
+        return { code, error, description };
+      }
+
+      function showAuthErrorHint() {
+        const { code, error, description } = getAuthErrorFromUrl();
+        const combined = `${code} ${error} ${description}`.toLowerCase();
+        if (!combined.trim()) return;
+
+        if (combined.includes("provider_email_needs_verification") || combined.includes("email") && combined.includes("verif")) {
+          setAuthMessage("เข้าสู่ระบบไม่สำเร็จ: กรุณายืนยันอีเมลใน Discord ก่อน แล้วลอง Login ใหม่", true);
+          return;
+        }
+
+        setAuthMessage(description || error || "เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง", true);
+      }
+
+      authForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        if (!canUseSupabase) {
+          setAuthMessage("ยังไม่ได้ตั้งค่า Supabase", true);
+          return;
+        }
+
+        setAuthMessage("กำลังพาไป Discord...");
+        const redirect = new URLSearchParams(location.search).get("redirect") || "post.html";
+        const redirectTo = new URL(redirect, location.href).href;
+        const result = await supabaseClient.auth.signInWithOAuth({
+          provider: "discord",
+          options: {
+            redirectTo
+          }
+        });
+
+        if (result.error) {
+          setAuthMessage(result.error.message, true);
+          return;
+        }
+      });
+
+      if (canUseSupabase) {
+        showAuthErrorHint();
+        supabaseClient.auth.getSession().then(({ data }) => showSession(data.session));
+        supabaseClient.auth.onAuthStateChange((_event, session) => showSession(session));
+      } else {
+        setAuthMessage("ยังไม่ได้ตั้งค่า Supabase", true);
+      }
+
+      window.ROOC_APP?.initTheme();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,2793 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Admin panel สำหรับจัดการฐานข้อมูลไอเท็ม ROOC Market TH"
+    />
+    <title>Admin | ROOC Market TH</title>
+    <link rel="icon" type="image/png" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
+    <link rel="apple-touch-icon" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="supabase-config.js?v=20260614-logo-cache"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="shell nav">
+        <a class="brand" href="index.html" aria-label="ROOC Market TH">
+          <span class="brand-mark"><img src="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" alt="" /></span>
+          <span>
+            <strong>ROOC Market</strong>
+            <small>Admin Panel</small>
+          </span>
+        </a>
+
+        <div class="nav-links" aria-label="เมนูหลัก">
+          <a href="index.html#market">ตลาด</a>
+          <a href="post.html">ลงประกาศ</a>
+          <a class="admin-link" href="admin.html" hidden>Admin</a>
+        </div>
+
+        <div class="nav-actions">
+          <label class="theme-switch" aria-label="สลับโหมดสว่างและมืด">
+            <input id="themeToggle" type="checkbox" />
+            <span class="switch-track">
+              <span class="switch-ball"></span>
+            </span>
+          </label>
+          <button class="btn btn-light" id="logoutButton" type="button" hidden>ออกจากระบบ</button>
+        </div>
+      </nav>
+    </header>
+
+    <main class="shell admin-page">
+      <section class="admin-head">
+        <div>
+          <p class="eyebrow">Admin</p>
+          <h1>จัดการฐานข้อมูลไอเท็ม</h1>
+          <p>
+            เพิ่ม แก้ไข ลบ MVP Cards, Accessories และ Fashion พร้อมอัปโหลดรูปเข้า Storage
+            เพื่อให้หน้าโพสต์ประกาศดึงรูปขึ้นอัตโนมัติ
+          </p>
+        </div>
+        <div class="admin-status" id="connectionStatus">
+          <span>Supabase</span>
+          <strong id="connectionStatusText">รอตั้งค่า</strong>
+          <small id="sessionStatusText">ยังไม่ได้ตรวจ session</small>
+        </div>
+      </section>
+
+      <section class="admin-setup" id="setupPanel" hidden>
+        <h2>ยังไม่ได้ตั้งค่า Supabase</h2>
+        <p>
+          ใส่ค่า `url` และ `anonKey` ในไฟล์ `supabase-config.js` จากนั้นรัน SQL ใน `supabase-schema.sql`
+          ที่ Supabase SQL Editor แล้วกลับมาเปิดหน้านี้ใหม่
+        </p>
+      </section>
+
+      <section class="admin-login" id="loginPanel" hidden>
+        <form class="admin-card" id="loginForm">
+          <p class="eyebrow">Login</p>
+          <h2>เข้าสู่ระบบผู้ดูแล</h2>
+          <p>เข้าสู่ระบบด้วย Discord บัญชีที่ได้รับสิทธิ์ Admin เท่านั้น</p>
+          <button class="btn btn-primary discord-login" type="submit">เข้าสู่ระบบด้วย Discord</button>
+          <p class="admin-message" id="loginMessage"></p>
+        </form>
+      </section>
+
+      <section class="admin-workspace" id="adminWorkspace" hidden>
+        <!-- Admin Navigation Tabs -->
+        <div class="admin-tabs-container">
+          <div class="admin-tabs">
+            <button class="admin-tab" data-tab="frames" type="button">Profile Frames</button>
+            <button class="admin-tab is-active" data-tab="dashboard" type="button">📊 Dashboard</button>
+            <button class="admin-tab" data-tab="items" type="button">📦 ไอเท็ม</button>
+            <button class="admin-tab" data-tab="servers" type="button">🖥️ Server</button>
+            <button class="admin-tab" data-tab="listings" type="button">📋 ประกาศ</button>
+            <button class="admin-tab" data-tab="premium" type="button">👑 Premium</button>
+            <button class="admin-tab" data-tab="icons" type="button">🎨 ไอคอน</button>
+            <button class="admin-tab" data-tab="settings" type="button">⚙️ ตั้งค่า</button>
+          </div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div class="admin-tab-content is-active" data-tab-content="dashboard">
+          <section class="admin-dashboard">
+            <div class="dashboard-stats">
+              <div class="stat-card">
+                <div class="stat-icon">📝</div>
+                <div class="stat-info">
+                  <strong id="totalListingsCount">0</strong>
+                  <span>ประกาศทั้งหมด</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-info">
+                  <strong id="activeListingsCount">0</strong>
+                  <span>ประกาศที่เปิดอยู่</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">🚫</div>
+                <div class="stat-info">
+                  <strong id="bannedUsersCount">0</strong>
+                  <span>ผู้ใช้ที่ถูกแบน</span>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">👑</div>
+                <div class="stat-info">
+                  <strong id="premiumUsersCount">0</strong>
+                  <span>สมาชิก Premium</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Visitor Stats Section -->
+            <div class="visitor-stats-section">
+              <h2>📈 สถิติผู้เข้าชมเว็บไซต์</h2>
+
+              <div id="visitorStatsLoading" class="visitor-stats-loading">กำลังโหลดสถิติ...</div>
+
+              <div id="visitorStatsContent" hidden>
+                <!-- Summary Cards -->
+                <div class="visitor-summary-grid">
+                  <div class="visitor-stat-card is-highlight">
+                    <span class="vs-label">วันนี้ (Unique)</span>
+                    <span class="vs-value" id="vsTodayVisitors">0</span>
+                    <span class="vs-sub" id="vsTodayViews">0 pageviews</span>
+                  </div>
+                  <div class="visitor-stat-card">
+                    <span class="vs-label">เดือนนี้ (Unique)</span>
+                    <span class="vs-value" id="vsThisMonthVisitors">0</span>
+                    <span class="vs-sub" id="vsThisMonthViews">0 pageviews</span>
+                  </div>
+                  <div class="visitor-stat-card">
+                    <span class="vs-label">เดือนที่แล้ว (Unique)</span>
+                    <span class="vs-value" id="vsLastMonthVisitors">0</span>
+                    <span class="vs-sub" id="vsLastMonthViews">0 pageviews</span>
+                  </div>
+                  <div class="visitor-stat-card">
+                    <span class="vs-label">รวมทั้งหมด (Unique)</span>
+                    <span class="vs-value" id="vsTotalVisitors">0</span>
+                    <span class="vs-sub" id="vsTotalViews">0 pageviews</span>
+                  </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="visitor-chart-block">
+                  <div class="visitor-chart-tabs">
+                    <button class="visitor-chart-tab is-active" data-chart-period="daily" type="button">รายวัน (30 วัน)</button>
+                    <button class="visitor-chart-tab" data-chart-period="monthly" type="button">รายเดือน (12 เดือน)</button>
+                  </div>
+            <div class="visitor-charts-grid">
+              <div class="visitor-chart-container">
+                <h4 class="chart-title">ผู้เข้าชม (Unique Visitors)</h4>
+                <div class="visitor-chart-canvas-wrap">
+                  <canvas id="visitorsChart"></canvas>
+                </div>
+              </div>
+              <div class="visitor-chart-container">
+                <h4 class="chart-title">ยอดวิว (Pageviews)</h4>
+                <div class="visitor-chart-canvas-wrap">
+                  <canvas id="viewsChart"></canvas>
+                </div>
+              </div>
+            </div>
+                </div>
+              </div>
+
+              <p id="visitorStatsError" class="admin-message is-error" hidden></p>
+            </div>
+
+            <div class="dashboard-actions">
+              <button class="btn btn-primary" id="dashboardRefreshBtn" type="button">🔄 รีเฟรชข้อมูล</button>
+            </div>
+          </section>
+        </div>
+
+        <!-- Items Tab -->
+        <div class="admin-tab-content" data-tab-content="items">
+          <div class="admin-grid-layout">
+            <div class="admin-column">
+              <form class="admin-editor" id="itemForm">
+                <div class="form-block-head">
+                  <span id="editorMode">+</span>
+                  <div>
+                    <h2 id="editorTitle">เพิ่มไอเท็มใหม่</h2>
+                    <p>รูปที่อัปโหลดจะถูกใช้เป็นรูปอัตโนมัติในหน้า `ลงประกาศ`</p>
+                  </div>
+                </div>
+
+                <input id="itemId" type="hidden" />
+                <input id="existingImageUrl" type="hidden" />
+                <input id="existingImagePath" type="hidden" />
+
+                <div class="post-grid">
+                  <label class="post-field">
+                    <span>หมวดหมู่</span>
+                    <select id="itemCategory" required>
+                      <option value="mvp">MVP Cards</option>
+                      <option value="accessories">Accessories</option>
+                      <option value="fashion">Fashion</option>
+                    </select>
+                  </label>
+                  <label class="post-field">
+                    <span>ชื่อไอเท็ม</span>
+                    <input id="itemName" type="text" placeholder="เช่น Maya Card" required />
+                  </label>
+                  <label class="post-field">
+                    <span>ราคาแนะนำ</span>
+                    <input id="itemPrice" type="text" placeholder="3,800" />
+                  </label>
+                  <label class="post-field">
+                    <span>ลำดับแสดงผล</span>
+                    <input id="itemSortOrder" type="number" value="0" />
+                  </label>
+                </div>
+
+                <label class="post-field">
+                  <span>รายละเอียดเริ่มต้น</span>
+                  <textarea id="itemDescription" rows="4" placeholder="ข้อความเริ่มต้นที่จะเติมในหน้าโพสต์ประกาศ"></textarea>
+                </label>
+
+                <div class="admin-upload-row">
+                  <label class="upload-drop" for="itemImage">
+                    <input id="itemImage" type="file" accept="image/*" />
+                    <span>อัปโหลดรูปไอเท็ม</span>
+                    <small>PNG, JPG หรือ WebP</small>
+                  </label>
+                  <div class="auto-image-box admin-image-preview">
+                    <img id="itemImagePreview" src="assets/category-icons/mvp-c.png" alt="" />
+                    <small>ตัวอย่างรูป</small>
+                  </div>
+                </div>
+
+                <div class="post-checks">
+                  <label><input id="itemActive" type="checkbox" checked /> เปิดใช้งาน</label>
+                </div>
+
+                <div class="post-actions">
+                  <button class="btn btn-light" id="resetFormButton" type="button">ล้างฟอร์ม</button>
+                  <button class="btn btn-primary" type="submit">บันทึกไอเท็ม</button>
+                </div>
+                <p class="admin-message" id="editorMessage"></p>
+              </form>
+            </div>
+
+            <div class="admin-column">
+              <section class="admin-list-panel item-admin-panel">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Items</p>
+                    <h2>รายการไอเท็ม</h2>
+                  </div>
+                  <select id="adminCategoryFilter" aria-label="กรองหมวด">
+                    <option value="all">ทั้งหมด</option>
+                    <option value="mvp">MVP Cards</option>
+                    <option value="accessories">Accessories</option>
+                    <option value="fashion">Fashion</option>
+                    <option value="auction">Auction</option>
+                  </select>
+                </div>
+                <div class="admin-items" id="adminItems"></div>
+                <div class="admin-pagination" id="adminItemsPagination"></div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <!-- Servers Tab -->
+        <div class="admin-tab-content" data-tab-content="servers">
+          <div class="admin-grid-layout">
+            <div class="admin-column">
+              <section class="admin-list-panel server-admin-panel">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Servers</p>
+                    <h2>จัดการรายชื่อ Server</h2>
+                  </div>
+                </div>
+
+                <form class="server-admin-form" id="serverForm">
+                  <input id="serverId" type="hidden" />
+                  <div class="post-grid">
+                    <label class="post-field">
+                      <span>ชื่อ Server</span>
+                      <input id="serverName" type="text" placeholder="เช่น Prontera 1" required />
+                    </label>
+                    <label class="post-field">
+                      <span>ลำดับแสดงผล</span>
+                      <input id="serverSortOrder" type="number" value="0" />
+                    </label>
+                  </div>
+                  <div class="post-checks">
+                    <label><input id="serverActive" type="checkbox" checked /> เปิดใช้งาน</label>
+                  </div>
+                  <div class="post-actions">
+                    <button class="btn btn-light" id="serverResetButton" type="button">ล้างฟอร์ม</button>
+                    <button class="btn btn-primary" type="submit">บันทึก Server</button>
+                  </div>
+                  <p class="admin-message" id="serverMessage"></p>
+                </form>
+
+                <div class="admin-items server-list" id="adminServers"></div>
+                <div class="admin-pagination" id="adminServersPagination"></div>
+              </section>
+            </div>
+
+            <div class="admin-column">
+              <section class="admin-list-panel dungeon-admin-panel">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Dungeons</p>
+                    <h2>จัดการลิสต์ดัน</h2>
+                  </div>
+                </div>
+
+                <form class="server-admin-form" id="dungeonForm">
+                  <input id="dungeonId" type="hidden" />
+                  <div class="post-grid">
+                    <label class="post-field">
+                      <span>ชื่อดัน</span>
+                      <input id="dungeonName" type="text" placeholder="เช่น Helheim Hard" required />
+                    </label>
+                    <label class="post-field">
+                      <span>ลำดับแสดงผล</span>
+                      <input id="dungeonSortOrder" type="number" value="0" />
+                    </label>
+                  </div>
+                  <label class="post-field">
+                    <span>รายละเอียด</span>
+                    <textarea id="dungeonDescription" rows="3" placeholder="เช่น รับลงดันรายวัน / บอส / ปาร์ตี้"></textarea>
+                  </label>
+                  <div class="post-checks">
+                    <label><input id="dungeonActive" type="checkbox" checked /> เปิดใช้งาน</label>
+                  </div>
+                  <div class="post-actions">
+                    <button class="btn btn-light" id="dungeonResetButton" type="button">ล้างฟอร์ม</button>
+                    <button class="btn btn-primary" type="submit">บันทึกลิสต์ดัน</button>
+                  </div>
+                  <p class="admin-message" id="dungeonMessage"></p>
+                </form>
+
+                <div class="admin-items server-list" id="adminDungeons"></div>
+                <div class="admin-pagination" id="adminDungeonsPagination"></div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <!-- Listings Tab -->
+        <div class="admin-tab-content" data-tab-content="listings">
+        <section class="admin-list-panel listing-admin-panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Listings</p>
+              <h2>จัดการประกาศและผู้ใช้</h2>
+            </div>
+            <button class="btn btn-light" id="refreshAdminListings" type="button">รีเฟรช</button>
+          </div>
+          <p class="admin-message" id="listingAdminMessage"></p>
+          <div class="admin-items" id="adminListings"></div>
+          <div class="admin-pagination" id="adminListingsPagination"></div>
+          <div class="admin-items banned-user-list" id="bannedUsers"></div>
+        </section>
+        </div>
+
+        <!-- Premium Tab -->
+        <div class="admin-tab-content" data-tab-content="premium">
+          <div class="admin-grid-layout">
+            <div class="admin-column">
+              <section class="admin-list-panel premium-admin-panel">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Premium</p>
+                    <h2>จัดการสมาชิก Premium</h2>
+                  </div>
+                </div>
+
+                <form class="premium-admin-form" id="premiumForm">
+                  <input id="premiumUserId" type="hidden" />
+                  <div class="premium-search-box">
+                    <label class="post-field">
+                      <span>ค้นหาผู้ใช้จากชื่อ Discord</span>
+                      <input id="premiumSearchInput" type="search" placeholder="พิมพ์ชื่อ Discord เช่น squidward1975" />
+                    </label>
+                    <button class="btn btn-light" id="premiumSearchButton" type="button">ค้นหา</button>
+                  </div>
+                  <div class="premium-search-results" id="premiumSearchResults"></div>
+
+                  <div class="post-grid">
+                    <label class="post-field">
+                      <span>Supabase User ID</span>
+                      <input id="premiumUserIdInput" type="text" placeholder="UUID ของผู้ใช้" required />
+                    </label>
+                    <label class="post-field">
+                      <span>Discord ID</span>
+                      <input id="premiumDiscordId" type="text" placeholder="ตัวเลข Discord ID" />
+                    </label>
+                    <label class="post-field">
+                      <span>ชื่อแสดงผล</span>
+                      <input id="premiumDisplayName" type="text" placeholder="ชื่อ Discord" />
+                    </label>
+                    <label class="post-field">
+                      <span>รูปโปรไฟล์</span>
+                      <input id="premiumAvatarUrl" type="url" placeholder="Avatar URL" />
+                    </label>
+                  </div>
+                  <label class="post-field">
+                    <span>บันทึกเพิ่มเติม</span>
+                    <textarea id="premiumNote" rows="2" placeholder="เช่น จ่ายแล้วถึงวันที่..."></textarea>
+                  </label>
+                  <div class="post-checks">
+                    <label><input id="premiumActive" type="checkbox" checked /> เปิดใช้งานสิทธิ์ Premium</label>
+                  </div>
+                  <div class="post-actions">
+                    <button class="btn btn-light" id="premiumResetButton" type="button">ล้างฟอร์ม</button>
+                    <button class="btn btn-primary" type="submit">บันทึกสิทธิ์ Premium</button>
+                  </div>
+                  <p class="admin-message" id="premiumMessage"></p>
+                </form>
+              </section>
+            </div>
+
+            <div class="admin-column">
+              <section class="admin-list-panel">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Members</p>
+                    <h2>รายการสมาชิก Premium</h2>
+                  </div>
+                </div>
+                <div class="admin-items premium-list" id="premiumUsers"></div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile Frames Tab -->
+        <div class="admin-tab-content" data-tab-content="frames">
+          <div class="admin-grid-layout">
+            <div class="admin-column">
+              <form class="admin-editor" id="profileFrameForm">
+                <div class="form-block-head">
+                  <span>FR</span>
+                  <div>
+                    <h2 id="profileFrameEditorTitle">เพิ่มกรอบโปรไฟล์</h2>
+                    <p>อัปโหลดกรอบโปรไฟล์แบบ PNG, GIF หรือ WebP โปร่งใส เพื่อให้สมาชิก Premium เลือกใช้ในหน้าร้านได้</p>
+                  </div>
+                </div>
+                <input id="profileFrameId" type="hidden" />
+                <input id="profileFrameImageUrl" type="hidden" />
+                <input id="profileFrameImagePath" type="hidden" />
+                <div class="post-grid">
+                  <label class="post-field">
+                    <span>ชื่อกรอบ</span>
+                    <input id="profileFrameName" type="text" placeholder="เช่น Golden Aura Frame" required />
+                  </label>
+                  <label class="post-field">
+                    <span>ลำดับ</span>
+                    <input id="profileFrameSortOrder" type="number" value="0" />
+                  </label>
+                </div>
+                <label class="post-field">
+                  <span>รูปกรอบโปรไฟล์</span>
+                  <input id="profileFrameImage" type="file" accept="image/png,image/webp,image/gif,image/*" />
+                </label>
+                <div class="profile-frame-admin-preview">
+                  <img class="profile-frame-preview-avatar" src="assets/site-icons/rooc-icon-192.png" alt="" />
+                  <img id="profileFramePreview" class="profile-frame-preview-frame" src="" alt="" hidden />
+                </div>
+                <label class="post-checks">
+                  <span><input id="profileFrameActive" type="checkbox" checked /> เปิดใช้งาน</span>
+                </label>
+                <div class="post-actions">
+                  <button class="btn btn-light" id="profileFrameResetButton" type="button">ล้างฟอร์ม</button>
+                  <button class="btn btn-primary" type="submit">บันทึกกรอบ</button>
+                </div>
+                <p class="admin-message" id="profileFrameMessage"></p>
+              </form>
+            </div>
+            <div class="admin-column">
+              <section class="admin-list-panel">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Profile Frames</p>
+                    <h2>กรอบโปรไฟล์ทั้งหมด</h2>
+                  </div>
+                </div>
+                <div class="admin-items" id="profileFrameList"></div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <!-- Icons Tab -->
+        <div class="admin-tab-content" data-tab-content="icons">
+          <div class="admin-grid-layout">
+            <div class="admin-column">
+              <section class="admin-editor">
+                <div class="form-block-head">
+                  <span>🎨</span>
+                  <div>
+                    <h2>จัดการไอคอนเว็บไซต์</h2>
+                    <p>อัปโหลดไอคอนเพื่อเปลี่ยนรูปในส่วนต่างๆ ของเว็บไซต์</p>
+                  </div>
+                </div>
+
+                <div class="icon-manager-grid" style="display: grid; gap: 20px;">
+                  <!-- Website Icons -->
+                  <div class="icon-group-card" style="border: 1px solid var(--line); border-radius: 16px; padding: 16px; background: var(--paper);">
+                    <h3 style="margin-top: 0; font-size: 16px; border-bottom: 1px solid var(--line); padding-bottom: 8px;">🌐 ไอคอนหลัก & หมวดหมู่</h3>
+                    <div class="icon-upload-list" style="display: grid; gap: 12px; margin-top: 12px;">
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft);">
+                          <img id="preview-site-logo" src="assets/site-icons/rooc-icon-64.png" style="max-width: 32px; max-height: 32px;" />
+                        </div>
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">Logo เว็บไซต์</span>
+                          <input type="file" data-icon-type="site-logo" accept="image/*" style="font-size: 11px; margin-top: 4px;" />
+                        </div>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft);">
+                          <img id="preview-cat-mvp" src="assets/category-icons/mvp-c.png" style="max-width: 32px; max-height: 32px;" />
+                        </div>
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">MVP Cards Icon</span>
+                          <input type="file" data-icon-type="cat-mvp" accept="image/*" style="font-size: 11px; margin-top: 4px;" />
+                        </div>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft);">
+                          <img id="preview-cat-acc" src="assets/category-icons/acc.png" style="max-width: 32px; max-height: 32px;" />
+                        </div>
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">Accessories Icon</span>
+                          <input type="file" data-icon-type="cat-acc" accept="image/*" style="font-size: 11px; margin-top: 4px;" />
+                        </div>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft);">
+                          <img id="preview-cat-fashion" src="assets/category-icons/fashion.png" style="max-width: 32px; max-height: 32px;" />
+                        </div>
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">Fashion Icon</span>
+                          <input type="file" data-icon-type="cat-fashion" accept="image/*" style="font-size: 11px; margin-top: 4px;" />
+                        </div>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft);">
+                          <img id="preview-cat-auction" src="assets/category-icons/auction-a.png" style="max-width: 32px; max-height: 32px;" />
+                        </div>
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">Auction Icon</span>
+                          <input type="file" data-icon-type="cat-auction" accept="image/*" style="font-size: 11px; margin-top: 4px;" />
+                        </div>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft);">
+                          <img id="preview-lock-icon" src="" style="max-width: 32px; max-height: 32px;" alt="🔒" />
+                        </div>
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">รูปภาพกุญแจล็อค (Lock Image)</span>
+                          <input type="file" data-icon-type="lock-icon" accept="image/*" style="font-size: 11px; margin-top: 4px;" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Category Lock/Unlock Controls -->
+                  <div class="icon-group-card" style="border: 1px solid var(--line); border-radius: 16px; padding: 16px; background: var(--paper);">
+                    <h3 style="margin-top: 0; font-size: 16px; border-bottom: 1px solid var(--line); padding-bottom: 8px;">🔒 ล็อค/ปลดล็อคหมวดหมู่</h3>
+                    <div class="icon-upload-list" style="display: grid; gap: 12px; margin-top: 12px;">
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px; justify-content: space-between;">
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">MVP Cards</span>
+                          <span style="display: block; font-size: 11px; color: var(--text-soft);">สถานะ: <span id="lock-status-mvp">ปลดล็อค</span></span>
+                        </div>
+                        <button class="btn btn-small" type="button" id="toggle-lock-mvp" data-category="mvp">ล็อค</button>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px; justify-content: space-between;">
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">Accessories</span>
+                          <span style="display: block; font-size: 11px; color: var(--text-soft);">สถานะ: <span id="lock-status-acc">ปลดล็อค</span></span>
+                        </div>
+                        <button class="btn btn-small" type="button" id="toggle-lock-acc" data-category="acc">ล็อค</button>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px; justify-content: space-between;">
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">Fashion</span>
+                          <span style="display: block; font-size: 11px; color: var(--text-soft);">สถานะ: <span id="lock-status-fashion">ปลดล็อค</span></span>
+                        </div>
+                        <button class="btn btn-small" type="button" id="toggle-lock-fashion" data-category="fashion">ล็อค</button>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px; justify-content: space-between;">
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">Auction</span>
+                          <span style="display: block; font-size: 11px; color: var(--text-soft);">สถานะ: <span id="lock-status-auction">ปลดล็อค</span></span>
+                        </div>
+                        <button class="btn btn-small" type="button" id="toggle-lock-auction" data-category="auction">ล็อค</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Dashboard Icons -->
+                  <div class="icon-group-card" style="border: 1px solid var(--line); border-radius: 16px; padding: 16px; background: var(--paper);">
+                    <h3 style="margin-top: 0; font-size: 16px; border-bottom: 1px solid var(--line); padding-bottom: 8px;">📊 Dashboard Icons</h3>
+                    <div class="icon-upload-list" style="display: grid; gap: 12px; margin-top: 12px;">
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft); color: var(--blue);">
+                          <div id="preview-dash-sell" style="display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M5 20h14v-2H5v2zm0-10h4v6h6v-6h4l-7-7-7 7z"/></svg></div>
+                        </div>
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">ไอคอนประกาศขาย</span>
+                          <input type="file" data-icon-type="dash-sell" accept="image/*" style="font-size: 11px; margin-top: 4px;" />
+                        </div>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft); color: var(--blue);">
+                          <div id="preview-dash-buy" style="display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19 15h-4v-6h-6v6h-4l7 7 7-7zm0-11h-14v2h14v-2z"/></svg></div>
+                        </div>
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">ไอคอนประกาศรับซื้อ</span>
+                          <input type="file" data-icon-type="dash-buy" accept="image/*" style="font-size: 11px; margin-top: 4px;" />
+                        </div>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft); color: var(--blue);">
+                          <div id="preview-dash-service" style="display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg></div>
+                        </div>
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">ไอคอนรับจ้างลงดัน</span>
+                          <input type="file" data-icon-type="dash-service" accept="image/*" style="font-size: 11px; margin-top: 4px;" />
+                        </div>
+                      </div>
+                      <div class="icon-upload-item" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="preview-box" style="width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--paper-soft); color: var(--blue);">
+                          <div id="preview-dash-account" style="display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+                        </div>
+                        <div style="flex: 1;">
+                          <span style="display: block; font-size: 13px; font-weight: bold;">ไอคอนสถานะบัญชี</span>
+                          <input type="file" data-icon-type="dash-account" accept="image/*" style="font-size: 11px; margin-top: 4px;" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="post-actions" style="margin-top: 24px;">
+                  <p id="iconManagerMessage" class="admin-message"></p>
+                  <button class="btn btn-primary" id="saveIconsBtn" type="button">💾 บันทึกการเปลี่ยนแปลงไอคอน</button>
+                </div>
+              </section>
+            </div>
+            <div class="admin-column">
+              <section class="admin-list-panel">
+                <div class="section-head">
+                  <div>
+                    <p class="eyebrow">Help</p>
+                    <h2>คำแนะนำการจัดการไอคอน</h2>
+                  </div>
+                </div>
+                <div style="padding: 16px;">
+                  <ul style="padding-left: 20px; display: grid; gap: 10px; font-size: 14px; line-height: 1.6;">
+                    <li><strong>ขนาดที่แนะนำ:</strong> ควรใช้รูปจัตุรัส (1:1) เช่น 128x128 px เพื่อความสวยงาม</li>
+                    <li><strong>นามสกุลไฟล์:</strong> รองรับ PNG (แนะนำแบบโปร่งใส), JPG และ WebP</li>
+                    <li><strong>การแสดงผล:</strong> หลังจากกดบันทึก ระบบจะอัปโหลดไฟล์เข้า Supabase Storage และนำ URL มาใช้งานแทนไฟล์เดิมในเครื่องทันที</li>
+                    <li><strong>Dashboard Icons:</strong> หากไม่ได้อัปโหลดรูป ระบบจะใช้ไอคอนมาตรฐาน (SVG) ที่เตรียมไว้ให้</li>
+                  </ul>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div class="admin-tab-content" data-tab-content="settings">
+          <section class="admin-list-panel support-admin-panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Support Bar</p>
+                <h2>ตั้งค่าโดเนทและ Middleman</h2>
+              </div>
+            </div>
+
+            <form class="support-admin-form" id="supportSettingsForm">
+            <div class="support-admin-grid">
+              <div class="support-admin-card announcement-admin-card">
+                <div class="form-block-head">
+                  <span>!</span>
+                  <div>
+                    <h3>ประกาศหน้าแรก</h3>
+                    <p>ข้อความวิ่งขนาดเล็กที่แสดงบน Head หน้าแรก สีเหลืองเข้ม</p>
+                  </div>
+                </div>
+                <div class="post-checks">
+                  <label><input id="announcementEnabled" type="checkbox" /> เปิดแสดงประกาศหน้าแรก</label>
+                </div>
+                <label class="post-field">
+                  <span>ข้อความประกาศ</span>
+                  <textarea id="announcementText" rows="3" placeholder="เช่น แจ้งเตือนกิจกรรม / ข่าวตลาด / ติดต่อทีมงาน"></textarea>
+                </label>
+              </div>
+
+              <div class="support-admin-card announcement-admin-card">
+                <div class="form-block-head">
+                  <span>A</span>
+                  <div>
+                    <h3>ประกาศขาย Account</h3>
+                    <p>เปิดหรือปิดการสร้างประกาศขาย Account ใหม่บนหน้าลงประกาศ</p>
+                  </div>
+                </div>
+                <div class="post-checks">
+                  <label><input id="accountListingEnabled" type="checkbox" /> เปิดให้ลงประกาศขาย Account</label>
+                </div>
+              </div>
+
+              <div class="support-admin-card">
+                <div class="form-block-head">
+                  <span>AD</span>
+                  <div>
+                    <h3>Hero Sponsor</h3>
+                    <p>โฆษณาหลักด้านขวาของ Hero หน้าแรก เปิด/ปิดและเปลี่ยนรูปได้</p>
+                  </div>
+                </div>
+                <div class="post-checks">
+                  <label><input id="heroSponsorEnabled" type="checkbox" /> เปิดแสดง Hero Sponsor</label>
+                </div>
+                <label class="post-field">
+                  <span>หัวข้อ</span>
+                  <input id="heroSponsorTitle" type="text" placeholder="เช่น ร้านกลาง ROOC พร้อมดูแลดีล" />
+                </label>
+                <label class="post-field">
+                  <span>ข้อความ</span>
+                  <textarea id="heroSponsorText" rows="3" placeholder="ข้อความสั้น ๆ ที่จะแสดงบนป้ายโฆษณา"></textarea>
+                </label>
+                <label class="post-field">
+                  <span>ข้อความบนปุ่ม</span>
+                  <input id="heroSponsorButtonLabel" type="text" placeholder="ดูรายละเอียด" />
+                </label>
+                <label class="post-field">
+                  <span>ลิงก์ปลายทาง</span>
+                  <input id="heroSponsorButtonUrl" type="url" placeholder="https://..." />
+                </label>
+                <input id="heroSponsorImageUrl" type="hidden" />
+                <input id="heroSponsorImagePath" type="hidden" />
+                <div class="admin-upload-row">
+                  <label class="upload-drop" for="heroSponsorImage">
+                    <input id="heroSponsorImage" type="file" accept="image/*" />
+                    <span>อัปโหลดรูป Hero Sponsor</span>
+                    <small>แนะนำ 1200×520 หรือ 21:9</small>
+                  </label>
+                  <div class="auto-image-box admin-image-preview hero-sponsor-admin-preview">
+                    <img id="heroSponsorPreview" src="assets/hero-rooc.png" alt="" />
+                    <small>ตัวอย่างรูปโฆษณา</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="support-admin-card">
+                <div class="form-block-head">
+                  <span>฿</span>
+                  <div>
+                    <h3>แถบโดเนท</h3>
+                    <p>ข้อความ QR Code และปุ่มลิงก์สำหรับสนับสนุนเว็บ</p>
+                  </div>
+                </div>
+                <div class="post-checks">
+                  <label><input id="donateEnabled" type="checkbox" /> เปิดแสดงแถบโดเนท</label>
+                </div>
+                <label class="post-field">
+                  <span>หัวข้อ</span>
+                  <input id="donateTitle" type="text" placeholder="สนับสนุน ROOC Market TH" />
+                </label>
+                <label class="post-field">
+                  <span>ข้อความ</span>
+                  <textarea id="donateText" rows="3" placeholder="ข้อความสั้น ๆ ที่จะแสดงใต้หัวข้อ"></textarea>
+                </label>
+                <label class="post-field">
+                  <span>ข้อความบนปุ่ม</span>
+                  <input id="donateButtonLabel" type="text" placeholder="โดเนทตอนนี้" />
+                </label>
+                <label class="post-field">
+                  <span>ลิงก์ปุ่ม</span>
+                  <input id="donateButtonUrl" type="url" placeholder="https://..." />
+                </label>
+                <input id="donateQrUrl" type="hidden" />
+                <input id="donateQrPath" type="hidden" />
+                <div class="admin-upload-row">
+                  <label class="upload-drop" for="donateQrImage">
+                    <input id="donateQrImage" type="file" accept="image/*" />
+                    <span>อัปโหลด QR โดเนท</span>
+                    <small>PNG หรือ JPG</small>
+                  </label>
+                  <div class="auto-image-box admin-image-preview">
+                    <img id="donateQrPreview" src="assets/site-icons/rooc-icon-192.png" alt="" />
+                    <small>ตัวอย่าง QR</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="support-admin-card">
+                <div class="form-block-head">
+                  <span>GO</span>
+                  <div>
+                    <h3>Donate Goal</h3>
+                    <p>ตั้งค่าหลอดเป้าหมายโดเนทด้านซ้าย กรอกยอดเองและใส่ลิงก์ EasyDonate สำหรับปุ่ม</p>
+                  </div>
+                </div>
+                <div class="post-checks">
+                  <label><input id="donateGoalEnabled" type="checkbox" /> เปิดแสดง Donate Goal</label>
+                </div>
+                <label class="post-field">
+                  <span>หัวข้อ</span>
+                  <input id="donateGoalTitle" type="text" placeholder="Donate Goal" />
+                </label>
+                <label class="post-field">
+                  <span>ข้อความ</span>
+                  <textarea id="donateGoalText" rows="2" placeholder="เช่น สนับสนุนค่าเซิร์ฟเวอร์"></textarea>
+                </label>
+                <div class="admin-field-row">
+                  <label class="post-field">
+                    <span>ยอดปัจจุบัน</span>
+                    <input id="donateGoalCurrent" type="number" min="0" step="1" placeholder="0" />
+                  </label>
+                  <label class="post-field">
+                    <span>ยอดเป้าหมาย</span>
+                    <input id="donateGoalTarget" type="number" min="1" step="1" placeholder="10000" />
+                  </label>
+                </div>
+                <label class="post-field">
+                  <span>ข้อความบนปุ่ม</span>
+                  <input id="donateGoalButtonLabel" type="text" placeholder="โดเนท" />
+                </label>
+                <label class="post-field">
+                  <span>ลิงก์ EasyDonate</span>
+                  <input id="donateGoalUrl" type="url" placeholder="https://widgets.easydonate.app?..." />
+                </label>
+              </div>
+
+              <div class="support-admin-card">
+                <div class="form-block-head">
+                  <span>M</span>
+                  <div>
+                    <h3>ติดต่อ Middleman</h3>
+                    <p>ข้อความ QR Code และปุ่มลิงก์สำหรับติดต่อทีมกลาง</p>
+                  </div>
+                </div>
+                <div class="post-checks">
+                  <label><input id="middlemanEnabled" type="checkbox" /> เปิดแสดงแถบ Middleman</label>
+                </div>
+                <label class="post-field">
+                  <span>หัวข้อ</span>
+                  <input id="middlemanTitle" type="text" placeholder="ติดต่อ Middleman" />
+                </label>
+                <label class="post-field">
+                  <span>ข้อความ</span>
+                  <textarea id="middlemanText" rows="3" placeholder="ข้อความสั้น ๆ ที่จะแสดงใต้หัวข้อ"></textarea>
+                </label>
+                <label class="post-field">
+                  <span>ข้อความบนปุ่ม</span>
+                  <input id="middlemanButtonLabel" type="text" placeholder="ติดต่อ Middleman" />
+                </label>
+                <label class="post-field">
+                  <span>ลิงก์ปุ่ม</span>
+                  <input id="middlemanButtonUrl" type="url" placeholder="https://discord.gg/..." />
+                </label>
+                <input id="middlemanQrUrl" type="hidden" />
+                <input id="middlemanQrPath" type="hidden" />
+                <div class="admin-upload-row">
+                  <label class="upload-drop" for="middlemanQrImage">
+                    <input id="middlemanQrImage" type="file" accept="image/*" />
+                    <span>อัปโหลด QR Middleman</span>
+                    <small>PNG หรือ JPG</small>
+                  </label>
+                  <div class="auto-image-box admin-image-preview">
+                    <img id="middlemanQrPreview" src="assets/site-icons/rooc-icon-192.png" alt="" />
+                    <small>ตัวอย่าง QR</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="post-actions">
+              <button class="btn btn-primary" type="submit">บันทึกแถบข้อความ</button>
+            </div>
+            <p class="admin-message" id="supportSettingsMessage"></p>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const app = window.ROOC_APP || {};
+      const config = app.config || window.ROOC_SUPABASE || {};
+      const supabaseClient = app.getSupabaseClient?.() || null;
+      const hasConfig = Boolean(supabaseClient);
+      const bucketName = config.itemBucket || "item-images";
+
+      const setupPanel = document.querySelector("#setupPanel");
+      const loginPanel = document.querySelector("#loginPanel");
+      const adminWorkspace = document.querySelector("#adminWorkspace");
+      const connectionStatus = document.querySelector("#connectionStatusText");
+      const sessionStatusText = document.querySelector("#sessionStatusText");
+      const loginForm = document.querySelector("#loginForm");
+      const loginMessage = document.querySelector("#loginMessage");
+      const logoutButton = document.querySelector("#logoutButton");
+      const itemForm = document.querySelector("#itemForm");
+      const editorMode = document.querySelector("#editorMode");
+      const editorTitle = document.querySelector("#editorTitle");
+      const editorMessage = document.querySelector("#editorMessage");
+      const adminItems = document.querySelector("#adminItems");
+      const adminItemsPagination = document.querySelector("#adminItemsPagination");
+      const adminCategoryFilter = document.querySelector("#adminCategoryFilter");
+      const serverForm = document.querySelector("#serverForm");
+      const adminServers = document.querySelector("#adminServers");
+      const adminServersPagination = document.querySelector("#adminServersPagination");
+      const serverResetButton = document.querySelector("#serverResetButton");
+      const serverMessage = document.querySelector("#serverMessage");
+      const dungeonForm = document.querySelector("#dungeonForm");
+      const adminDungeons = document.querySelector("#adminDungeons");
+      const adminDungeonsPagination = document.querySelector("#adminDungeonsPagination");
+      const dungeonResetButton = document.querySelector("#dungeonResetButton");
+      const dungeonMessage = document.querySelector("#dungeonMessage");
+      const adminListings = document.querySelector("#adminListings");
+      const adminListingsPagination = document.querySelector("#adminListingsPagination");
+      const refreshAdminListings = document.querySelector("#refreshAdminListings");
+      const listingAdminMessage = document.querySelector("#listingAdminMessage");
+      const bannedUsers = document.querySelector("#bannedUsers");
+      const resetFormButton = document.querySelector("#resetFormButton");
+      const itemImage = document.querySelector("#itemImage");
+      const itemImagePreview = document.querySelector("#itemImagePreview");
+      const premiumForm = document.querySelector("#premiumForm");
+      const premiumUsers = document.querySelector("#premiumUsers");
+      const premiumResetButton = document.querySelector("#premiumResetButton");
+      const premiumMessage = document.querySelector("#premiumMessage");
+      const premiumSearchInput = document.querySelector("#premiumSearchInput");
+      const premiumSearchButton = document.querySelector("#premiumSearchButton");
+      const premiumSearchResults = document.querySelector("#premiumSearchResults");
+      const profileFrameForm = document.querySelector("#profileFrameForm");
+      const profileFrameList = document.querySelector("#profileFrameList");
+      const profileFrameResetButton = document.querySelector("#profileFrameResetButton");
+      const profileFrameMessage = document.querySelector("#profileFrameMessage");
+      const profileFrameImage = document.querySelector("#profileFrameImage");
+      const profileFramePreview = document.querySelector("#profileFramePreview");
+      const profileFrameEditorTitle = document.querySelector("#profileFrameEditorTitle");
+      
+      // Icon Manager Elements
+      const iconInputs = document.querySelectorAll('input[data-icon-type]');
+      const saveIconsBtn = document.getElementById('saveIconsBtn');
+      const iconManagerMessage = document.getElementById('iconManagerMessage');
+      let iconFiles = {};
+      
+      // Category Lock/Unlock Elements
+      const lockButtons = document.querySelectorAll('[id^="toggle-lock-"]');
+      let categoryLockState = { mvp: false, acc: false, fashion: false, auction: false };
+
+      const supportSettingsForm = document.querySelector("#supportSettingsForm");
+      const supportSettingsMessage = document.querySelector("#supportSettingsMessage");
+      const supportFields = {
+        announcementEnabled: document.querySelector("#announcementEnabled"),
+        announcementText: document.querySelector("#announcementText"),
+        accountListingEnabled: document.querySelector("#accountListingEnabled"),
+        donateEnabled: document.querySelector("#donateEnabled"),
+        donateTitle: document.querySelector("#donateTitle"),
+        donateText: document.querySelector("#donateText"),
+        donateButtonLabel: document.querySelector("#donateButtonLabel"),
+        donateButtonUrl: document.querySelector("#donateButtonUrl"),
+        donateQrUrl: document.querySelector("#donateQrUrl"),
+        donateQrPath: document.querySelector("#donateQrPath"),
+        donateQrImage: document.querySelector("#donateQrImage"),
+        donateQrPreview: document.querySelector("#donateQrPreview"),
+        donateGoalEnabled: document.querySelector("#donateGoalEnabled"),
+        donateGoalTitle: document.querySelector("#donateGoalTitle"),
+        donateGoalText: document.querySelector("#donateGoalText"),
+        donateGoalCurrent: document.querySelector("#donateGoalCurrent"),
+        donateGoalTarget: document.querySelector("#donateGoalTarget"),
+        donateGoalButtonLabel: document.querySelector("#donateGoalButtonLabel"),
+        donateGoalUrl: document.querySelector("#donateGoalUrl"),
+        middlemanEnabled: document.querySelector("#middlemanEnabled"),
+        middlemanTitle: document.querySelector("#middlemanTitle"),
+        middlemanText: document.querySelector("#middlemanText"),
+        middlemanButtonLabel: document.querySelector("#middlemanButtonLabel"),
+        middlemanButtonUrl: document.querySelector("#middlemanButtonUrl"),
+        middlemanQrUrl: document.querySelector("#middlemanQrUrl"),
+        middlemanQrPath: document.querySelector("#middlemanQrPath"),
+        middlemanQrImage: document.querySelector("#middlemanQrImage"),
+        middlemanQrPreview: document.querySelector("#middlemanQrPreview"),
+        heroSponsorEnabled: document.querySelector("#heroSponsorEnabled"),
+        heroSponsorTitle: document.querySelector("#heroSponsorTitle"),
+        heroSponsorText: document.querySelector("#heroSponsorText"),
+        heroSponsorButtonLabel: document.querySelector("#heroSponsorButtonLabel"),
+        heroSponsorButtonUrl: document.querySelector("#heroSponsorButtonUrl"),
+        heroSponsorImageUrl: document.querySelector("#heroSponsorImageUrl"),
+        heroSponsorImagePath: document.querySelector("#heroSponsorImagePath"),
+        heroSponsorImage: document.querySelector("#heroSponsorImage"),
+        heroSponsorPreview: document.querySelector("#heroSponsorPreview")
+      };
+
+      const fields = {
+        id: document.querySelector("#itemId"),
+        category: document.querySelector("#itemCategory"),
+        name: document.querySelector("#itemName"),
+        price: document.querySelector("#itemPrice"),
+        sortOrder: document.querySelector("#itemSortOrder"),
+        description: document.querySelector("#itemDescription"),
+        imageUrl: document.querySelector("#existingImageUrl"),
+        imagePath: document.querySelector("#existingImagePath"),
+        active: document.querySelector("#itemActive")
+      };
+
+      const serverFields = {
+        id: document.querySelector("#serverId"),
+        name: document.querySelector("#serverName"),
+        sortOrder: document.querySelector("#serverSortOrder"),
+        active: document.querySelector("#serverActive")
+      };
+
+      const dungeonFields = {
+        id: document.querySelector("#dungeonId"),
+        name: document.querySelector("#dungeonName"),
+        description: document.querySelector("#dungeonDescription"),
+        sortOrder: document.querySelector("#dungeonSortOrder"),
+        active: document.querySelector("#dungeonActive")
+      };
+
+      let itemCache = [];
+      let serverCache = [];
+      let dungeonCache = [];
+      let premiumCache = [];
+      let premiumProfileResults = [];
+      let profileFrameCache = [];
+      let listingCache = [];
+      let bannedCache = [];
+      let currentSession = null;
+      let adminItemPage = 1;
+      let adminServerPage = 1;
+      let adminDungeonPage = 1;
+      let adminListingPage = 1;
+      const adminPageSize = 6;
+      const adminServerPageSize = 5;
+      const adminDungeonPageSize = 5;
+
+      const premiumFields = {
+        id: document.querySelector("#premiumUserId"),
+        userId: document.querySelector("#premiumUserIdInput"),
+        discordId: document.querySelector("#premiumDiscordId"),
+        displayName: document.querySelector("#premiumDisplayName"),
+        avatarUrl: document.querySelector("#premiumAvatarUrl"),
+        note: document.querySelector("#premiumNote"),
+        active: document.querySelector("#premiumActive")
+      };
+
+      const profileFrameFields = {
+        id: document.querySelector("#profileFrameId"),
+        name: document.querySelector("#profileFrameName"),
+        imageUrl: document.querySelector("#profileFrameImageUrl"),
+        imagePath: document.querySelector("#profileFrameImagePath"),
+        sortOrder: document.querySelector("#profileFrameSortOrder"),
+        active: document.querySelector("#profileFrameActive")
+      };
+
+      function arrangeAdminPanels() {
+        // ยกเลิกการจัด Column แบบ Dynamic ที่ทำให้ Layout เละเทะเมื่อเปลี่ยน Tab
+        // และให้แต่ละ Tab จัดการ Layout ภายในตัวเองแทน
+        adminWorkspace.dataset.arranged = "true";
+      }
+
+      function setMessage(target, message, isError = false) {
+        target.textContent = message;
+        target.classList.toggle("is-error", isError);
+      }
+
+      function escapeHtml(value) {
+        return String(value || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function categoryLabel(category) {
+        return {
+          mvp: "MVP Cards",
+          accessories: "Accessories",
+          fashion: "Fashion"
+        }[category] || category;
+      }
+
+      function formatListingPrice(value) {
+        const price = Number(normalizePriceText(value));
+        return Number.isFinite(price) && price > 0 ? price.toLocaleString("th-TH", { maximumFractionDigits: 2 }) : "0";
+      }
+
+      function normalizePriceText(value) {
+        const cleaned = String(value || "")
+          .replace(/,/g, "")
+          .replace(/[^\d.]/g, "");
+        const [whole = "", ...fractionParts] = cleaned.split(".");
+        const normalized = fractionParts.length ? `${whole || "0"}.${fractionParts.join("")}` : whole;
+        return normalized.replace(/^0+(?=\d)/, "") || "";
+      }
+
+      function resetEditor() {
+        itemForm.reset();
+        fields.id.value = "";
+        fields.imageUrl.value = "";
+        fields.imagePath.value = "";
+        fields.sortOrder.value = "0";
+        fields.active.checked = true;
+        itemImagePreview.src = "assets/category-icons/mvp-c.png";
+        editorMode.textContent = "+";
+        editorTitle.textContent = "เพิ่มไอเท็มใหม่";
+        setMessage(editorMessage, "");
+      }
+
+      function renderItems() {
+        const filter = adminCategoryFilter.value;
+        const visible = itemCache.filter((item) => filter === "all" || item.category === filter);
+        adminItems.innerHTML = "";
+        adminItemsPagination.innerHTML = "";
+
+        if (!visible.length) {
+          adminItems.innerHTML = '<p class="admin-empty">ยังไม่มีไอเท็มในหมวดนี้</p>';
+          return;
+        }
+
+        const totalPages = Math.max(1, Math.ceil(visible.length / adminPageSize));
+        adminItemPage = Math.min(adminItemPage, totalPages);
+        const pageItems = visible.slice((adminItemPage - 1) * adminPageSize, adminItemPage * adminPageSize);
+
+        pageItems.forEach((item) => {
+          const card = document.createElement("article");
+          card.className = "admin-item-card";
+          card.innerHTML = `
+            <img src="${item.image_url}" alt="" />
+            <div>
+              <strong>${item.name}</strong>
+              <span>${categoryLabel(item.category)} · ${item.active ? "เปิดใช้งาน" : "ปิดใช้งาน"}</span>
+              <small>${item.price_hint || "ยังไม่ใส่ราคา"}</small>
+            </div>
+            <div class="admin-item-actions">
+              <button class="btn btn-small" type="button" data-edit="${item.id}">แก้ไข</button>
+              <button class="btn btn-small admin-delete" type="button" data-delete="${item.id}">ลบ</button>
+            </div>
+          `;
+          adminItems.append(card);
+        });
+        renderAdminPagination(adminItemsPagination, adminItemPage, totalPages, "item");
+      }
+
+      function renderAdminPagination(target, currentPage, totalPages, type) {
+        if (!target || totalPages <= 1) {
+          if (target) target.innerHTML = "";
+          return;
+        }
+        target.innerHTML = `
+          <button class="btn btn-small" type="button" data-page-type="${type}" data-page-dir="prev" ${currentPage === 1 ? "disabled" : ""}>ก่อนหน้า</button>
+          <span>หน้า ${currentPage} / ${totalPages}</span>
+          <button class="btn btn-small" type="button" data-page-type="${type}" data-page-dir="next" ${currentPage === totalPages ? "disabled" : ""}>ถัดไป</button>
+        `;
+      }
+
+      async function loadItems() {
+        const { data, error } = await supabaseClient
+          .from("marketplace_items")
+          .select("*")
+          .order("category", { ascending: true })
+          .order("sort_order", { ascending: true })
+          .order("name", { ascending: true });
+
+        if (error) {
+          setMessage(editorMessage, error.message, true);
+          return;
+        }
+
+        itemCache = data || [];
+        renderItems();
+      }
+
+      function resetServerForm() {
+        serverForm.reset();
+        serverFields.id.value = "";
+        serverFields.sortOrder.value = "0";
+        serverFields.active.checked = true;
+        setMessage(serverMessage, "");
+      }
+
+      function renderServers() {
+        adminServers.innerHTML = "";
+        adminServersPagination.innerHTML = "";
+        if (!serverCache.length) {
+          adminServers.innerHTML = '<p class="admin-empty">ยังไม่มีรายชื่อ Server</p>';
+          return;
+        }
+
+        const totalPages = Math.max(1, Math.ceil(serverCache.length / adminServerPageSize));
+        adminServerPage = Math.min(adminServerPage, totalPages);
+        const pageServers = serverCache.slice((adminServerPage - 1) * adminServerPageSize, adminServerPage * adminServerPageSize);
+
+        pageServers.forEach((server) => {
+          const card = document.createElement("article");
+          card.className = "admin-item-card server-item-card";
+          card.innerHTML = `
+            <div class="server-icon" aria-hidden="true">${escapeHtml(server.name).slice(0, 2).toUpperCase()}</div>
+            <div>
+              <strong>${escapeHtml(server.name)}</strong>
+              <span>${server.active ? "เปิดใช้งาน" : "ปิดใช้งาน"} · ลำดับ ${Number(server.sort_order || 0)}</span>
+            </div>
+            <div class="admin-item-actions">
+              <button class="btn btn-small" type="button" data-server-edit="${escapeHtml(server.id)}">แก้ไข</button>
+              <button class="btn btn-small admin-delete" type="button" data-server-delete="${escapeHtml(server.id)}">ลบ</button>
+            </div>
+          `;
+          adminServers.append(card);
+        });
+        renderAdminPagination(adminServersPagination, adminServerPage, totalPages, "server");
+      }
+
+      async function loadServers() {
+        const { data, error } = await supabaseClient
+          .from("marketplace_servers")
+          .select("*")
+          .order("sort_order", { ascending: true })
+          .order("name", { ascending: true });
+
+        if (error) {
+          setMessage(serverMessage, error.message, true);
+          return;
+        }
+
+        serverCache = data || [];
+        renderServers();
+      }
+
+      function editServer(serverId) {
+        const server = serverCache.find((entry) => entry.id === serverId);
+        if (!server) return;
+        serverFields.id.value = server.id;
+        serverFields.name.value = server.name || "";
+        serverFields.sortOrder.value = server.sort_order || 0;
+        serverFields.active.checked = Boolean(server.active);
+        setMessage(serverMessage, "");
+        serverForm.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+
+      async function deleteServer(serverId) {
+        const server = serverCache.find((entry) => entry.id === serverId);
+        if (!server) return;
+        if (!confirm(`ลบ Server "${server.name}" ออกจากตัวเลือก?`)) return;
+
+        const { error } = await supabaseClient
+          .from("marketplace_servers")
+          .delete()
+          .eq("id", serverId);
+
+        if (error) {
+          setMessage(serverMessage, error.message, true);
+          return;
+        }
+
+        setMessage(serverMessage, "ลบ Server เรียบร้อย");
+        resetServerForm();
+        adminServerPage = 1;
+        await loadServers();
+      }
+
+      async function saveServer(event) {
+        event.preventDefault();
+        const payload = {
+          name: serverFields.name.value.trim(),
+          sort_order: Number(serverFields.sortOrder.value || 0),
+          active: serverFields.active.checked
+        };
+
+        if (!payload.name) {
+          setMessage(serverMessage, "กรุณาใส่ชื่อ Server", true);
+          serverFields.name.focus();
+          return;
+        }
+
+        setMessage(serverMessage, "กำลังบันทึก Server...");
+        const request = serverFields.id.value
+          ? supabaseClient.from("marketplace_servers").update(payload).eq("id", serverFields.id.value)
+          : supabaseClient.from("marketplace_servers").insert(payload);
+        const { error } = await request;
+
+        if (error) {
+          setMessage(serverMessage, error.message, true);
+          return;
+        }
+
+        setMessage(serverMessage, "บันทึก Server เรียบร้อย");
+        resetServerForm();
+        adminServerPage = 1;
+        await loadServers();
+      }
+
+      function resetDungeonForm() {
+        dungeonForm.reset();
+        dungeonFields.id.value = "";
+        dungeonFields.sortOrder.value = "0";
+        dungeonFields.active.checked = true;
+        setMessage(dungeonMessage, "");
+      }
+
+      function renderDungeons() {
+        adminDungeons.innerHTML = "";
+        adminDungeonsPagination.innerHTML = "";
+        if (!dungeonCache.length) {
+          adminDungeons.innerHTML = '<p class="admin-empty">ยังไม่มีลิสต์ดัน</p>';
+          return;
+        }
+
+        const totalPages = Math.max(1, Math.ceil(dungeonCache.length / adminDungeonPageSize));
+        adminDungeonPage = Math.min(adminDungeonPage, totalPages);
+        const pageDungeons = dungeonCache.slice((adminDungeonPage - 1) * adminDungeonPageSize, adminDungeonPage * adminDungeonPageSize);
+
+        pageDungeons.forEach((dungeon) => {
+          const card = document.createElement("article");
+          card.className = "admin-item-card server-item-card";
+          card.innerHTML = `
+            <div class="server-icon" aria-hidden="true">DU</div>
+            <div>
+              <strong>${escapeHtml(dungeon.name)}</strong>
+              <span>${dungeon.active ? "เปิดใช้งาน" : "ปิดใช้งาน"} · ลำดับ ${Number(dungeon.sort_order || 0)}</span>
+              <small>${escapeHtml(dungeon.description || "ยังไม่มีรายละเอียด")}</small>
+            </div>
+            <div class="admin-item-actions">
+              <button class="btn btn-small" type="button" data-dungeon-edit="${escapeHtml(dungeon.id)}">แก้ไข</button>
+              <button class="btn btn-small admin-delete" type="button" data-dungeon-delete="${escapeHtml(dungeon.id)}">ลบ</button>
+            </div>
+          `;
+          adminDungeons.append(card);
+        });
+        renderAdminPagination(adminDungeonsPagination, adminDungeonPage, totalPages, "dungeon");
+      }
+
+      async function loadDungeons() {
+        const { data, error } = await supabaseClient
+          .from("marketplace_dungeons")
+          .select("*")
+          .order("sort_order", { ascending: true })
+          .order("name", { ascending: true });
+
+        if (error) {
+          setMessage(dungeonMessage, error.message, true);
+          return;
+        }
+
+        dungeonCache = data || [];
+        renderDungeons();
+      }
+
+      function editDungeon(dungeonId) {
+        const dungeon = dungeonCache.find((entry) => entry.id === dungeonId);
+        if (!dungeon) return;
+        dungeonFields.id.value = dungeon.id;
+        dungeonFields.name.value = dungeon.name || "";
+        dungeonFields.description.value = dungeon.description || "";
+        dungeonFields.sortOrder.value = dungeon.sort_order || 0;
+        dungeonFields.active.checked = Boolean(dungeon.active);
+        setMessage(dungeonMessage, "");
+        dungeonForm.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+
+      async function deleteDungeon(dungeonId) {
+        const dungeon = dungeonCache.find((entry) => entry.id === dungeonId);
+        if (!dungeon) return;
+        if (!confirm(`ลบดัน "${dungeon.name}" ออกจากตัวเลือก?`)) return;
+
+        const { error } = await supabaseClient
+          .from("marketplace_dungeons")
+          .delete()
+          .eq("id", dungeonId);
+
+        if (error) {
+          setMessage(dungeonMessage, error.message, true);
+          return;
+        }
+
+        setMessage(dungeonMessage, "ลบลิสต์ดันเรียบร้อย");
+        resetDungeonForm();
+        adminDungeonPage = 1;
+        await loadDungeons();
+      }
+
+      async function saveDungeon(event) {
+        event.preventDefault();
+        const payload = {
+          name: dungeonFields.name.value.trim(),
+          description: dungeonFields.description.value.trim(),
+          sort_order: Number(dungeonFields.sortOrder.value || 0),
+          active: dungeonFields.active.checked
+        };
+
+        if (!payload.name) {
+          setMessage(dungeonMessage, "กรุณาใส่ชื่อดัน", true);
+          dungeonFields.name.focus();
+          return;
+        }
+
+        setMessage(dungeonMessage, "กำลังบันทึกลิสต์ดัน...");
+        const request = dungeonFields.id.value
+          ? supabaseClient.from("marketplace_dungeons").update(payload).eq("id", dungeonFields.id.value)
+          : supabaseClient.from("marketplace_dungeons").insert(payload);
+        const { error } = await request;
+
+        if (error) {
+          setMessage(dungeonMessage, error.message, true);
+          return;
+        }
+
+        setMessage(dungeonMessage, "บันทึกลิสต์ดันเรียบร้อย");
+        resetDungeonForm();
+        adminDungeonPage = 1;
+        await loadDungeons();
+      }
+
+      function resetPremiumForm() {
+        premiumForm.reset();
+        premiumFields.id.value = "";
+        premiumFields.active.checked = true;
+        setMessage(premiumMessage, "");
+      }
+
+      function renderPremiumUsers() {
+        premiumUsers.innerHTML = "";
+        if (!premiumCache.length) {
+          premiumUsers.innerHTML = '<p class="admin-empty">ยังไม่มีสมาชิก Premium</p>';
+          return;
+        }
+
+        premiumCache.forEach((user) => {
+          const card = document.createElement("article");
+          card.className = "admin-item-card premium-user-card";
+          card.innerHTML = `
+            <img src="${user.avatar_url || "assets/category-icons/account-b.png"}" alt="" />
+            <div>
+              <strong>${user.display_name || "Premium user"}</strong>
+              <span>${user.active ? "Premium เปิดใช้งาน" : "ปิดสิทธิ์"} · ${user.discord_id || "ยังไม่มี Discord ID"}</span>
+              <small>${user.user_id}${user.note ? ` · ${user.note}` : ""}</small>
+            </div>
+            <div class="admin-item-actions">
+              <button class="btn btn-small" type="button" data-premium-edit="${user.user_id}">แก้ไข</button>
+              <button class="btn btn-small admin-delete" type="button" data-premium-delete="${user.user_id}">ลบ</button>
+            </div>
+          `;
+          premiumUsers.append(card);
+        });
+      }
+
+      async function loadPremiumUsers() {
+        const { data, error } = await supabaseClient
+          .from("marketplace_premium_users")
+          .select("*")
+          .order("active", { ascending: false })
+          .order("display_name", { ascending: true });
+
+        if (error) {
+          setMessage(premiumMessage, error.message, true);
+          return;
+        }
+
+        premiumCache = data || [];
+        renderPremiumUsers();
+      }
+
+      function resetProfileFrameForm() {
+        profileFrameForm?.reset();
+        profileFrameFields.id.value = "";
+        profileFrameFields.imageUrl.value = "";
+        profileFrameFields.imagePath.value = "";
+        profileFrameFields.sortOrder.value = "0";
+        profileFrameFields.active.checked = true;
+        profileFramePreview.src = "";
+        profileFramePreview.hidden = true;
+        profileFrameEditorTitle.textContent = "เพิ่มกรอบโปรไฟล์";
+        setMessage(profileFrameMessage, "");
+      }
+
+      function renderProfileFrames() {
+        if (!profileFrameList) return;
+        profileFrameList.innerHTML = "";
+        if (!profileFrameCache.length) {
+          profileFrameList.innerHTML = '<p class="admin-empty">ยังไม่มีกรอบโปรไฟล์</p>';
+          return;
+        }
+
+        profileFrameCache.forEach((frame) => {
+          const card = document.createElement("article");
+          card.className = "admin-item-card";
+          card.innerHTML = `
+            <span class="profile-frame-admin-preview" style="width: 82px; height: 82px; margin: 0;">
+              <img class="profile-frame-preview-avatar" src="assets/site-icons/rooc-icon-192.png" alt="" style="width: 58px; height: 58px;" />
+              <img class="profile-frame-preview-frame" src="${escapeHtml(frame.image_url)}" alt="" />
+            </span>
+            <div>
+              <strong>${escapeHtml(frame.name)}</strong>
+              <span>${frame.active ? "เปิดใช้งาน" : "ปิดใช้งาน"} · ลำดับ ${Number(frame.sort_order || 0)}</span>
+              <small>Premium only</small>
+            </div>
+            <div class="admin-item-actions">
+              <button class="btn btn-small" type="button" data-frame-edit="${escapeHtml(frame.id)}">แก้ไข</button>
+              <button class="btn btn-small admin-delete" type="button" data-frame-delete="${escapeHtml(frame.id)}">ลบ</button>
+            </div>
+          `;
+          profileFrameList.append(card);
+        });
+      }
+
+      async function loadProfileFrames() {
+        if (!profileFrameList) return;
+        const { data, error } = await supabaseClient
+          .from("marketplace_profile_frames")
+          .select("*")
+          .order("sort_order", { ascending: true })
+          .order("name", { ascending: true });
+
+        if (error) {
+          setMessage(profileFrameMessage, error.message, true);
+          return;
+        }
+
+        profileFrameCache = data || [];
+        renderProfileFrames();
+      }
+
+      function editProfileFrame(frameId) {
+        const frame = profileFrameCache.find((entry) => entry.id === frameId);
+        if (!frame) return;
+        profileFrameFields.id.value = frame.id;
+        profileFrameFields.name.value = frame.name || "";
+        profileFrameFields.imageUrl.value = frame.image_url || "";
+        profileFrameFields.imagePath.value = frame.image_path || "";
+        profileFrameFields.sortOrder.value = frame.sort_order || 0;
+        profileFrameFields.active.checked = Boolean(frame.active);
+        profileFramePreview.src = frame.image_url || "";
+        profileFramePreview.hidden = !frame.image_url;
+        profileFrameEditorTitle.textContent = "แก้ไขกรอบโปรไฟล์";
+        setMessage(profileFrameMessage, "");
+        profileFrameForm.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+
+      async function saveProfileFrame(event) {
+        event.preventDefault();
+        const file = profileFrameImage?.files?.[0];
+        let imageUrl = profileFrameFields.imageUrl.value;
+        let imagePath = profileFrameFields.imagePath.value;
+
+        try {
+          if (file) {
+            const uploaded = await uploadImage(file, "profile-frames");
+            imageUrl = uploaded.imageUrl;
+            imagePath = uploaded.imagePath;
+          }
+
+          if (!profileFrameFields.name.value.trim()) {
+            setMessage(profileFrameMessage, "กรุณาใส่ชื่อกรอบ", true);
+            profileFrameFields.name.focus();
+            return;
+          }
+
+          if (!imageUrl) {
+            setMessage(profileFrameMessage, "กรุณาอัปโหลดรูปกรอบ", true);
+            return;
+          }
+
+          const payload = {
+            name: profileFrameFields.name.value.trim(),
+            image_url: imageUrl,
+            image_path: imagePath || null,
+            sort_order: Number(profileFrameFields.sortOrder.value || 0),
+            active: profileFrameFields.active.checked
+          };
+
+          const request = profileFrameFields.id.value
+            ? supabaseClient.from("marketplace_profile_frames").update(payload).eq("id", profileFrameFields.id.value)
+            : supabaseClient.from("marketplace_profile_frames").insert(payload);
+          const { error } = await request;
+          if (error) throw error;
+
+          setMessage(profileFrameMessage, "บันทึกกรอบโปรไฟล์เรียบร้อย");
+          resetProfileFrameForm();
+          await loadProfileFrames();
+        } catch (error) {
+          setMessage(profileFrameMessage, error.message || "บันทึกกรอบไม่สำเร็จ", true);
+        }
+      }
+
+      async function deleteProfileFrame(frameId) {
+        const frame = profileFrameCache.find((entry) => entry.id === frameId);
+        if (!frame || !confirm(`ลบกรอบ "${frame.name}"?`)) return;
+
+        const { error } = await supabaseClient
+          .from("marketplace_profile_frames")
+          .delete()
+          .eq("id", frameId);
+
+        if (error) {
+          setMessage(profileFrameMessage, error.message, true);
+          return;
+        }
+
+        if (frame.image_path) {
+          await supabaseClient.storage.from(bucketName).remove([frame.image_path]);
+        }
+
+        resetProfileFrameForm();
+        await loadProfileFrames();
+      }
+
+      function renderAdminListings() {
+        adminListings.innerHTML = "";
+        adminListingsPagination.innerHTML = "";
+        if (!listingCache.length) {
+          adminListings.innerHTML = '<p class="admin-empty">ยังไม่มีประกาศ</p>';
+          return;
+        }
+
+        const totalPages = Math.max(1, Math.ceil(listingCache.length / adminPageSize));
+        adminListingPage = Math.min(adminListingPage, totalPages);
+        const pageListings = listingCache.slice((adminListingPage - 1) * adminPageSize, adminListingPage * adminPageSize);
+        pageListings.forEach((listing) => {
+          const card = document.createElement("article");
+          card.className = "admin-item-card admin-listing-card";
+          card.innerHTML = `
+            <img src="${escapeHtml(listing.image_url || "assets/category-icons/mvp-c.png")}" alt="" />
+            <div>
+              <strong>${escapeHtml(listing.title || listing.item_name || "ประกาศขาย")}</strong>
+              <span>${escapeHtml(listing.seller_name || "ไม่ระบุผู้ขาย")} · ${escapeHtml(listing.category || "-")} · ${listing.active ? "กำลังแสดง" : "ปิดอยู่"}</span>
+              <small>฿ ${formatListingPrice(listing.price_text)} · ${escapeHtml(listing.server_name || "ทั้งหมด")}</small>
+            </div>
+            <div class="admin-item-actions">
+              <button class="btn btn-small admin-delete" type="button" data-listing-delete="${escapeHtml(listing.id)}">ลบประกาศ</button>
+              ${listing.user_id ? `<button class="btn btn-small admin-ban" type="button" data-user-ban="${escapeHtml(listing.user_id)}">แบนผู้ใช้</button>` : ""}
+            </div>
+          `;
+          adminListings.append(card);
+        });
+        renderAdminPagination(adminListingsPagination, adminListingPage, totalPages, "listing");
+      }
+
+      function renderBannedUsers() {
+        bannedUsers.innerHTML = "";
+        if (!bannedCache.length) {
+          bannedUsers.innerHTML = '<p class="admin-empty">ยังไม่มีผู้ใช้ถูกแบน</p>';
+          return;
+        }
+
+        bannedUsers.innerHTML = `
+          <p class="eyebrow">Banned Users</p>
+          ${bannedCache.map((user) => `
+            <article class="admin-item-card banned-user-card">
+              <img src="assets/category-icons/account-b.png" alt="" />
+              <div>
+                <strong>${escapeHtml(user.display_name || "Banned user")}</strong>
+                <span>${user.active ? "ถูกแบนอยู่" : "ปลดแบนแล้ว"} · ${escapeHtml(user.discord_id || "ไม่มี Discord ID")}</span>
+                <small>${escapeHtml(user.reason || "ไม่ระบุเหตุผล")}</small>
+              </div>
+              <div class="admin-item-actions">
+                <button class="btn btn-small" type="button" data-user-unban="${escapeHtml(user.user_id)}">ปลดแบน</button>
+              </div>
+            </article>
+          `).join("")}
+        `;
+      }
+
+      async function loadAdminListings() {
+        const { data, error } = await supabaseClient
+          .from("marketplace_listings")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(1000);
+        if (error) {
+          setMessage(listingAdminMessage, error.message, true);
+          return;
+        }
+        listingCache = data || [];
+        renderAdminListings();
+      }
+
+      async function loadBannedUsers() {
+        const { data, error } = await supabaseClient
+          .from("marketplace_banned_users")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error) {
+          setMessage(listingAdminMessage, error.message, true);
+          return;
+        }
+        bannedCache = data || [];
+        renderBannedUsers();
+      }
+
+      async function deleteListingAdmin(listingId) {
+        if (!confirm("ลบประกาศนี้ออกจากระบบ?")) return;
+        const { error } = await supabaseClient
+          .from("marketplace_listings")
+          .delete()
+          .eq("id", listingId);
+        if (error) {
+          setMessage(listingAdminMessage, error.message, true);
+          return;
+        }
+        setMessage(listingAdminMessage, "ลบประกาศเรียบร้อย");
+        await loadAdminListings();
+      }
+
+      async function banUserAdmin(userId) {
+        const listing = listingCache.find((entry) => entry.user_id === userId) || {};
+        const reason = prompt(`เหตุผลที่แบน ${listing.seller_name || userId}`, "ละเมิดกติกาซื้อขาย") || "";
+        if (!reason) return;
+        const { error } = await supabaseClient
+          .from("marketplace_banned_users")
+          .upsert({
+            user_id: userId,
+            discord_id: listing.seller_discord_id || "",
+            display_name: listing.seller_name || "",
+            reason,
+            active: true,
+            banned_by: currentSession?.user?.id || null
+          }, { onConflict: "user_id" });
+        if (error) {
+          setMessage(listingAdminMessage, error.message, true);
+          return;
+        }
+        await supabaseClient
+          .from("marketplace_listings")
+          .update({ active: false, sale_status: "closed" })
+          .eq("user_id", userId);
+        setMessage(listingAdminMessage, "แบนผู้ใช้และปิดประกาศทั้งหมดแล้ว");
+        await Promise.all([loadAdminListings(), loadBannedUsers()]);
+      }
+
+      async function unbanUserAdmin(userId) {
+        const { error } = await supabaseClient
+          .from("marketplace_banned_users")
+          .update({ active: false })
+          .eq("user_id", userId);
+        if (error) {
+          setMessage(listingAdminMessage, error.message, true);
+          return;
+        }
+        setMessage(listingAdminMessage, "ปลดแบนผู้ใช้แล้ว");
+        await loadBannedUsers();
+      }
+
+      function editPremiumUser(userId) {
+        const user = premiumCache.find((entry) => entry.user_id === userId);
+        if (!user) return;
+        premiumFields.id.value = user.user_id;
+        premiumFields.userId.value = user.user_id;
+        premiumFields.discordId.value = user.discord_id || "";
+        premiumFields.displayName.value = user.display_name || "";
+        premiumFields.avatarUrl.value = user.avatar_url || "";
+        premiumFields.note.value = user.note || "";
+        premiumFields.active.checked = user.active;
+        setMessage(premiumMessage, "");
+        premiumForm.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+
+      function fillPremiumForm(profile) {
+        premiumFields.id.value = profile.user_id;
+        premiumFields.userId.value = profile.user_id;
+        premiumFields.discordId.value = profile.discord_id || "";
+        premiumFields.displayName.value = profile.display_name || "";
+        premiumFields.avatarUrl.value = profile.avatar_url || "";
+        premiumFields.active.checked = true;
+        if (!premiumFields.note.value) premiumFields.note.value = "เปิดจากการค้นหา Discord";
+      }
+
+      async function savePremiumPayload(payload) {
+        const { error } = await supabaseClient
+          .from("marketplace_premium_users")
+          .upsert(payload, { onConflict: "user_id" });
+
+        if (error) {
+          setMessage(premiumMessage, error.message, true);
+          return;
+        }
+
+        await supabaseClient
+          .from("marketplace_listings")
+          .update({
+            seller_is_premium: payload.active,
+            seller_name: payload.display_name,
+            seller_avatar_url: payload.avatar_url
+          })
+          .eq("user_id", payload.user_id);
+
+        setMessage(premiumMessage, "บันทึก Premium เรียบร้อย");
+        resetPremiumForm();
+        await loadPremiumUsers();
+      }
+
+      async function savePremiumUser(event) {
+        event.preventDefault();
+        setMessage(premiumMessage, "กำลังบันทึก Premium...");
+        await savePremiumPayload({
+          user_id: premiumFields.userId.value.trim(),
+          discord_id: premiumFields.discordId.value.trim(),
+          display_name: premiumFields.displayName.value.trim(),
+          avatar_url: premiumFields.avatarUrl.value.trim(),
+          note: premiumFields.note.value.trim(),
+          active: premiumFields.active.checked
+        });
+      }
+
+      async function grantPremiumFromProfile(profile) {
+        setMessage(premiumMessage, `กำลังเปิด Premium ให้ ${profile.display_name || profile.user_id}...`);
+        await savePremiumPayload({
+          user_id: profile.user_id,
+          discord_id: profile.discord_id || "",
+          display_name: profile.display_name || "",
+          avatar_url: profile.avatar_url || "",
+          note: "เปิดจากการค้นหา Discord",
+          active: true
+        });
+      }
+
+      function renderProfileResults(profiles) {
+        premiumProfileResults = profiles;
+        if (!profiles.length) {
+          premiumSearchResults.innerHTML = '<p class="admin-empty">ไม่พบผู้ใช้ชื่อนี้ ผู้ใช้ต้องเคย Login Discord ก่อนอย่างน้อย 1 ครั้ง</p>';
+          return;
+        }
+
+        premiumSearchResults.innerHTML = profiles.map((profile) => `
+          <article class="premium-search-result">
+            <img src="${escapeHtml(profile.avatar_url || "assets/category-icons/account-b.png")}" alt="" />
+            <div>
+              <strong>${escapeHtml(profile.display_name || "Discord user")}</strong>
+              <span>${escapeHtml(profile.discord_id || "ยังไม่มี Discord ID")}</span>
+              <small>${escapeHtml(profile.user_id)}</small>
+            </div>
+            <button class="btn btn-small btn-premium" type="button" data-grant-premium="${escapeHtml(profile.user_id)}">ให้สิทธิ์</button>
+          </article>
+        `).join("");
+      }
+
+      async function searchPremiumProfiles() {
+        const query = premiumSearchInput.value.trim();
+        if (!query) {
+          premiumSearchResults.innerHTML = '<p class="admin-empty">พิมพ์ชื่อ Discord ก่อนค้นหา</p>';
+          return;
+        }
+
+        premiumSearchResults.innerHTML = '<p class="admin-empty">กำลังค้นหา...</p>';
+        const { data, error } = await supabaseClient
+          .from("marketplace_profiles")
+          .select("*")
+          .ilike("display_name", `%${query}%`)
+          .order("display_name", { ascending: true })
+          .limit(8);
+
+        if (error) {
+          premiumSearchResults.innerHTML = `<p class="admin-empty">${escapeHtml(error.message)}</p>`;
+          return;
+        }
+
+        renderProfileResults(data || []);
+      }
+
+      async function deletePremiumUser(userId) {
+        if (!confirm("ลบสิทธิ์ Premium ของผู้ใช้นี้?")) return;
+        const { error } = await supabaseClient
+          .from("marketplace_premium_users")
+          .delete()
+          .eq("user_id", userId);
+
+        if (error) {
+          setMessage(premiumMessage, error.message, true);
+          return;
+        }
+
+        await supabaseClient
+          .from("marketplace_listings")
+          .update({ seller_is_premium: false })
+          .eq("user_id", userId);
+
+        await loadPremiumUsers();
+      }
+
+      function editItem(id) {
+        const item = itemCache.find((entry) => entry.id === id);
+        if (!item) return;
+
+        fields.id.value = item.id;
+        fields.category.value = item.category;
+        fields.name.value = item.name;
+        fields.price.value = item.price_hint || "";
+        fields.sortOrder.value = item.sort_order || 0;
+        fields.description.value = item.description || "";
+        fields.imageUrl.value = item.image_url || "";
+        fields.imagePath.value = item.image_path || "";
+        fields.active.checked = item.active;
+        itemImagePreview.src = item.image_url;
+        editorMode.textContent = "แก้";
+        editorTitle.textContent = "แก้ไขไอเท็ม";
+        setMessage(editorMessage, "");
+        itemForm.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      async function uploadImage(file, category) {
+        const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
+        const path = `${category}/${Date.now()}-${safeName}`;
+        const { error } = await supabaseClient.storage.from(bucketName).upload(path, file, {
+          cacheControl: "86400",
+          upsert: false
+        });
+
+        if (error) throw error;
+
+        const { data } = supabaseClient.storage.from(bucketName).getPublicUrl(path);
+        return { imageUrl: data.publicUrl, imagePath: path };
+      }
+
+      async function uploadSupportImage(file, type) {
+        const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
+        const path = `site-settings/${type}-${Date.now()}-${safeName}`;
+        const { error } = await supabaseClient.storage.from(bucketName).upload(path, file, {
+          cacheControl: "86400",
+          upsert: false
+        });
+
+        if (error) throw error;
+
+        const { data } = supabaseClient.storage.from(bucketName).getPublicUrl(path);
+        return { imageUrl: data.publicUrl, imagePath: path };
+      }
+
+      function getSupportPayload() {
+        return {
+          announcement_enabled: supportFields.announcementEnabled.checked,
+          announcement_text: supportFields.announcementText.value.trim(),
+          account_listing_enabled: supportFields.accountListingEnabled.checked,
+          donate_enabled: supportFields.donateEnabled.checked,
+          donate_title: supportFields.donateTitle.value.trim(),
+          donate_text: supportFields.donateText.value.trim(),
+          donate_button_label: supportFields.donateButtonLabel.value.trim(),
+          donate_button_url: supportFields.donateButtonUrl.value.trim(),
+          donate_qr_url: supportFields.donateQrUrl.value,
+          donate_qr_path: supportFields.donateQrPath.value,
+          donate_goal_enabled: supportFields.donateGoalEnabled.checked,
+          donate_goal_title: supportFields.donateGoalTitle.value.trim(),
+          donate_goal_text: supportFields.donateGoalText.value.trim(),
+          donate_goal_current: supportFields.donateGoalCurrent.value,
+          donate_goal_target: supportFields.donateGoalTarget.value,
+          donate_goal_button_label: supportFields.donateGoalButtonLabel.value.trim(),
+          donate_goal_url: supportFields.donateGoalUrl.value.trim(),
+          middleman_enabled: supportFields.middlemanEnabled.checked,
+          middleman_title: supportFields.middlemanTitle.value.trim(),
+          middleman_text: supportFields.middlemanText.value.trim(),
+          middleman_button_label: supportFields.middlemanButtonLabel.value.trim(),
+          middleman_button_url: supportFields.middlemanButtonUrl.value.trim(),
+          middleman_qr_url: supportFields.middlemanQrUrl.value,
+          middleman_qr_path: supportFields.middlemanQrPath.value,
+          hero_sponsor_enabled: supportFields.heroSponsorEnabled.checked,
+          hero_sponsor_title: supportFields.heroSponsorTitle.value.trim(),
+          hero_sponsor_text: supportFields.heroSponsorText.value.trim(),
+          hero_sponsor_button_label: supportFields.heroSponsorButtonLabel.value.trim(),
+          hero_sponsor_button_url: supportFields.heroSponsorButtonUrl.value.trim(),
+          hero_sponsor_image_url: supportFields.heroSponsorImageUrl.value,
+          hero_sponsor_image_path: supportFields.heroSponsorImagePath.value
+        };
+      }
+
+      function setSupportForm(settings = {}) {
+        supportFields.announcementEnabled.checked = Boolean(settings.announcement_enabled);
+        supportFields.announcementText.value = settings.announcement_text || "";
+        supportFields.accountListingEnabled.checked = settings.account_listing_enabled !== false;
+        supportFields.donateEnabled.checked = Boolean(settings.donate_enabled);
+        supportFields.donateTitle.value = settings.donate_title || "";
+        supportFields.donateText.value = settings.donate_text || "";
+        supportFields.donateButtonLabel.value = settings.donate_button_label || "";
+        supportFields.donateButtonUrl.value = settings.donate_button_url || "";
+        supportFields.donateQrUrl.value = settings.donate_qr_url || "";
+        supportFields.donateQrPath.value = settings.donate_qr_path || "";
+        supportFields.donateQrPreview.src = settings.donate_qr_url || "assets/site-icons/rooc-icon-192.png";
+        supportFields.donateGoalEnabled.checked = settings.donate_goal_enabled !== false;
+        supportFields.donateGoalTitle.value = settings.donate_goal_title || "";
+        supportFields.donateGoalText.value = settings.donate_goal_text || "";
+        supportFields.donateGoalCurrent.value = settings.donate_goal_current || "";
+        supportFields.donateGoalTarget.value = settings.donate_goal_target || "";
+        supportFields.donateGoalButtonLabel.value = settings.donate_goal_button_label || "";
+        supportFields.donateGoalUrl.value = settings.donate_goal_url || "https://widgets.easydonate.app?w=goal&u=kacamuzqsbaegbgdq3w2ct3j&t=3538844b626beec00859d48a9a1433a7&ts=1781015612021";
+        supportFields.middlemanEnabled.checked = Boolean(settings.middleman_enabled);
+        supportFields.middlemanTitle.value = settings.middleman_title || "";
+        supportFields.middlemanText.value = settings.middleman_text || "";
+        supportFields.middlemanButtonLabel.value = settings.middleman_button_label || "";
+        supportFields.middlemanButtonUrl.value = settings.middleman_button_url || "";
+        supportFields.middlemanQrUrl.value = settings.middleman_qr_url || "";
+        supportFields.middlemanQrPath.value = settings.middleman_qr_path || "";
+        supportFields.middlemanQrPreview.src = settings.middleman_qr_url || "assets/site-icons/rooc-icon-192.png";
+        supportFields.heroSponsorEnabled.checked = Boolean(settings.hero_sponsor_enabled);
+        supportFields.heroSponsorTitle.value = settings.hero_sponsor_title || "";
+        supportFields.heroSponsorText.value = settings.hero_sponsor_text || "";
+        supportFields.heroSponsorButtonLabel.value = settings.hero_sponsor_button_label || "";
+        supportFields.heroSponsorButtonUrl.value = settings.hero_sponsor_button_url || "";
+        supportFields.heroSponsorImageUrl.value = settings.hero_sponsor_image_url || "";
+        supportFields.heroSponsorImagePath.value = settings.hero_sponsor_image_path || "";
+        supportFields.heroSponsorPreview.src = settings.hero_sponsor_image_url || "assets/hero-rooc.png";
+      }
+
+      async function loadSupportSettings() {
+        const { data, error } = await supabaseClient
+          .from("marketplace_site_settings")
+          .select("value")
+          .eq("key", "support_sidebar")
+          .maybeSingle();
+
+        if (error) {
+          setMessage(supportSettingsMessage, error.message, true);
+          return;
+        }
+
+        setSupportForm(data?.value || {});
+      }
+
+      async function saveSupportSettings(event) {
+        event.preventDefault();
+        setMessage(supportSettingsMessage, "กำลังบันทึกแถบข้อความ...");
+
+        try {
+          if (supportFields.donateQrImage.files?.[0]) {
+            const uploaded = await uploadSupportImage(supportFields.donateQrImage.files[0], "donate");
+            supportFields.donateQrUrl.value = uploaded.imageUrl;
+            supportFields.donateQrPath.value = uploaded.imagePath;
+            supportFields.donateQrPreview.src = uploaded.imageUrl;
+          }
+
+          if (supportFields.middlemanQrImage.files?.[0]) {
+            const uploaded = await uploadSupportImage(supportFields.middlemanQrImage.files[0], "middleman");
+            supportFields.middlemanQrUrl.value = uploaded.imageUrl;
+            supportFields.middlemanQrPath.value = uploaded.imagePath;
+            supportFields.middlemanQrPreview.src = uploaded.imageUrl;
+          }
+
+          if (supportFields.heroSponsorImage.files?.[0]) {
+            const uploaded = await uploadSupportImage(supportFields.heroSponsorImage.files[0], "hero-sponsor");
+            supportFields.heroSponsorImageUrl.value = uploaded.imageUrl;
+            supportFields.heroSponsorImagePath.value = uploaded.imagePath;
+            supportFields.heroSponsorPreview.src = uploaded.imageUrl;
+          }
+
+          const { error } = await supabaseClient
+            .from("marketplace_site_settings")
+            .upsert({
+              key: "support_sidebar",
+              value: getSupportPayload(),
+              updated_by: currentSession?.user?.id || null
+            }, { onConflict: "key" });
+
+          if (error) throw error;
+          supportFields.donateQrImage.value = "";
+          supportFields.middlemanQrImage.value = "";
+          supportFields.heroSponsorImage.value = "";
+          setMessage(supportSettingsMessage, "บันทึกแถบข้อความเรียบร้อย");
+        } catch (error) {
+          setMessage(supportSettingsMessage, error.message || "บันทึกไม่สำเร็จ", true);
+        }
+      }
+
+      async function saveItem(event) {
+        event.preventDefault();
+        setMessage(editorMessage, "กำลังบันทึก...");
+
+        try {
+          const { data: userData, error: userError } = await supabaseClient.auth.getUser();
+          if (userError || !userData.user) {
+            setMessage(editorMessage, "Session ไม่ใช่ authenticated กรุณาออกจากระบบแล้ว Login ใหม่", true);
+            return;
+          }
+
+          const file = itemImage.files && itemImage.files[0];
+          let imageUrl = fields.imageUrl.value;
+          let imagePath = fields.imagePath.value;
+
+          if (file) {
+            const uploaded = await uploadImage(file, fields.category.value);
+            imageUrl = uploaded.imageUrl;
+            imagePath = uploaded.imagePath;
+          }
+
+          if (!imageUrl) {
+            setMessage(editorMessage, "กรุณาอัปโหลดรูปไอเท็ม", true);
+            return;
+          }
+
+          const payload = {
+            category: fields.category.value,
+            name: fields.name.value.trim(),
+            image_url: imageUrl,
+            image_path: imagePath || null,
+            price_hint: fields.price.value.trim(),
+            description: fields.description.value.trim(),
+            sort_order: Number(fields.sortOrder.value || 0),
+            active: fields.active.checked
+          };
+
+          const query = fields.id.value
+            ? supabaseClient.from("marketplace_items").update(payload).eq("id", fields.id.value)
+            : supabaseClient.from("marketplace_items").insert(payload);
+
+          const { error } = await query;
+          if (error) throw error;
+
+          setMessage(editorMessage, "บันทึกเรียบร้อย");
+          resetEditor();
+          await loadItems();
+        } catch (error) {
+          setMessage(editorMessage, error.message || "บันทึกไม่สำเร็จ", true);
+        }
+      }
+
+      async function deleteItem(id) {
+        const item = itemCache.find((entry) => entry.id === id);
+        if (!item || !confirm(`ลบ ${item.name}?`)) return;
+
+        const { error } = await supabaseClient.from("marketplace_items").delete().eq("id", id);
+        if (error) {
+          setMessage(editorMessage, error.message, true);
+          return;
+        }
+
+        if (item.image_path) {
+          await supabaseClient.storage.from(bucketName).remove([item.image_path]);
+        }
+
+        await loadItems();
+      }
+
+      function getDiscordIds(session) {
+        const identities = session?.user?.identities || [];
+        return identities
+          .filter((identity) => identity.provider === "discord")
+          .map((identity) => identity.identity_data?.sub || identity.id)
+          .filter(Boolean);
+      }
+
+      function isAdminSession(session) {
+        if (!session) return false;
+        const user = session.user || {};
+        const email = (user.email || user.user_metadata?.email || user.identities?.[0]?.identity_data?.email || "").toLowerCase();
+        return (config.adminUserIds || []).includes(user.id) ||
+          (config.adminEmails || []).map((entry) => entry.toLowerCase()).includes(email) ||
+          getDiscordIds(session).some((id) => (config.adminDiscordIds || []).includes(id));
+      }
+
+      function showApp(session) {
+        currentSession = session;
+        const isAdmin = isAdminSession(session);
+        loginPanel.hidden = true;
+        adminWorkspace.hidden = !isAdmin;
+        logoutButton.hidden = !session;
+        connectionStatus.textContent = isAdmin ? "เชื่อมต่อแล้ว" : session ? "ไม่มีสิทธิ์ Admin" : "พร้อมล็อกอิน";
+        sessionStatusText.textContent = session
+          ? `${session.user.email || session.user.user_metadata?.full_name || "Discord user"} · role: ${isAdmin ? "admin" : "member"}`
+          : "ยังไม่ได้ login";
+        if (session && !isAdmin) {
+          const discordIds = getDiscordIds(session);
+          setMessage(loginMessage, `บัญชีนี้ยังไม่มีสิทธิ์ Admin · Supabase User ID: ${session.user.id}${discordIds.length ? ` · Discord ID: ${discordIds[0]}` : ""}`, true);
+        } else {
+          setMessage(loginMessage, "");
+        }
+        if (isAdmin) {
+          arrangeAdminPanels();
+          loadItems();
+          loadServers();
+          loadDungeons();
+          loadPremiumUsers();
+          loadProfileFrames();
+          loadSupportSettings();
+          loadAdminListings();
+          loadBannedUsers();
+          if (typeof loadCurrentIconsForAdmin === 'function') {
+            loadCurrentIconsForAdmin();
+      
+      // โหลดสถานะการล็อคหมวดหมู่จากฐานข้อมูล
+      async function loadCategoryLockState() {
+        try {
+          const { data, error } = await supabaseClient
+            .from('marketplace_settings')
+            .select('key, value')
+            .in('key', ['category_lock_mvp', 'category_lock_acc', 'category_lock_fashion', 'category_lock_auction']);
+          
+          if (error) throw error;
+          
+          if (data && data.length > 0) {
+            data.forEach(row => {
+              const category = row.key.replace('category_lock_', '');
+              categoryLockState[category] = row.value === 'true' || row.value === true;
+            });
+          }
+          
+          updateLockButtonUI();
+        } catch (err) {
+          console.error('Error loading category lock state:', err);
+        }
+      }
+      
+      // อัปเดต UI ของปุ่มล็อค
+      function updateLockButtonUI() {
+        Object.entries(categoryLockState).forEach(([category, isLocked]) => {
+          const button = document.getElementById(`toggle-lock-${category}`);
+          const statusSpan = document.getElementById(`lock-status-${category}`);
+          if (button && statusSpan) {
+            if (isLocked) {
+              button.textContent = '🔓 ปลดล็อค';
+              button.classList.add('btn-danger');
+              statusSpan.textContent = '🔒 ล็อคอยู่';
+            } else {
+              button.textContent = '🔒 ล็อค';
+              button.classList.remove('btn-danger');
+              statusSpan.textContent = '✅ ปลดล็อค';
+            }
+          }
+        });
+      }
+      
+      // ฟังก์ชันสลับสถานะล็อค
+      async function toggleCategoryLock(category) {
+        const isCurrentlyLocked = categoryLockState[category];
+        const newLockState = !isCurrentlyLocked;
+        
+        try {
+          const { error } = await supabaseClient
+            .from('marketplace_settings')
+            .upsert(
+              { key: `category_lock_${category}`, value: newLockState ? 'true' : 'false' },
+              { onConflict: 'key' }
+            );
+          
+          if (error) throw error;
+          
+          categoryLockState[category] = newLockState;
+          updateLockButtonUI();
+          
+          // รีโหลด Icon เพื่ออัปเดตสถานะบนหน้าแรก
+          if (typeof window.ROOC_LOAD_ICONS === 'function') {
+            await window.ROOC_LOAD_ICONS();
+          }
+        } catch (err) {
+          alert('เกิดข้อผิดพลาด: ' + err.message);
+        }
+      }
+      
+      // เพิ่ม Event Listener ให้ปุ่มล็อค
+      lockButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const category = button.dataset.category;
+          toggleCategoryLock(category);
+        });
+      });
+      
+      loadCategoryLockState(); // โหลดไอคอนปัจจุบันเมื่อเข้า Admin
+          }
+        } else if (!session) {
+          window.location.replace("login.html");
+        }
+      }
+
+      if (!hasConfig) {
+        setupPanel.hidden = false;
+        loginPanel.hidden = true;
+        connectionStatus.textContent = "ยังไม่ได้ตั้งค่า";
+      } else {
+        supabaseClient.auth.getSession().then(({ data }) => showApp(data.session));
+        supabaseClient.auth.onAuthStateChange((_event, session) => showApp(session));
+      }
+
+      loginForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        setMessage(loginMessage, "กำลังพาไป Discord...");
+        const { error } = await supabaseClient.auth.signInWithOAuth({
+          provider: "discord",
+          options: {
+            redirectTo: new URL("admin.html", location.href).href
+          }
+        });
+        setMessage(loginMessage, error ? error.message : "", Boolean(error));
+      });
+
+      logoutButton.addEventListener("click", () => supabaseClient.auth.signOut());
+      itemForm.addEventListener("submit", saveItem);
+      serverForm.addEventListener("submit", saveServer);
+      dungeonForm.addEventListener("submit", saveDungeon);
+      premiumForm.addEventListener("submit", savePremiumUser);
+      supportSettingsForm.addEventListener("submit", saveSupportSettings);
+      serverResetButton.addEventListener("click", resetServerForm);
+      dungeonResetButton.addEventListener("click", resetDungeonForm);
+      premiumResetButton.addEventListener("click", resetPremiumForm);
+      premiumSearchButton.addEventListener("click", searchPremiumProfiles);
+
+      // Icon Manager Listeners
+      iconInputs.forEach(input => {
+        input.addEventListener('change', (e) => {
+          const type = e.target.dataset.iconType;
+          const file = e.target.files[0];
+          if (file) {
+            iconFiles[type] = file;
+            const previewId = `preview-${type}`;
+            const previewEl = document.getElementById(previewId);
+            if (previewEl) {
+              if (previewEl.tagName === 'IMG') {
+                previewEl.src = URL.createObjectURL(file);
+              } else {
+                previewEl.innerHTML = `<img src="${URL.createObjectURL(file)}" style="max-width: 32px; max-height: 32px;" />`;
+              }
+            }
+          }
+        });
+      });
+
+      // ใช้ฟังก์ชันโหลดไอคอนกลางจาก supabase-config.js
+      async function loadCurrentIconsForAdmin() {
+        if (typeof window.ROOC_LOAD_ICONS === 'function') {
+          await window.ROOC_LOAD_ICONS();
+          
+          // เพิ่มการดึงค่า lock-icon มาแสดงในพรีวิวหน้า Admin
+          try {
+            const { data } = await supabaseClient
+              .from('marketplace_settings')
+              .select('value')
+              .eq('key', 'lock-icon')
+              .single();
+            
+            if (data && data.value) {
+              const previewEl = document.getElementById('preview-lock-icon');
+              if (previewEl) {
+                previewEl.src = data.value + '?t=' + Date.now();
+              }
+            }
+          } catch (e) { console.log("No lock icon set yet"); }
+        } else {
+          setTimeout(loadCurrentIconsForAdmin, 500);
+        }
+      }
+
+      if (saveIconsBtn) {
+        saveIconsBtn.addEventListener('click', async () => {
+          if (Object.keys(iconFiles).length === 0) {
+            setMessage(iconManagerMessage, "กรุณาเลือกไฟล์ที่ต้องการเปลี่ยนก่อน", true);
+            return;
+          }
+
+          saveIconsBtn.disabled = true;
+          saveIconsBtn.textContent = "⏳ กำลังอัปโหลด...";
+          setMessage(iconManagerMessage, "กำลังอัปโหลดไอคอน...");
+
+          try {
+            const results = [];
+            for (const [type, file] of Object.entries(iconFiles)) {
+              const fileName = `site_assets/${type}_${Date.now()}.${file.name.split('.').pop()}`;
+              const { data, error } = await supabaseClient.storage
+                .from('marketplace-assets')
+                .upload(fileName, file, { upsert: true });
+
+              if (error) throw error;
+
+              const { data: { publicUrl } } = supabaseClient.storage
+                .from('marketplace-assets')
+                .getPublicUrl(fileName);
+              
+              results.push({ type, url: publicUrl });
+            }
+
+            // บันทึกลงตาราง marketplace_settings
+            const { error: settingsError } = await supabaseClient
+              .from('marketplace_settings')
+              .upsert(results.map(r => ({ 
+                key: r.type === 'lock-icon' ? 'lock-icon' : `icon_${r.type}`, 
+                value: r.url 
+              })), { onConflict: 'key' });
+
+            if (settingsError) throw settingsError;
+
+            setMessage(iconManagerMessage, "บันทึกไอคอนเรียบร้อยแล้ว! ระบบจะเริ่มใช้ไอคอนใหม่ทันที");
+            iconFiles = {}; // Clear files
+            if (typeof loadCurrentIconsForAdmin === 'function') {
+              await loadCurrentIconsForAdmin(); // โหลดไอคอนล่าสุดมาแสดง
+            }
+            
+            // รีโหลด Icon เพื่ออัปเดตสถานะบนหน้าแรก
+            if (typeof window.ROOC_LOAD_ICONS === 'function') {
+              await window.ROOC_LOAD_ICONS();
+            }
+          } catch (err) {
+            setMessage(iconManagerMessage, "เกิดข้อผิดพลาด: " + err.message, true);
+          } finally {
+            saveIconsBtn.disabled = false;
+            saveIconsBtn.textContent = "💾 บันทึกการเปลี่ยนแปลงไอคอน";
+          }
+        });
+      }
+
+      premiumSearchInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          searchPremiumProfiles();
+        }
+      });
+      resetFormButton.addEventListener("click", resetEditor);
+      adminCategoryFilter.addEventListener("change", () => {
+        adminItemPage = 1;
+        renderItems();
+      });
+      itemImage.addEventListener("change", () => {
+        const file = itemImage.files && itemImage.files[0];
+        if (file) itemImagePreview.src = URL.createObjectURL(file);
+      });
+      supportFields.donateQrImage.addEventListener("change", () => {
+        const file = supportFields.donateQrImage.files && supportFields.donateQrImage.files[0];
+        if (file) supportFields.donateQrPreview.src = URL.createObjectURL(file);
+      });
+      supportFields.middlemanQrImage.addEventListener("change", () => {
+        const file = supportFields.middlemanQrImage.files && supportFields.middlemanQrImage.files[0];
+        if (file) supportFields.middlemanQrPreview.src = URL.createObjectURL(file);
+      });
+      supportFields.heroSponsorImage.addEventListener("change", () => {
+        const file = supportFields.heroSponsorImage.files && supportFields.heroSponsorImage.files[0];
+        if (file) supportFields.heroSponsorPreview.src = URL.createObjectURL(file);
+      });
+      profileFrameImage?.addEventListener("change", () => {
+        const file = profileFrameImage.files && profileFrameImage.files[0];
+        if (file) {
+          profileFramePreview.src = URL.createObjectURL(file);
+          profileFramePreview.hidden = false;
+        }
+      });
+      profileFrameForm?.addEventListener("submit", saveProfileFrame);
+      profileFrameResetButton?.addEventListener("click", resetProfileFrameForm);
+      profileFrameList?.addEventListener("click", (event) => {
+        const editId = event.target.dataset.frameEdit;
+        const deleteId = event.target.dataset.frameDelete;
+        if (editId) editProfileFrame(editId);
+        if (deleteId) deleteProfileFrame(deleteId);
+      });
+      adminItems.addEventListener("click", (event) => {
+        const editId = event.target.dataset.edit;
+        const deleteId = event.target.dataset.delete;
+        if (editId) editItem(editId);
+        if (deleteId) deleteItem(deleteId);
+      });
+      adminItemsPagination.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-page-type]");
+        if (!button || button.disabled) return;
+        adminItemPage += button.dataset.pageDir === "next" ? 1 : -1;
+        renderItems();
+      });
+      adminServers.addEventListener("click", (event) => {
+        const editId = event.target.dataset.serverEdit;
+        const deleteId = event.target.dataset.serverDelete;
+        if (editId) editServer(editId);
+        if (deleteId) deleteServer(deleteId);
+      });
+      adminServersPagination.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-page-type]");
+        if (!button || button.disabled) return;
+        adminServerPage += button.dataset.pageDir === "next" ? 1 : -1;
+        renderServers();
+      });
+      adminDungeons.addEventListener("click", (event) => {
+        const editId = event.target.dataset.dungeonEdit;
+        const deleteId = event.target.dataset.dungeonDelete;
+        if (editId) editDungeon(editId);
+        if (deleteId) deleteDungeon(deleteId);
+      });
+      adminDungeonsPagination.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-page-type]");
+        if (!button || button.disabled) return;
+        adminDungeonPage += button.dataset.pageDir === "next" ? 1 : -1;
+        renderDungeons();
+      });
+      refreshAdminListings.addEventListener("click", () => {
+        adminListingPage = 1;
+        loadAdminListings();
+        loadBannedUsers();
+      });
+      adminListings.addEventListener("click", (event) => {
+        const deleteId = event.target.dataset.listingDelete;
+        const banId = event.target.dataset.userBan;
+        if (deleteId) deleteListingAdmin(deleteId);
+        if (banId) banUserAdmin(banId);
+      });
+      adminListingsPagination.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-page-type]");
+        if (!button || button.disabled) return;
+        adminListingPage += button.dataset.pageDir === "next" ? 1 : -1;
+        renderAdminListings();
+      });
+      bannedUsers.addEventListener("click", (event) => {
+        const userId = event.target.dataset.userUnban;
+        if (userId) unbanUserAdmin(userId);
+      });
+      premiumUsers.addEventListener("click", (event) => {
+        const editId = event.target.dataset.premiumEdit;
+        const deleteId = event.target.dataset.premiumDelete;
+        if (editId) editPremiumUser(editId);
+        if (deleteId) deletePremiumUser(deleteId);
+      });
+      premiumSearchResults.addEventListener("click", (event) => {
+        const grantId = event.target.dataset.grantPremium;
+        if (!grantId) return;
+        const profile = premiumProfileResults.find((entry) => entry.user_id === grantId);
+        if (profile) grantPremiumFromProfile(profile);
+      });
+
+      // Admin Tabs Navigation
+      document.querySelectorAll(".admin-tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          const tabName = tab.dataset.tab;
+          // Hide all tab contents
+          document.querySelectorAll(".admin-tab-content").forEach((content) => {
+            content.classList.remove("is-active");
+          });
+          // Remove active class from all tabs
+          document.querySelectorAll(".admin-tab").forEach((t) => {
+            t.classList.remove("is-active");
+          });
+          // Show selected tab content
+          const selectedContent = document.querySelector(`[data-tab-content="${tabName}"]`);
+          if (selectedContent) selectedContent.classList.add("is-active");
+          tab.classList.add("is-active");
+        });
+      });
+
+      // Update Dashboard Stats
+      function updateDashboardStats() {
+        const totalListings = listingCache.length;
+        const activeListings = listingCache.filter((l) => l.sale_status !== "deleted" && l.sale_status !== "sold").length;
+        const bannedUsers = bannedCache.length;
+        const premiumUsers = premiumCache.filter((u) => u.active).length;
+
+        document.getElementById("totalListingsCount").textContent = totalListings.toLocaleString("th-TH");
+        document.getElementById("activeListingsCount").textContent = activeListings.toLocaleString("th-TH");
+        document.getElementById("bannedUsersCount").textContent = bannedUsers.toLocaleString("th-TH");
+        document.getElementById("premiumUsersCount").textContent = premiumUsers.toLocaleString("th-TH");
+      }
+
+      // Dashboard Refresh Button
+      document.getElementById("dashboardRefreshBtn")?.addEventListener("click", async () => {
+        const btn = document.getElementById("dashboardRefreshBtn");
+        btn.disabled = true;
+        btn.textContent = "🔄 กำลังรีเฟรช...";
+        await Promise.all([loadItems(), loadServers(), loadDungeons(), loadAdminListings(), loadBannedUsers(), loadPremiumUsers(), loadProfileFrames()]);
+        updateDashboardStats();
+        btn.disabled = false;
+        btn.textContent = "🔄 รีเฟรชข้อมูล";
+      });
+
+      // Update dashboard stats when data loads
+      const originalLoadAdminListings = loadAdminListings;
+      loadAdminListings = async function() {
+        await originalLoadAdminListings();
+        updateDashboardStats();
+      };
+
+      const originalLoadBannedUsers = loadBannedUsers;
+      loadBannedUsers = async function() {
+        await originalLoadBannedUsers();
+        updateDashboardStats();
+      };
+
+      const originalLoadPremiumUsers = loadPremiumUsers;
+      loadPremiumUsers = async function() {
+        await originalLoadPremiumUsers();
+        updateDashboardStats();
+      };
+
+      // =====================================================
+      // Visitor Stats Dashboard
+      // =====================================================
+
+      let visitorsChart = null;
+      let viewsChart = null;
+      let visitorDailyData = [];
+      let visitorMonthlyData = [];
+      let currentChartPeriod = "daily";
+
+      function formatThaiMonth(dateStr) {
+        if (!dateStr) return "-";
+        const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
+          "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+        let d = new Date(dateStr);
+        const dateMatch = String(dateStr).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (dateMatch) {
+          const y = parseInt(dateMatch[1]);
+          const m = parseInt(dateMatch[2]) - 1;
+          return (months[m] || "-") + " " + (y + 543).toString().slice(2);
+        }
+        if (!isNaN(d.getTime())) {
+          return months[d.getMonth()] + " " + (d.getFullYear() + 543).toString().slice(2);
+        }
+        return dateStr;
+      }
+
+      function formatThaiDate(dateStr) {
+        if (!dateStr) return "-";
+        const dateMatch = String(dateStr).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (dateMatch) {
+          return parseInt(dateMatch[3]) + "/" + parseInt(dateMatch[2]);
+        }
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) {
+          return d.getDate() + "/" + (d.getMonth() + 1);
+        }
+        return dateStr;
+      }
+
+      function getChartColors(isDark) {
+        return {
+          visitors: isDark ? "rgba(85, 184, 255, 0.8)" : "rgba(23, 125, 220, 0.8)",
+          views: isDark ? "rgba(69, 214, 149, 0.8)" : "rgba(24, 166, 106, 0.8)",
+          grid: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
+          text: isDark ? "#9fb3c8" : "#637386"
+        };
+      }
+
+      function renderVisitorChart(period) {
+        const visitorsCanvas = document.getElementById("visitorsChart");
+        const viewsCanvas = document.getElementById("viewsChart");
+        if (!visitorsCanvas || !viewsCanvas) return;
+
+        const isDark = document.documentElement.dataset.theme === "dark";
+        const colors = getChartColors(isDark);
+
+        const data = period === "daily" ? visitorDailyData : visitorMonthlyData;
+        const labels = data.map((row) => {
+          const dateVal = row.stat_date || row.stat_month || row.date || row.month || Object.values(row)[0];
+          return period === "daily" ? formatThaiDate(dateVal) : formatThaiMonth(dateVal);
+        });
+        const visitorsData = data.map((row) => Number(row.unique_visitors || row.visitors || 0));
+        const viewsData = data.map((row) => Number(row.total_views || row.views || 0));
+
+        if (visitorsChart) visitorsChart.destroy();
+        if (viewsChart) viewsChart.destroy();
+
+        const commonOptions = {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: isDark ? "#101b2a" : "#fff",
+              titleColor: isDark ? "#f4f9ff" : "#102033",
+              bodyColor: isDark ? "#9fb3c8" : "#637386",
+              borderColor: isDark ? "#263a50" : "#dce8ef",
+              borderWidth: 1
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: colors.text, font: { size: 10 }, maxTicksLimit: 8 }
+            },
+            y: {
+              beginAtZero: true,
+              grid: { color: colors.grid, drawBorder: false },
+              ticks: { color: colors.text, font: { size: 10 }, precision: 0 }
+            }
+          }
+        };
+
+        visitorsChart = new Chart(visitorsCanvas, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [{
+              label: "ผู้เข้าชม",
+              data: visitorsData,
+              backgroundColor: colors.visitors,
+              borderRadius: 4
+            }]
+          },
+          options: commonOptions
+        });
+
+        viewsChart = new Chart(viewsCanvas, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [{
+              label: "ยอดวิว",
+              data: viewsData,
+              backgroundColor: colors.views,
+              borderRadius: 4
+            }]
+          },
+          options: commonOptions
+        });
+      }
+
+      async function loadVisitorStats() {
+        const loading = document.getElementById("visitorStatsLoading");
+        const content = document.getElementById("visitorStatsContent");
+        const errorEl = document.getElementById("visitorStatsError");
+
+        loading.hidden = false;
+        content.hidden = true;
+        errorEl.hidden = true;
+
+        try {
+          // โหลด summary, daily, monthly พร้อมกัน
+          const [summaryResult, dailyResult, monthlyResult] = await Promise.all([
+            supabaseClient.rpc("get_visitor_summary"),
+            supabaseClient.rpc("get_daily_visitor_stats", { p_days: 30 }),
+            supabaseClient.rpc("get_monthly_visitor_stats", { p_months: 12 })
+          ]);
+
+          if (summaryResult.error) throw summaryResult.error;
+          if (dailyResult.error) throw dailyResult.error;
+          if (monthlyResult.error) throw monthlyResult.error;
+
+          const summary = summaryResult.data?.[0] || {};
+          visitorDailyData = dailyResult.data || [];
+          visitorMonthlyData = monthlyResult.data || [];
+
+          // อัปเดต summary cards
+          const fmt = (n) => Number(n || 0).toLocaleString("th-TH");
+          document.getElementById("vsTodayVisitors").textContent = fmt(summary.today_visitors);
+          document.getElementById("vsTodayViews").textContent = fmt(summary.today_views) + " pageviews";
+          document.getElementById("vsThisMonthVisitors").textContent = fmt(summary.this_month_visitors);
+          document.getElementById("vsThisMonthViews").textContent = fmt(summary.this_month_views) + " pageviews";
+          document.getElementById("vsLastMonthVisitors").textContent = fmt(summary.last_month_visitors);
+          document.getElementById("vsLastMonthViews").textContent = fmt(summary.last_month_views) + " pageviews";
+          document.getElementById("vsTotalVisitors").textContent = fmt(summary.total_visitors);
+          document.getElementById("vsTotalViews").textContent = fmt(summary.total_views) + " pageviews";
+
+          loading.hidden = true;
+          content.hidden = false;
+
+          // render chart
+          renderVisitorChart(currentChartPeriod);
+
+        } catch (err) {
+          loading.hidden = true;
+          errorEl.hidden = false;
+          errorEl.textContent = "โหลดสถิติไม่สำเร็จ: " + (err.message || String(err));
+          console.error("Visitor stats error:", err);
+        }
+      }
+
+      // Chart period tab switching
+      document.querySelectorAll(".visitor-chart-tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".visitor-chart-tab").forEach((t) => t.classList.remove("is-active"));
+          tab.classList.add("is-active");
+          currentChartPeriod = tab.dataset.chartPeriod;
+          renderVisitorChart(currentChartPeriod);
+        });
+      });
+
+      // โหลดสถิติเมื่อ admin เข้าสู่ระบบ
+      const originalShowApp = showApp;
+      // ใช้ wrapper ผ่าน event แทน เพราะ showApp ถูก define ก่อนหน้า
+      // โหลดสถิติเมื่อ admin workspace แสดงผล
+      const visitorObserver = new MutationObserver(() => {
+        if (!adminWorkspace.hidden) {
+          visitorObserver.disconnect();
+          loadVisitorStats();
+        }
+      });
+      visitorObserver.observe(adminWorkspace, { attributes: true, attributeFilter: ["hidden"] });
+
+      // Dashboard refresh รวม visitor stats ด้วย
+      const origDashboardRefresh = document.getElementById("dashboardRefreshBtn");
+      origDashboardRefresh?.addEventListener("click", () => {
+        loadVisitorStats();
+      }, { capture: true });
+
+      window.ROOC_APP?.initTheme();
+    </script>
+  </body>
+</html>

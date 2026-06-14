@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Premium และสิทธิพิเศษ | ROOC Market TH" />
+    <title>Premium | ROOC Market TH</title>
+    <link rel="icon" type="image/png" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
+    <link rel="apple-touch-icon" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js?v=20260614-logo-cache"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="shell nav">
+        <a class="brand" href="index.html" aria-label="ROOC Market TH">
+          <span class="brand-mark"><img src="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" alt="" /></span>
+          <span>
+            <strong>ROOC Market</strong>
+            <small>Thailand Marketplace</small>
+          </span>
+        </a>
+
+        <div class="nav-links" aria-label="เมนูหลัก">
+          <a href="index.html#market">ตลาด</a>
+          
+          <a href="post.html">ลงประกาศ</a>
+          <a class="my-listings-link" href="store.html" hidden>ร้านค้าของฉัน</a>
+          <a class="admin-link" href="admin.html" hidden>Admin</a>
+        </div>
+
+        <div class="nav-actions">
+          <label class="theme-switch" aria-label="สลับโหมดสว่างและมืด">
+            <input id="themeToggle" type="checkbox" />
+            <span class="switch-track">
+              <span class="switch-ball"></span>
+            </span>
+          </label>
+          <a class="btn btn-light auth-link" href="login.html?redirect=premium.html">เข้าสู่ระบบ</a>
+          <a class="btn btn-primary" href="post.html">ลงประกาศ</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="shell premium-page">
+      <section class="premium-hero">
+        <p class="premium-pill">Premium</p>
+        <h1>ขายได้มากขึ้น เห็นก่อน และจัดการประกาศง่ายกว่า</h1>
+        <p>อัปเกรดครั้งเดียว ไม่มีรายเดือน ไม่มีต่ออายุ จ่ายครั้งเดียวและใช้สิทธิพิเศษได้ถาวร</p>
+      </section>
+
+      <section class="premium-plans" aria-label="แพ็กเกจ Premium">
+        <article class="plan-card">
+          <span>Free</span>
+          <h2>฿0</h2>
+          <p>สำหรับผู้ใช้ทั่วไป</p>
+          <ul>
+            <li>โควต้าลงประกาศ 2 ครั้ง</li>
+            <li>ประกาศหมดอายุใน 2 วัน</li>
+            <li class="is-muted">ไม่มีมงกุฎ Premium บนประกาศ</li>
+            <li class="is-muted">ไม่มีตำแหน่งประกาศแนะนำ</li>
+            <li class="is-muted">ไม่ถูกดันก่อนในรายการล่าสุด</li>
+          </ul>
+        </article>
+
+        <article class="plan-card is-premium">
+          <span>Premium <em>One-time</em></span>
+          <h2>฿89 <del>฿100</del></h2>
+          <p>จ่ายครั้งเดียว เก็บสิทธิ์ถาวร</p>
+          <ul>
+            <li>โควต้าลงประกาศ 5 ครั้ง</li>
+            <li>ประกาศหมดอายุใน 7 วัน</li>
+            <li>มงกุฎ Premium บนประกาศ</li>
+            <li>ประกาศ Premium ถูกดันก่อนในรายการล่าสุด</li>
+            <li>✨ เลือกพื้นหลังการ์ด Pixel Art ได้ 5 แบบ</li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="upgrade-card">
+        <h2>วิธีอัปเกรด</h2>
+        <ol>
+          <li><strong>เข้า Discord Server</strong><span>เข้าห้อง Community ของ ROOC Market TH</span></li>
+          <li><strong>เปิด Ticket อัปเกรด</strong><span>แจ้งชื่อ Discord และชื่อตัวละครหลัก</span></li>
+          <li><strong>ชำระเงินและส่งสลิป</strong><span>จ่าย ฿89 แล้วส่งหลักฐานให้แอดมินตรวจสอบ</span></li>
+          <li><strong>เปิดสิทธิ์ Premium</strong><span>เมื่อยืนยันแล้ว สิทธิ์ Premium จะถูกเปิดให้บัญชี Discord ของคุณ</span></li>
+        </ol>
+      </section>
+
+      <section class="premium-status-card" id="premiumStatusCard">
+        <h2>สถานะบัญชีของฉัน</h2>
+        <p id="premiumStatusText">เข้าสู่ระบบด้วย Discord เพื่อตรวจสอบสถานะ Premium</p>
+        <div class="premium-id-box" id="premiumUserBox" hidden>
+          <span>Supabase User ID</span>
+          <strong id="premiumUserId">-</strong>
+        </div>
+      </section>
+
+      <div class="premium-cta">
+        <a class="btn btn-premium" href="#">ไปอัปเกรด Premium ฿89</a>
+      </div>
+    </main>
+
+    <script>
+      window.ROOC_APP?.initTheme();
+
+      const app = window.ROOC_APP || {};
+      const config = app.config || window.ROOC_SUPABASE || {};
+      const supabaseClient = app.getSupabaseClient?.() || null;
+      const canUseSupabase = Boolean(supabaseClient);
+      const premiumStatusText = document.querySelector("#premiumStatusText");
+      const premiumUserBox = document.querySelector("#premiumUserBox");
+      const premiumUserId = document.querySelector("#premiumUserId");
+
+      async function syncPremiumStatus() {
+        if (!supabaseClient) return;
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+        const session = sessionData.session;
+        if (!session) {
+          premiumStatusText.textContent = "ยังไม่ได้เข้าสู่ระบบ";
+          premiumUserBox.hidden = true;
+          return;
+        }
+
+        premiumUserBox.hidden = false;
+        premiumUserId.textContent = session.user.id;
+        const { data } = await supabaseClient
+          .from("marketplace_premium_users")
+          .select("active")
+          .eq("user_id", session.user.id)
+          .eq("active", true)
+          .maybeSingle();
+        premiumStatusText.textContent = data?.active ? "บัญชีนี้เป็น Premium แล้ว" : "บัญชีนี้ยังไม่ได้เปิด Premium";
+      }
+
+      syncPremiumStatus();
+    </script>
+  </body>
+</html>
