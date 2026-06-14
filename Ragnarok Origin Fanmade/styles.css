@@ -2077,14 +2077,26 @@ h1 {
   gap: 8px;
   align-items: center;
   width: 100%;
+  min-width: 0;
 }
 
 .listing-card-actions .btn {
   flex: 1;
+  min-width: 0;
   min-height: 40px;
-  padding-inline: 8px;
-  font-size: 13px;
+  padding-inline: 5px;
+  overflow: hidden;
+  font-size: 12px;
   font-weight: 400;
+  white-space: nowrap;
+}
+
+.listing-card-actions .chat-seller-button {
+  flex-grow: 0.72;
+}
+
+.listing-card-actions .contact-seller-button {
+  flex-grow: 1.25;
 }
 
 .seller-facebook-btn {
