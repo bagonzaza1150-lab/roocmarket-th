@@ -1862,6 +1862,69 @@ window.ROOC_SUPABASE = {
   let activeChatSession = null;
   let activeChatChannel = null;
   let chatNotificationChannel = null;
+  let activeChatParticipants = null;
+
+  function getChatParticipant(own) {
+    const fallback = {
+      name: own ? getDiscordDisplayName(activeChatSession) : "คู่สนทนา",
+      avatar: "assets/category-icons/account-b.png"
+    };
+    return (own ? activeChatParticipants?.own : activeChatParticipants?.partner) || fallback;
+  }
+
+  async function loadChatParticipants(room, session) {
+    const ownIsBuyer = session.user.id === room.buyer_user_id;
+    const partnerId = ownIsBuyer ? room.seller_user_id : room.buyer_user_id;
+    const participants = {
+      own: {
+        name: getDiscordDisplayName(session),
+        avatar: getDiscordAvatarUrl(session) || "assets/category-icons/account-b.png"
+      },
+      partner: {
+        name: (ownIsBuyer ? room.seller_name : room.buyer_name) || "คู่สนทนา",
+        avatar: "assets/category-icons/account-b.png"
+      }
+    };
+
+    const { data: profile } = await supabaseClient
+      .from("marketplace_profiles")
+      .select("display_name,avatar_url")
+      .eq("user_id", partnerId)
+      .maybeSingle();
+    if (profile) {
+      participants.partner.name = profile.display_name || participants.partner.name;
+      participants.partner.avatar = profile.avatar_url || participants.partner.avatar;
+    }
+
+    if (participants.partner.avatar === "assets/category-icons/account-b.png" && room.listing_id) {
+      if (partnerId === room.seller_user_id) {
+        const { data: listing } = await supabaseClient
+          .from("marketplace_listings")
+          .select("seller_name,seller_avatar_url")
+          .eq("id", room.listing_id)
+          .maybeSingle();
+        if (listing) {
+          participants.partner.name = listing.seller_name || participants.partner.name;
+          participants.partner.avatar = listing.seller_avatar_url || participants.partner.avatar;
+        }
+      } else {
+        const { data: offer } = await supabaseClient
+          .from("marketplace_listing_offers")
+          .select("buyer_display_name,buyer_avatar_url")
+          .eq("listing_id", room.listing_id)
+          .eq("buyer_user_id", partnerId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (offer) {
+          participants.partner.name = offer.buyer_display_name || participants.partner.name;
+          participants.partner.avatar = offer.buyer_avatar_url || participants.partner.avatar;
+        }
+      }
+    }
+
+    return participants;
+  }
 
   function ensureChatModal() {
     let modal = document.querySelector("#marketChatModal");
@@ -1917,16 +1980,21 @@ window.ROOC_SUPABASE = {
 
     container.innerHTML = messages.map((message) => {
       const own = message.sender_user_id === activeChatSession.user.id;
+      const participant = getChatParticipant(own);
       const readAt = activeChatSession.user.id === activeChatRoom?.buyer_user_id
         ? activeChatRoom?.seller_last_read_at
         : activeChatRoom?.buyer_last_read_at;
       const isRead = own && readAt && new Date(readAt) >= new Date(message.created_at);
       return `
         <div class="market-chat-message${own ? " is-own" : ""}" data-chat-message-id="${escapeHtml(message.id || "")}">
-          <p>${escapeHtml(message.message)}</p>
-          <span class="market-chat-meta">
-            <time>${new Date(message.created_at).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" })}</time>
-            ${own ? `<span class="market-chat-read-status${isRead ? " is-read" : ""}">${isRead ? "อ่านแล้ว" : "ส่งแล้ว"}</span>` : ""}
+          <img class="market-chat-message-avatar" src="${escapeHtml(participant.avatar)}" alt="" loading="lazy" />
+          <span class="market-chat-message-content">
+            <strong class="market-chat-sender">${escapeHtml(participant.name)}</strong>
+            <p>${escapeHtml(message.message)}</p>
+            <span class="market-chat-meta">
+              <time>${new Date(message.created_at).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" })}</time>
+              ${own ? `<span class="market-chat-read-status${isRead ? " is-read" : ""}">${isRead ? "อ่านแล้ว" : "ส่งแล้ว"}</span>` : ""}
+            </span>
           </span>
         </div>
       `;
@@ -1943,11 +2011,16 @@ window.ROOC_SUPABASE = {
     const element = document.createElement("div");
     element.className = "market-chat-message is-own";
     element.dataset.chatMessageId = String(message.id);
+    const participant = getChatParticipant(true);
     element.innerHTML = `
-      <p>${escapeHtml(message.message || "")}</p>
-      <span class="market-chat-meta">
-        <time>${new Date(message.created_at || Date.now()).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" })}</time>
-        <span class="market-chat-read-status">ส่งแล้ว</span>
+      <img class="market-chat-message-avatar" src="${escapeHtml(participant.avatar)}" alt="" loading="lazy" />
+      <span class="market-chat-message-content">
+        <strong class="market-chat-sender">${escapeHtml(participant.name)}</strong>
+        <p>${escapeHtml(message.message || "")}</p>
+        <span class="market-chat-meta">
+          <time>${new Date(message.created_at || Date.now()).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" })}</time>
+          <span class="market-chat-read-status">ส่งแล้ว</span>
+        </span>
       </span>
     `;
     container.appendChild(element);
@@ -2050,6 +2123,16 @@ window.ROOC_SUPABASE = {
   async function openChatRoom(room, session) {
     activeChatRoom = room;
     activeChatSession = session;
+    activeChatParticipants = await loadChatParticipants(room, session).catch(() => ({
+      own: {
+        name: getDiscordDisplayName(session),
+        avatar: getDiscordAvatarUrl(session) || "assets/category-icons/account-b.png"
+      },
+      partner: {
+        name: session.user.id === room.buyer_user_id ? room.seller_name : room.buyer_name,
+        avatar: "assets/category-icons/account-b.png"
+      }
+    }));
     const modal = ensureChatModal();
     const partnerName = session.user.id === room.buyer_user_id ? room.seller_name : room.buyer_name;
     modal.querySelector("#marketChatTitle").textContent = room.listing_title || "แชตประกาศ";
@@ -2195,6 +2278,7 @@ window.ROOC_SUPABASE = {
     activeChatChannel = null;
     activeChatRoom = null;
     activeChatSession = null;
+    activeChatParticipants = null;
     document.body.classList.remove("modal-open");
   }
 
@@ -2647,7 +2731,7 @@ window.ROOC_SUPABASE = {
     }
     const { data: rooms, error } = await supabaseClient
       .from("marketplace_chat_rooms")
-      .select("id,buyer_user_id,seller_user_id,buyer_name,seller_name,listing_title,listing_image_url,last_message,last_message_at,buyer_unread_count,seller_unread_count,buyer_last_read_at,seller_last_read_at")
+      .select("id,listing_id,buyer_user_id,seller_user_id,buyer_name,seller_name,listing_title,listing_image_url,last_message,last_message_at,buyer_unread_count,seller_unread_count,buyer_last_read_at,seller_last_read_at")
       .or(`buyer_user_id.eq.${session.user.id},seller_user_id.eq.${session.user.id}`)
       .neq("last_message", "")
       .order("last_message_at", { ascending: false })

@@ -2651,8 +2651,37 @@ h1 {
 }
 
 .market-chat-message {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 8px;
+  align-items: end;
   align-self: flex-start;
-  max-width: min(78%, 430px);
+  max-width: min(84%, 460px);
+}
+
+.market-chat-message-avatar {
+  width: 30px;
+  height: 30px;
+  border: 1px solid color-mix(in srgb, var(--blue) 28%, var(--line));
+  border-radius: 8px;
+  background: var(--paper);
+  object-fit: cover;
+}
+
+.market-chat-message-content {
+  display: block;
+  min-width: 0;
+}
+
+.market-chat-sender {
+  display: block;
+  overflow: hidden;
+  margin: 0 0 4px 2px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .market-chat-message p {
@@ -2693,8 +2722,23 @@ h1 {
 }
 
 .market-chat-message.is-own {
+  grid-template-columns: minmax(0, 1fr) 30px;
   align-self: flex-end;
   text-align: right;
+}
+
+.market-chat-message.is-own .market-chat-message-avatar {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.market-chat-message.is-own .market-chat-message-content {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.market-chat-message.is-own .market-chat-sender {
+  margin-right: 2px;
 }
 
 .market-chat-message.is-own p {
