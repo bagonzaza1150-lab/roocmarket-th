@@ -1876,14 +1876,21 @@ window.ROOC_SUPABASE = {
       <section class="contact-modal-card market-chat-card" role="dialog" aria-modal="true" aria-labelledby="marketChatTitle">
         <button class="contact-modal-close" type="button" data-close-market-chat aria-label="ปิด">×</button>
         <div class="market-chat-head">
-          <p class="eyebrow">MARKET CHAT</p>
-          <h2 id="marketChatTitle">แชต</h2>
-          <small id="marketChatPartner"></small>
+          <span class="market-chat-listing-image" aria-hidden="true">
+            <img id="marketChatListingImage" src="assets/category-icons/mvp-c.png" alt="" />
+          </span>
+          <span class="market-chat-heading">
+            <span class="eyebrow">MARKET CHAT</span>
+            <h2 id="marketChatTitle">แชต</h2>
+            <small id="marketChatPartner"></small>
+          </span>
         </div>
         <div class="market-chat-messages" id="marketChatMessages" aria-live="polite"></div>
         <form class="market-chat-form" id="marketChatForm">
           <textarea id="marketChatInput" rows="2" maxlength="1000" placeholder="พิมพ์ข้อความ..." required></textarea>
-          <button class="btn btn-primary" type="submit">ส่ง</button>
+          <button class="market-chat-send" type="submit" aria-label="ส่งข้อความ" title="ส่งข้อความ">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+          </button>
         </form>
         <p class="post-message" id="marketChatStatus"></p>
       </section>
@@ -1917,8 +1924,10 @@ window.ROOC_SUPABASE = {
       return `
         <div class="market-chat-message${own ? " is-own" : ""}">
           <p>${escapeHtml(message.message)}</p>
-          <time>${new Date(message.created_at).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" })}</time>
-          ${own ? `<span class="market-chat-read-status${isRead ? " is-read" : ""}">${isRead ? "อ่านแล้ว" : "ยังไม่ได้อ่าน"}</span>` : ""}
+          <span class="market-chat-meta">
+            <time>${new Date(message.created_at).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" })}</time>
+            ${own ? `<span class="market-chat-read-status${isRead ? " is-read" : ""}">${isRead ? "อ่านแล้ว" : "ส่งแล้ว"}</span>` : ""}
+          </span>
         </div>
       `;
     }).join("");
@@ -2024,7 +2033,9 @@ window.ROOC_SUPABASE = {
     const modal = ensureChatModal();
     const partnerName = session.user.id === room.buyer_user_id ? room.seller_name : room.buyer_name;
     modal.querySelector("#marketChatTitle").textContent = room.listing_title || "แชตประกาศ";
-    modal.querySelector("#marketChatPartner").textContent = partnerName || "คู่สนทนา";
+    modal.querySelector("#marketChatPartner").textContent = `สนทนากับ ${partnerName || "คู่สนทนา"}`;
+    const listingImage = modal.querySelector("#marketChatListingImage");
+    if (listingImage) listingImage.src = room.listing_image_url || "assets/category-icons/mvp-c.png";
     modal.querySelector("#marketChatInput").value = "";
     setChatStatus("");
     modal.hidden = false;
