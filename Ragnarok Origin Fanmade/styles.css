@@ -5780,6 +5780,54 @@ h1 {
   white-space: nowrap;
 }
 
+.seller-signal-row {
+  display: flex;
+  flex: 1 1 100%;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+
+.seller-signal-row .seller-trust-badge {
+  width: auto;
+  margin-top: 0;
+}
+
+.seller-push-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 1px 6px;
+  border-radius: 99px;
+  color: #28c98b;
+  background: rgba(40, 201, 139, 0.12);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.seller-push-badge svg {
+  width: 11px;
+  height: 11px;
+  flex: 0 0 11px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.store-seller-push-badge {
+  margin-left: auto;
+}
+
+.store-seller-push-badge + .status-badge {
+  margin-left: 0 !important;
+}
+
 .listing-seller {
   display: flex;
   align-items: center;

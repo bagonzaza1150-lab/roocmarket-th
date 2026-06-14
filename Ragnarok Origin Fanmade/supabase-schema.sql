@@ -150,6 +150,21 @@ create table if not exists public.marketplace_chat_messages (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.marketplace_push_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  endpoint text not null,
+  p256dh text not null,
+  auth text not null,
+  user_agent text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (endpoint)
+);
+
+create index if not exists marketplace_push_subscriptions_user_idx
+  on public.marketplace_push_subscriptions (user_id);
+
 create index if not exists marketplace_chat_rooms_buyer_idx
   on public.marketplace_chat_rooms (buyer_user_id, last_message_at desc);
 
@@ -442,6 +457,12 @@ create trigger marketplace_chat_rooms_set_updated_at
 before update on public.marketplace_chat_rooms
 for each row execute function public.set_updated_at();
 
+drop trigger if exists marketplace_push_subscriptions_set_updated_at
+  on public.marketplace_push_subscriptions;
+create trigger marketplace_push_subscriptions_set_updated_at
+before update on public.marketplace_push_subscriptions
+for each row execute function public.set_updated_at();
+
 create or replace function public.marketplace_chat_message_after_insert()
 returns trigger
 language plpgsql
@@ -529,6 +550,7 @@ alter table public.marketplace_listings enable row level security;
 alter table public.marketplace_listing_offers enable row level security;
 alter table public.marketplace_chat_rooms enable row level security;
 alter table public.marketplace_chat_messages enable row level security;
+alter table public.marketplace_push_subscriptions enable row level security;
 alter table public.marketplace_admins enable row level security;
 alter table public.marketplace_profiles enable row level security;
 alter table public.marketplace_profile_frames enable row level security;
@@ -622,6 +644,59 @@ grant select, insert on table public.marketplace_chat_rooms to authenticated;
 grant select, insert on table public.marketplace_chat_messages to authenticated;
 revoke update, delete on table public.marketplace_chat_rooms from authenticated;
 revoke update, delete on table public.marketplace_chat_messages from authenticated;
+grant select, insert, update, delete on table public.marketplace_push_subscriptions to authenticated;
+grant select, delete on table public.marketplace_push_subscriptions to service_role;
+create or replace function public.register_marketplace_push_subscription(
+  p_endpoint text,
+  p_p256dh text,
+  p_auth text,
+  p_user_agent text default ''
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'Authentication required';
+  end if;
+
+  delete from public.marketplace_push_subscriptions
+  where endpoint = p_endpoint;
+
+  insert into public.marketplace_push_subscriptions (
+    user_id,
+    endpoint,
+    p256dh,
+    auth,
+    user_agent
+  )
+  values (
+    auth.uid(),
+    p_endpoint,
+    p_p256dh,
+    p_auth,
+    coalesce(p_user_agent, '')
+  );
+end;
+$$;
+
+revoke all on function public.register_marketplace_push_subscription(text, text, text, text) from public;
+grant execute on function public.register_marketplace_push_subscription(text, text, text, text) to authenticated;
+create or replace function public.marketplace_push_enabled_user_ids(p_user_ids uuid[])
+returns table(user_id uuid)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select distinct subscriptions.user_id
+  from public.marketplace_push_subscriptions as subscriptions
+  where subscriptions.user_id = any(coalesce(p_user_ids, array[]::uuid[]));
+$$;
+revoke all on function public.marketplace_push_enabled_user_ids(uuid[]) from public;
+grant execute on function public.marketplace_push_enabled_user_ids(uuid[]) to anon, authenticated;
 revoke all on function public.mark_marketplace_chat_room_read(uuid) from public;
 grant execute on function public.mark_marketplace_chat_room_read(uuid) to authenticated;
 grant select on table public.marketplace_admins to authenticated;
@@ -1081,6 +1156,15 @@ with check (
       and (auth.uid() = rooms.buyer_user_id or auth.uid() = rooms.seller_user_id)
   )
 );
+
+drop policy if exists "Users manage their push subscriptions"
+  on public.marketplace_push_subscriptions;
+create policy "Users manage their push subscriptions"
+on public.marketplace_push_subscriptions
+for all
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
 
 do $$
 begin

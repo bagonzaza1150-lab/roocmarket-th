@@ -381,6 +381,7 @@ window.ROOC_SUPABASE = {
   };
   let publicListings = [];
   let soldListings = [];
+  let pushEnabledSellerIds = new Set();
   let profileFramesCache = [];
   let profileFramesLoadedAt = 0;
   const listingsPerPage = 6;
@@ -705,6 +706,28 @@ window.ROOC_SUPABASE = {
         seller_profile_frame_url: frameId ? frameById.get(String(frameId)) || "" : ""
       };
     });
+  }
+
+  async function hydrateSellerPushStatuses(listings) {
+    const userIds = [...new Set((listings || []).map((listing) => listing.user_id).filter(Boolean))];
+    if (!userIds.length || !supabaseClient) {
+      pushEnabledSellerIds = new Set();
+      return;
+    }
+
+    const { data, error } = await supabaseClient.rpc("marketplace_push_enabled_user_ids", {
+      p_user_ids: userIds
+    });
+
+    if (error) {
+      pushEnabledSellerIds = new Set();
+      if (!/marketplace_push_enabled_user_ids|schema cache/i.test(error.message || "")) {
+        console.warn("ROOC seller notification status failed:", error);
+      }
+      return;
+    }
+
+    pushEnabledSellerIds = new Set((data || []).map((row) => String(row.user_id)));
   }
 
   async function fetchSiteSettings() {
@@ -1158,6 +1181,12 @@ window.ROOC_SUPABASE = {
       }, {});
       const soldCount = sellerSoldCounts[listing.user_id] || 0;
       const trustBadge = soldCount > 0 ? `<div class="seller-trust-badge"><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"/></svg> สำเร็จ ${soldCount} รายการ</div>` : "";
+      const pushBadge = pushEnabledSellerIds.has(String(listing.user_id))
+        ? `<div class="seller-push-badge" title="ผู้ขายเปิดรับการแจ้งเตือนข้อความแชต"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg> เปิดแจ้งเตือนแชต</div>`
+        : "";
+      const sellerSignals = trustBadge || pushBadge
+        ? `<div class="seller-signal-row">${trustBadge}${pushBadge}</div>`
+        : "";
       const listingType = listing.listing_type || "sell";
       const isServiceListing = listingType === "service";
       const mediaClass = listing.category === "mvp" ? "item-media card-media" : listing.category === "account" ? "item-media account-listing-media" : "item-media";
@@ -1206,7 +1235,7 @@ window.ROOC_SUPABASE = {
 	              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(sellerName)}</span>
 	              ${listing.seller_is_premium ? '<strong title="Premium" style="color: #f59e0b; font-size: 14px; text-shadow: 0 0 8px rgba(245, 158, 11, 0.3); flex-shrink: 0;">♛</strong>' : ""}
 	            </a>
-            ${trustBadge}
+            ${sellerSignals}
           </div>
           <div class="listing-meta">${badges}</div>
           <h3>${escapeHtml(title)}</h3>
@@ -1548,6 +1577,7 @@ window.ROOC_SUPABASE = {
         })
       ]);
       publicListings = await hydrateListingProfileFrames(publicListings, Boolean(force));
+      await hydrateSellerPushStatuses(publicListings);
       renderFilteredListings();
       renderSoldListings(soldListings);
       console.info(`ROOC listings refreshed ${publicListings.length} active rows, ${soldListings.length} sold rows`);
@@ -2463,6 +2493,9 @@ window.ROOC_SUPABASE = {
           const discordId = getListingDiscordId(listing);
           const sellerName = listing.seller_name || "ผู้ขาย ROOC";
           const sellerAvatar = listing.seller_avatar_url || "assets/category-icons/account-b.png";
+          const pushBadge = pushEnabledSellerIds.has(String(listing.user_id))
+            ? `<div class="seller-push-badge store-seller-push-badge" title="ผู้ขายเปิดรับการแจ้งเตือนข้อความแชต"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg> เปิดแจ้งเตือนแชต</div>`
+            : "";
 	          const badges = [
 	            `<span class="${listingType === "buy" ? "buy" : listingType === "service" ? "verified" : "fast"} shine">${listingType === "buy" ? "รับซื้อ" : listingType === "service" ? "รับจ้าง" : "ขาย"}</span>`,
 	            `<span class="shine">${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
@@ -2489,6 +2522,7 @@ window.ROOC_SUPABASE = {
 		                  <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(sellerName)}</span>
 		                  ${listing.seller_is_premium ? '<strong title="Premium" style="color: #f59e0b; font-size: 14px; text-shadow: 0 0 8px rgba(245, 158, 11, 0.3); flex-shrink: 0;">♛</strong>' : ""}
 		                </span>
+		                ${pushBadge}
 		                ${isOwner ? `<span class="status-badge ${status.className}" style="margin-left: auto; flex-shrink: 0;">${status.label}</span>` : ""}
 		              </div>
 	              <div class="listing-meta">${badges}</div>
@@ -2598,6 +2632,7 @@ window.ROOC_SUPABASE = {
         if (result.error) throw result.error;
         const data = result.data;
         storeListings = data || [];
+        await hydrateSellerPushStatuses(storeListings);
         // อัปเดต global state หลังจาก fetch เสร็จ
         if (window._storeState) window._storeState.storeListings = storeListings;
         console.log("Store listings found:", storeListings.length);
