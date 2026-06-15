@@ -3556,29 +3556,32 @@ window.ROOC_SUPABASE = {
   // Visitor Tracking
   // =====================================================
 
-  function getOrCreateSessionId() {
-    const key = "rooc_sid";
-    let sid = sessionStorage.getItem(key);
-    if (!sid) {
-      sid = "sid_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 9);
-      sessionStorage.setItem(key, sid);
+  function getOrCreateVisitorId() {
+    const key = "rooc_visitor_id";
+    let visitorId = localStorage.getItem(key);
+    if (!visitorId) {
+      visitorId = window.crypto?.randomUUID
+        ? `visitor_${window.crypto.randomUUID()}`
+        : "visitor_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 12);
+      localStorage.setItem(key, visitorId);
     }
-    return sid;
+    return visitorId;
   }
 
   async function trackPageView() {
     if (!supabaseClient) return;
     try {
-      const sessionId = getOrCreateSessionId();
+      const sessionId = getOrCreateVisitorId();
       const page = (location.pathname + location.search).slice(0, 200);
       const referrer = (document.referrer || "").slice(0, 200);
       const userAgent = (navigator.userAgent || "").slice(0, 300);
-      await supabaseClient.rpc("record_page_view", {
+      const { error } = await supabaseClient.rpc("record_page_view", {
         p_session_id: sessionId,
         p_page: page,
         p_referrer: referrer,
         p_user_agent: userAgent
       });
+      if (error) throw error;
     } catch (err) {
       // ไม่ block การทำงานหลักหากเกิดข้อผิดพลาด
       console.warn("ROOC visitor tracking error:", err);
