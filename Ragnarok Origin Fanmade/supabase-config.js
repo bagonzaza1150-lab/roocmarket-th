@@ -1683,8 +1683,12 @@ window.ROOC_SUPABASE = {
     option.classList.toggle("is-available", enabled);
     option.setAttribute("aria-disabled", enabled ? "false" : "true");
     option.dataset.gameUrl = enabled && url ? url : "";
-    if (statusElement) statusElement.textContent = enabled ? "เปิดใช้งานแล้ว" : "เร็ว ๆ นี้";
-    if (iconElement) iconElement.textContent = enabled ? "→" : "";
+    if (statusElement) {
+      statusElement.textContent = enabled
+        ? "\u0E40\u0E1B\u0E34\u0E14\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19\u0E41\u0E25\u0E49\u0E27"
+        : "\u0E40\u0E23\u0E47\u0E27 \u0E46 \u0E19\u0E35\u0E49";
+    }
+    if (iconElement) iconElement.textContent = enabled ? "\u2192" : "";
 
     const applyBackground = (element, imageUrl, positionX, positionY) => {
       if (!element) return;
