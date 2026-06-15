@@ -466,46 +466,6 @@ window.ROOC_SUPABASE = {
       .replace(/'/g, "&#039;");
   }
 
-  function initFloatingElements() {
-    const container = document.querySelector("#floatingElements");
-    if (!container) return;
-
-    // รายการใบไม้ Pixel Art แบบต่างๆ
-    const leafImages = [
-      "assets/leaf-pixel-green.png",
-      "assets/leaf-pixel-orange.png",
-      "assets/leaf-pixel-yellow.png"
-    ];
-
-    const count = 20; // เพิ่มจำนวนใบไม้เล็กน้อยเพื่อให้ดูเต็มขึ้น
-
-    for (let i = 0; i < count; i++) {
-      const item = document.createElement("img");
-      item.src = leafImages[Math.floor(Math.random() * leafImages.length)];
-      item.className = "floating-item";
-      
-      // ปรับขนาดให้ใหญ่ขึ้นเห็นชัดเจน (40px - 70px)
-      const size = Math.random() * 30 + 40;
-      item.style.width = `${size}px`;
-      item.style.height = "auto";
-      
-      // สุ่มตำแหน่งเริ่มต้น (กระจายทั่วหน้าจอ)
-      item.style.left = `${Math.random() * 100}%`;
-      item.style.top = `${Math.random() * 100}%`;
-      
-      // สุ่มความเร็วและจังหวะการร่วง
-      const duration = Math.random() * 15 + 20; // 20s - 35s
-      const delay = Math.random() * -35; // สุ่มให้เริ่มไม่พร้อมกัน
-      item.style.animationDuration = `${duration}s`;
-      item.style.animationDelay = `${delay}s`;
-      
-      // สุ่มความเร็วในการแกว่ง (ใช้คุณสมบัติ CSS variable ถ้าต้องการปรับแต่งเพิ่ม)
-      item.style.opacity = "0"; // เริ่มต้นที่ 0 (CSS จะจัดการเฟดอินเอง)
-      
-      container.appendChild(item);
-    }
-  }
-
   function initTheme() {
     const savedTheme = localStorage.getItem("theme");
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -3591,7 +3551,6 @@ window.ROOC_SUPABASE = {
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
       initTheme();
-      initFloatingElements();
       ensureGlobalChatWidget();
       hydratePublicListings();
       hydrateAuthUi();
@@ -3602,7 +3561,6 @@ window.ROOC_SUPABASE = {
     });
   } else {
     initTheme();
-    initFloatingElements();
     ensureGlobalChatWidget();
     hydratePublicListings();
     hydrateAuthUi();

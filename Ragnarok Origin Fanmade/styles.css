@@ -5739,66 +5739,6 @@ h1 {
 .listing-card:nth-child(11) { animation-delay: 1.1s; }
 .listing-card:nth-child(12) { animation-delay: 1.2s; }
 
-/* Floating Background Elements */
-.floating-elements {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: -1;
-  overflow: hidden;
-}
-
-.floating-item {
-  position: absolute;
-  opacity: 0.18; /* ปรับให้ชัดขึ้นเล็กน้อยสำหรับ Pixel Art */
-  pointer-events: none;
-  image-rendering: pixelated; /* ทำให้ Pixel Art ดูคมชัด */
-  animation: float-around 25s linear infinite;
-}
-
-:root[data-theme="dark"] .floating-item {
-  opacity: 0.1;
-  filter: brightness(0.7) saturate(0.6);
-}
-
-@keyframes leaf-falling {
-  0% {
-    transform: translateY(-10vh) translateX(0) rotate(0deg) rotateY(0deg);
-    opacity: 0;
-  }
-  10% {
-    opacity: 0.18;
-  }
-  25% {
-    transform: translateY(20vh) translateX(30px) rotate(45deg) rotateY(180deg);
-  }
-  50% {
-    transform: translateY(50vh) translateX(-30px) rotate(135deg) rotateY(0deg);
-  }
-  75% {
-    transform: translateY(80vh) translateX(30px) rotate(225deg) rotateY(180deg);
-  }
-  90% {
-    opacity: 0.18;
-  }
-  100% {
-    transform: translateY(110vh) translateX(0) rotate(360deg) rotateY(0deg);
-    opacity: 0;
-  }
-}
-
-.floating-item {
-  position: absolute;
-  opacity: 0; /* เริ่มต้นที่ 0 แล้วค่อยเฟดอินในแอนิเมชัน */
-  pointer-events: none;
-  image-rendering: pixelated;
-  animation: leaf-falling 20s linear infinite;
-  will-change: transform, opacity;
-}
-
 /* Seller Trust Badge Style */
 .seller-trust-badge {
   display: inline-flex;
