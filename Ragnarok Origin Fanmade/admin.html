@@ -12,10 +12,10 @@
     <title>Admin | ROOC Market TH</title>
     <link rel="icon" type="image/png" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
     <link rel="apple-touch-icon" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
-  <link rel="stylesheet" href="styles.css?v=20260615-remove-leaves-v1" />
+  <link rel="stylesheet" href="styles.css?v=20260615-game-background-v1" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="supabase-config.js?v=20260615-sold-unlimited-v1"></script>
+  <script src="supabase-config.js?v=20260615-game-background-v1"></script>
   </head>
   <body>
     <header class="site-header">
@@ -772,6 +772,57 @@
                 </div>
               </div>
 
+              <div class="support-admin-card announcement-admin-card">
+                <div class="form-block-head">
+                  <span>G2</span>
+                  <div>
+                    <h3>เกมที่สอง</h3>
+                    <p>ปลดล็อกตัวเลือกเกมบนสุดของหน้าแรก และกำหนดลิงก์ไปยังเว็บของเกมนั้น</p>
+                  </div>
+                </div>
+                <div class="post-checks">
+                  <label><input id="secondGameEnabled" type="checkbox" /> เปิดใช้งานเกมที่สอง</label>
+                </div>
+                <div class="post-grid two-columns">
+                  <label class="post-field">
+                    <span>ชื่อเกม</span>
+                    <input id="secondGameName" type="text" maxlength="80" placeholder="เช่น Ragnarok M Classic" />
+                  </label>
+                  <label class="post-field">
+                    <span>ลิงก์เว็บไซต์เกม</span>
+                    <input id="secondGameUrl" type="url" placeholder="https://game2.example.com" />
+                  </label>
+                </div>
+                <div class="post-grid two-columns">
+                  <div>
+                    <input id="currentGameBackgroundUrl" type="hidden" />
+                    <input id="currentGameBackgroundPath" type="hidden" />
+                    <label class="upload-drop" for="currentGameBackgroundImage">
+                      <input id="currentGameBackgroundImage" type="file" accept="image/*" />
+                      <span>พื้นหลังปุ่มเกมปัจจุบัน</span>
+                      <small>PNG, JPG หรือ WebP</small>
+                    </label>
+                    <div class="auto-image-box admin-image-preview">
+                      <img id="currentGameBackgroundPreview" alt="" hidden />
+                      <small data-empty-preview>ยังไม่ได้ตั้งค่ารูป</small>
+                    </div>
+                  </div>
+                  <div>
+                    <input id="secondGameBackgroundUrl" type="hidden" />
+                    <input id="secondGameBackgroundPath" type="hidden" />
+                    <label class="upload-drop" for="secondGameBackgroundImage">
+                      <input id="secondGameBackgroundImage" type="file" accept="image/*" />
+                      <span>พื้นหลังปุ่มเกมที่สอง</span>
+                      <small>PNG, JPG หรือ WebP</small>
+                    </label>
+                    <div class="auto-image-box admin-image-preview">
+                      <img id="secondGameBackgroundPreview" alt="" hidden />
+                      <small data-empty-preview>ยังไม่ได้ตั้งค่ารูป</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div class="support-admin-card">
                 <div class="form-block-head">
                   <span>AD</span>
@@ -1027,6 +1078,17 @@
         popupAnnouncementButtonLabel: document.querySelector("#popupAnnouncementButtonLabel"),
         popupAnnouncementButtonUrl: document.querySelector("#popupAnnouncementButtonUrl"),
         accountListingEnabled: document.querySelector("#accountListingEnabled"),
+        secondGameEnabled: document.querySelector("#secondGameEnabled"),
+        secondGameName: document.querySelector("#secondGameName"),
+        secondGameUrl: document.querySelector("#secondGameUrl"),
+        currentGameBackgroundUrl: document.querySelector("#currentGameBackgroundUrl"),
+        currentGameBackgroundPath: document.querySelector("#currentGameBackgroundPath"),
+        currentGameBackgroundImage: document.querySelector("#currentGameBackgroundImage"),
+        currentGameBackgroundPreview: document.querySelector("#currentGameBackgroundPreview"),
+        secondGameBackgroundUrl: document.querySelector("#secondGameBackgroundUrl"),
+        secondGameBackgroundPath: document.querySelector("#secondGameBackgroundPath"),
+        secondGameBackgroundImage: document.querySelector("#secondGameBackgroundImage"),
+        secondGameBackgroundPreview: document.querySelector("#secondGameBackgroundPreview"),
         donateEnabled: document.querySelector("#donateEnabled"),
         donateTitle: document.querySelector("#donateTitle"),
         donateText: document.querySelector("#donateText"),
@@ -1230,6 +1292,8 @@
         bindImageSizeDisplay(supportFields.heroSponsorImage, supportFields.heroSponsorPreview);
         bindImageSizeDisplay(supportFields.donateQrImage, supportFields.donateQrPreview);
         bindImageSizeDisplay(supportFields.middlemanQrImage, supportFields.middlemanQrPreview);
+        bindImageSizeDisplay(supportFields.currentGameBackgroundImage, supportFields.currentGameBackgroundPreview);
+        bindImageSizeDisplay(supportFields.secondGameBackgroundImage, supportFields.secondGameBackgroundPreview);
 
         iconInputs.forEach((input) => {
           bindImageSizeDisplay(input, document.getElementById(`preview-${input.dataset.iconType}`));
@@ -2281,6 +2345,13 @@
           popup_announcement_button_label: supportFields.popupAnnouncementButtonLabel.value.trim(),
           popup_announcement_button_url: supportFields.popupAnnouncementButtonUrl.value.trim(),
           account_listing_enabled: supportFields.accountListingEnabled.checked,
+          second_game_enabled: supportFields.secondGameEnabled.checked,
+          second_game_name: supportFields.secondGameName.value.trim(),
+          second_game_url: supportFields.secondGameUrl.value.trim(),
+          current_game_background_url: supportFields.currentGameBackgroundUrl.value,
+          current_game_background_path: supportFields.currentGameBackgroundPath.value,
+          second_game_background_url: supportFields.secondGameBackgroundUrl.value,
+          second_game_background_path: supportFields.secondGameBackgroundPath.value,
           donate_enabled: supportFields.donateEnabled.checked,
           donate_title: supportFields.donateTitle.value.trim(),
           donate_text: supportFields.donateText.value.trim(),
@@ -2322,6 +2393,15 @@
         supportFields.popupAnnouncementButtonLabel.value = settings.popup_announcement_button_label || "";
         supportFields.popupAnnouncementButtonUrl.value = settings.popup_announcement_button_url || "";
         supportFields.accountListingEnabled.checked = settings.account_listing_enabled !== false;
+        supportFields.secondGameEnabled.checked = Boolean(settings.second_game_enabled);
+        supportFields.secondGameName.value = settings.second_game_name || "";
+        supportFields.secondGameUrl.value = settings.second_game_url || "";
+        supportFields.currentGameBackgroundUrl.value = settings.current_game_background_url || "";
+        supportFields.currentGameBackgroundPath.value = settings.current_game_background_path || "";
+        supportFields.secondGameBackgroundUrl.value = settings.second_game_background_url || "";
+        supportFields.secondGameBackgroundPath.value = settings.second_game_background_path || "";
+        setOptionalImagePreview(supportFields.currentGameBackgroundPreview, settings.current_game_background_url, "ยังไม่ได้ตั้งค่ารูป");
+        setOptionalImagePreview(supportFields.secondGameBackgroundPreview, settings.second_game_background_url, "ยังไม่ได้ตั้งค่ารูป");
         supportFields.donateEnabled.checked = Boolean(settings.donate_enabled);
         supportFields.donateTitle.value = settings.donate_title || "";
         supportFields.donateText.value = settings.donate_text || "";
@@ -2376,7 +2456,9 @@
         const previousPaths = {
           donate: supportFields.donateQrPath.value,
           middleman: supportFields.middlemanQrPath.value,
-          heroSponsor: supportFields.heroSponsorImagePath.value
+          heroSponsor: supportFields.heroSponsorImagePath.value,
+          currentGameBackground: supportFields.currentGameBackgroundPath.value,
+          secondGameBackground: supportFields.secondGameBackgroundPath.value
         };
         const uploadedPaths = [];
         let saved = false;
@@ -2412,6 +2494,22 @@
             setOptionalImagePreview(supportFields.heroSponsorPreview, uploaded.imageUrl);
           }
 
+          if (supportFields.currentGameBackgroundImage.files?.[0]) {
+            const uploaded = await uploadSupportImage(supportFields.currentGameBackgroundImage.files[0], "current-game-background");
+            supportFields.currentGameBackgroundUrl.value = uploaded.imageUrl;
+            supportFields.currentGameBackgroundPath.value = uploaded.imagePath;
+            uploadedPaths.push(uploaded.imagePath);
+            setOptionalImagePreview(supportFields.currentGameBackgroundPreview, uploaded.imageUrl);
+          }
+
+          if (supportFields.secondGameBackgroundImage.files?.[0]) {
+            const uploaded = await uploadSupportImage(supportFields.secondGameBackgroundImage.files[0], "second-game-background");
+            supportFields.secondGameBackgroundUrl.value = uploaded.imageUrl;
+            supportFields.secondGameBackgroundPath.value = uploaded.imagePath;
+            uploadedPaths.push(uploaded.imagePath);
+            setOptionalImagePreview(supportFields.secondGameBackgroundPreview, uploaded.imageUrl);
+          }
+
           const { error } = await supabaseClient
             .from("marketplace_site_settings")
             .upsert({
@@ -2425,11 +2523,15 @@
           await removeStorageFiles(bucketName, [
             previousPaths.donate && previousPaths.donate !== supportFields.donateQrPath.value ? previousPaths.donate : "",
             previousPaths.middleman && previousPaths.middleman !== supportFields.middlemanQrPath.value ? previousPaths.middleman : "",
-            previousPaths.heroSponsor && previousPaths.heroSponsor !== supportFields.heroSponsorImagePath.value ? previousPaths.heroSponsor : ""
+            previousPaths.heroSponsor && previousPaths.heroSponsor !== supportFields.heroSponsorImagePath.value ? previousPaths.heroSponsor : "",
+            previousPaths.currentGameBackground && previousPaths.currentGameBackground !== supportFields.currentGameBackgroundPath.value ? previousPaths.currentGameBackground : "",
+            previousPaths.secondGameBackground && previousPaths.secondGameBackground !== supportFields.secondGameBackgroundPath.value ? previousPaths.secondGameBackground : ""
           ]);
           supportFields.donateQrImage.value = "";
           supportFields.middlemanQrImage.value = "";
           supportFields.heroSponsorImage.value = "";
+          supportFields.currentGameBackgroundImage.value = "";
+          supportFields.secondGameBackgroundImage.value = "";
           setMessage(supportSettingsMessage, "บันทึกแถบข้อความเรียบร้อย");
         } catch (error) {
           if (!saved) {
@@ -2848,6 +2950,14 @@
       supportFields.heroSponsorImage.addEventListener("change", () => {
         const file = supportFields.heroSponsorImage.files && supportFields.heroSponsorImage.files[0];
         if (file) setOptionalImagePreview(supportFields.heroSponsorPreview, URL.createObjectURL(file));
+      });
+      supportFields.currentGameBackgroundImage.addEventListener("change", () => {
+        const file = supportFields.currentGameBackgroundImage.files && supportFields.currentGameBackgroundImage.files[0];
+        if (file) setOptionalImagePreview(supportFields.currentGameBackgroundPreview, URL.createObjectURL(file));
+      });
+      supportFields.secondGameBackgroundImage.addEventListener("change", () => {
+        const file = supportFields.secondGameBackgroundImage.files && supportFields.secondGameBackgroundImage.files[0];
+        if (file) setOptionalImagePreview(supportFields.secondGameBackgroundPreview, URL.createObjectURL(file));
       });
       profileFrameImage?.addEventListener("change", () => {
         const file = profileFrameImage.files && profileFrameImage.files[0];

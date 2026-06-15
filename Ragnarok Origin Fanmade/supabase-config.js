@@ -1666,8 +1666,41 @@ window.ROOC_SUPABASE = {
     announcement.hidden = false;
   }
 
+  function renderGameSwitcher(settings = {}) {
+    const option = document.querySelector("#lockedGameOption");
+    if (!option) return;
+
+    const currentOption = document.querySelector("#currentGameOption");
+    const enabled = Boolean(settings.second_game_enabled);
+    const name = String(settings.second_game_name || "เกมใหม่").trim();
+    const url = String(settings.second_game_url || "").trim();
+    const nameElement = document.querySelector("#secondGameName");
+    const statusElement = document.querySelector("#secondGameStatus");
+    const iconElement = option.querySelector(".game-option-lock");
+
+    if (nameElement) nameElement.textContent = name;
+    option.classList.toggle("is-locked", !enabled);
+    option.classList.toggle("is-available", enabled);
+    option.setAttribute("aria-disabled", enabled ? "false" : "true");
+    option.dataset.gameUrl = enabled && url ? url : "";
+    if (statusElement) statusElement.textContent = enabled ? "เปิดใช้งานแล้ว" : "เร็ว ๆ นี้";
+    if (iconElement) iconElement.textContent = enabled ? "→" : "";
+
+    const applyBackground = (element, imageUrl) => {
+      if (!element) return;
+      const url = String(imageUrl || "").trim();
+      element.classList.toggle("has-game-background", Boolean(url));
+      element.style.backgroundImage = url
+        ? `linear-gradient(rgba(5, 15, 25, 0.42), rgba(5, 15, 25, 0.42)), url("${url.replace(/"/g, '\\"')}")`
+        : "";
+    };
+    applyBackground(currentOption, settings.current_game_background_url);
+    applyBackground(option, settings.second_game_background_url);
+  }
+
   function applySiteSettings(settings = {}) {
     accountListingEnabled = settings.account_listing_enabled !== false;
+    renderGameSwitcher(settings);
 
     const accountCount = document.querySelector("#accountListingCount");
     const accountCard = accountCount?.closest("article");
