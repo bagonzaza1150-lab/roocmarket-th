@@ -394,6 +394,11 @@ window.ROOC_SUPABASE = {
   let profileFramesCache = [];
   let profileFramesLoadedAt = 0;
   const listingsPerPage = 6;
+  let publicListingTotal = 0;
+  let publicListingCounts = null;
+  let serverPaginationEnabled = true;
+  let listingRequestSequence = 0;
+  let searchDebounceTimer = null;
   const listingCacheMs = 45000;
   const soldListingCacheMs = 120000;
   const listingSelectColumns = [
@@ -594,6 +599,30 @@ window.ROOC_SUPABASE = {
         );
       }
     }
+  }
+
+  async function fetchPublicListingsPage() {
+    if (!supabaseClient) throw new Error("Supabase client is unavailable");
+    const filters = getActiveFilters();
+    const { data, error } = await supabaseClient.rpc("get_marketplace_listings_page", {
+      p_page: currentListingPage,
+      p_page_size: listingsPerPage,
+      p_listing_type: filters.listingType,
+      p_category: filters.category,
+      p_server: filters.server,
+      p_search: filters.search,
+      p_price_filter: filters.price,
+      p_sort: filters.sort,
+      p_middleman: filters.middleman,
+      p_ready: filters.ready
+    });
+    if (error) throw error;
+    return {
+      items: Array.isArray(data?.items) ? data.items : [],
+      totalCount: Number(data?.total_count || 0),
+      categoryCounts: data?.category_counts || {},
+      typeCounts: data?.type_counts || {}
+    };
   }
 
   async function fetchSoldListings(force = false) {
@@ -1194,12 +1223,18 @@ window.ROOC_SUPABASE = {
 
   }
 
-  function renderCounts(listings) {
+  function renderCounts(listings, aggregateCounts = null) {
     const counts = { mvp: 0, accessories: 0, fashion: 0, account: 0 };
-    const visibleListings = listings.filter((listing) => accountListingEnabled || listing.category !== "account");
-    visibleListings.filter((listing) => (listing.listing_type || "sell") === activeListingType).forEach((listing) => {
-      if (counts[listing.category] !== undefined) counts[listing.category] += 1;
-    });
+    if (aggregateCounts?.categoryCounts) {
+      Object.keys(counts).forEach((category) => {
+        counts[category] = Number(aggregateCounts.categoryCounts[category] || 0);
+      });
+    } else {
+      const visibleListings = listings.filter((listing) => accountListingEnabled || listing.category !== "account");
+      visibleListings.filter((listing) => (listing.listing_type || "sell") === activeListingType).forEach((listing) => {
+        if (counts[listing.category] !== undefined) counts[listing.category] += 1;
+      });
+    }
 
     const targets = {
       mvp: document.querySelector("#mvpListingCount"),
@@ -1211,9 +1246,15 @@ window.ROOC_SUPABASE = {
       if (target) target.textContent = counts[category].toLocaleString("th-TH");
     });
 
-    const sellTotal = listings.filter((listing) => (listing.listing_type || "sell") === "sell" && listing.sale_status !== "deleted" && listing.sale_status !== "sold").length;
-    const buyTotal = listings.filter((listing) => (listing.listing_type || "sell") === "buy" && listing.sale_status !== "deleted" && listing.sale_status !== "sold").length;
-    const serviceTotal = listings.filter((listing) => (listing.listing_type || "sell") === "service" && listing.sale_status !== "deleted" && listing.sale_status !== "sold").length;
+    const sellTotal = aggregateCounts?.typeCounts
+      ? Number(aggregateCounts.typeCounts.sell || 0)
+      : listings.filter((listing) => (listing.listing_type || "sell") === "sell" && listing.sale_status !== "deleted" && listing.sale_status !== "sold").length;
+    const buyTotal = aggregateCounts?.typeCounts
+      ? Number(aggregateCounts.typeCounts.buy || 0)
+      : listings.filter((listing) => (listing.listing_type || "sell") === "buy" && listing.sale_status !== "deleted" && listing.sale_status !== "sold").length;
+    const serviceTotal = aggregateCounts?.typeCounts
+      ? Number(aggregateCounts.typeCounts.service || 0)
+      : listings.filter((listing) => (listing.listing_type || "sell") === "service" && listing.sale_status !== "deleted" && listing.sale_status !== "sold").length;
     const sellTarget = document.querySelector("#totalSellListingCount");
     const buyTarget = document.querySelector("#totalBuyListingCount");
     const serviceTarget = document.querySelector("#totalServiceListingCount");
@@ -1236,7 +1277,7 @@ window.ROOC_SUPABASE = {
     grid.innerHTML = skeletons;
   }
 
-  function renderListingCards(listings, isFiltered = false) {
+  function renderListingCards(listings, isFiltered = false, totalItems = listings.length, alreadyPaged = false) {
     const grid = document.querySelector("#latestListingGrid");
     const emptyState = document.querySelector("#latestEmptyState");
     const pagination = document.querySelector("#listingPagination");
@@ -1255,22 +1296,17 @@ window.ROOC_SUPABASE = {
       return;
     }
 
-    const totalPages = Math.max(1, Math.ceil(listings.length / listingsPerPage));
+    const totalPages = Math.max(1, Math.ceil(totalItems / listingsPerPage));
     currentListingPage = Math.min(Math.max(currentListingPage, 1), totalPages);
     const pageStart = (currentListingPage - 1) * listingsPerPage;
-    const pageListings = listings.slice(pageStart, pageStart + listingsPerPage);
+    const pageListings = alreadyPaged ? listings : listings.slice(pageStart, pageStart + listingsPerPage);
 
     // Reset animation by clearing grid first if needed
     grid.innerHTML = "";
     
     const cardsHtml = pageListings.map((listing, index) => {
       const title = listing.title || listing.item_name || "ประกาศขาย";
-      const sellerSoldCounts = soldListings.reduce((acc, item) => {
-        const uid = item.user_id;
-        if (uid) acc[uid] = (acc[uid] || 0) + 1;
-        return acc;
-      }, {});
-      const soldCount = sellerSoldCounts[listing.user_id] || 0;
+      const soldCount = Number(listing.seller_sold_count || soldListings.filter((item) => item.user_id === listing.user_id).length);
       const trustBadge = soldCount > 0 ? `<div class="seller-trust-badge"><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"/></svg> สำเร็จ ${soldCount} รายการ</div>` : "";
       const pushBadge = pushEnabledSellerIds.has(String(listing.user_id))
         ? `<div class="seller-push-badge" title="ผู้ขายเปิดรับการแจ้งเตือนข้อความแชต"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg> เปิดแจ้งเตือนแชต</div>`
@@ -1362,7 +1398,7 @@ window.ROOC_SUPABASE = {
 
     grid.innerHTML = cardsHtml;
     emptyState.hidden = true;
-    renderListingPagination(listings.length, totalPages);
+    renderListingPagination(totalItems, totalPages);
   }
 
   function renderListingPagination(totalItems, totalPages) {
@@ -1646,6 +1682,11 @@ window.ROOC_SUPABASE = {
 
   function renderFilteredListings() {
     if (!document.querySelector("#latestListingGrid")) return;
+    if (serverPaginationEnabled) {
+      renderCounts(publicListings, publicListingCounts);
+      renderListingCards(publicListings, true, publicListingTotal, true);
+      return;
+    }
     renderCounts(publicListings);
     renderListingCards(getFilteredListings(), true);
   }
@@ -1656,6 +1697,7 @@ window.ROOC_SUPABASE = {
 
   async function refreshListings(force = false) {
     const controls = getFilterControls();
+    const requestSequence = ++listingRequestSequence;
     if (controls.refresh) {
       controls.refresh.disabled = true;
       controls.refresh.classList.add("is-loading");
@@ -1664,25 +1706,58 @@ window.ROOC_SUPABASE = {
 
     try {
       renderListingSkeletons();
-      [publicListings, soldListings] = await Promise.all([
-        fetchPublicListings(Boolean(force)),
-        fetchSoldListings(Boolean(force)).catch((error) => {
-          console.warn("ROOC sold listings failed:", error);
-          return [];
-        })
-      ]);
-      publicListings = await hydrateListingProfileFrames(publicListings, Boolean(force));
+      let pageResult = null;
+      let nextPublicListings = [];
+      let nextPublicListingTotal = 0;
+      let nextPublicListingCounts = null;
+      let nextServerPaginationEnabled = serverPaginationEnabled;
+      if (nextServerPaginationEnabled) {
+        try {
+          pageResult = await fetchPublicListingsPage();
+        } catch (error) {
+          const rpcUnavailable = /get_marketplace_listings_page|schema cache|function.*does not exist|could not find/i.test(error.message || "");
+          if (!rpcUnavailable) throw error;
+          nextServerPaginationEnabled = false;
+          console.warn("ROOC pagination RPC is not installed; using legacy listing loader.", error);
+        }
+      }
+
+      const soldPromise = fetchSoldListings(Boolean(force)).catch((error) => {
+        console.warn("ROOC sold listings failed:", error);
+        return [];
+      });
+
+      if (nextServerPaginationEnabled) {
+        nextPublicListings = pageResult.items;
+        nextPublicListingTotal = pageResult.totalCount;
+        nextPublicListingCounts = {
+          categoryCounts: pageResult.categoryCounts,
+          typeCounts: pageResult.typeCounts
+        };
+      } else {
+        nextPublicListings = await fetchPublicListings(Boolean(force));
+        nextPublicListingTotal = nextPublicListings.length;
+      }
+      const nextSoldListings = await soldPromise;
+      if (requestSequence !== listingRequestSequence) return;
+      nextPublicListings = await hydrateListingProfileFrames(nextPublicListings, Boolean(force));
       await Promise.all([
-        hydrateSellerPushStatuses(publicListings),
-        hydratePresenceStatuses(publicListings)
+        hydrateSellerPushStatuses(nextPublicListings),
+        hydratePresenceStatuses(nextPublicListings)
       ]);
+      if (requestSequence !== listingRequestSequence) return;
+      publicListings = nextPublicListings;
+      publicListingTotal = nextPublicListingTotal;
+      publicListingCounts = nextPublicListingCounts;
+      serverPaginationEnabled = nextServerPaginationEnabled;
+      soldListings = nextSoldListings;
       renderFilteredListings();
       renderSoldListings(soldListings);
-      console.info(`ROOC listings refreshed ${publicListings.length} active rows, ${soldListings.length} sold rows`);
+      console.info(`ROOC listings refreshed ${publicListings.length}/${publicListingTotal} active rows, ${soldListings.length} sold rows`);
     } catch (error) {
       console.error("ROOC listings refresh failed:", error);
     } finally {
-      if (controls.refresh) {
+      if (controls.refresh && requestSequence === listingRequestSequence) {
         controls.refresh.classList.remove("is-loading");
         if (force) {
           setRefreshCooldown(10);
@@ -1700,11 +1775,15 @@ window.ROOC_SUPABASE = {
     document.body.dataset.filtersBound = "true";
     const controls = getFilterControls();
     const rerender = () => {
+      window.clearTimeout(searchDebounceTimer);
       resetListingPage();
-      renderFilteredListings();
+      refreshListings();
     };
 
-    controls.search?.addEventListener("input", rerender);
+    controls.search?.addEventListener("input", () => {
+      window.clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = window.setTimeout(rerender, 300);
+    });
     controls.search?.addEventListener("search", rerender);
     controls.search?.addEventListener("change", rerender);
     controls.sort?.addEventListener("change", rerender);
@@ -1768,7 +1847,7 @@ window.ROOC_SUPABASE = {
       if (prevButton) currentListingPage = Math.max(1, currentListingPage - 1);
       if (nextButton) currentListingPage += 1;
       if (pageButton || prevButton || nextButton) {
-        renderFilteredListings();
+        refreshListings();
         document.querySelector("#market")?.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     });

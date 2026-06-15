@@ -23,7 +23,7 @@
       }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=20260615-remove-leaves-v1"></script>
+  <script src="supabase-config.js?v=20260615-sold-unlimited-v1"></script>
   </head>
   <body>
     <header class="site-header">
@@ -413,37 +413,8 @@
       </div>
     </footer>
     <script>
-      const categoryLabels = {
-        mvp: "MVP Cards",
-        accessories: "Accessories",
-        fashion: "Fashion",
-        auction: "Auction",
-        account: "Account"
-      };
-      const appConfig = window.ROOC_SUPABASE || {};
-
       function getSupabaseClient() {
         return window.ROOC_APP?.getSupabaseClient?.() || null;
-      }
-
-      async function fetchListingsFromRest(params = "select=*&active=eq.true&sale_status=neq.closed&sale_status=neq.sold&sale_status=neq.deleted&order=created_at.desc") {
-        if (!appConfig.url || !appConfig.anonKey) {
-          throw new Error("Supabase config is missing");
-        }
-
-        const response = await fetch(`${appConfig.url}/rest/v1/marketplace_listings?${params}`, {
-          headers: {
-            apikey: appConfig.anonKey,
-            Authorization: `Bearer ${appConfig.anonKey}`
-          }
-        });
-
-        if (!response.ok) {
-          const detail = await response.text();
-          throw new Error(detail || `Supabase REST error ${response.status}`);
-        }
-
-        return response.json();
       }
 
       function escapeHtml(value) {
@@ -453,164 +424,6 @@
           .replace(/>/g, "&gt;")
           .replace(/"/g, "&quot;")
           .replace(/'/g, "&#039;");
-      }
-
-      async function loadListingCounts(client) {
-        const targets = {
-          mvp: document.querySelector("#mvpListingCount"),
-          accessories: document.querySelector("#accessoriesListingCount"),
-          fashion: document.querySelector("#fashionListingCount"),
-          auction: document.querySelector("#auctionListingCount"),
-          account: document.querySelector("#accountListingCount")
-        };
-        const totalTarget = document.querySelector("#totalListingCount");
-
-        try {
-          let data = [];
-          let error = null;
-          if (client) {
-            const result = await client
-              .from("marketplace_listings")
-              .select("category")
-              .eq("active", true)
-              .not("sale_status", "in", '("closed","sold","deleted")');
-            data = result.data;
-            error = result.error;
-          } else {
-            data = await fetchListingsFromRest("select=category&active=eq.true&sale_status=neq.closed&sale_status=neq.sold&sale_status=neq.deleted");
-          }
-
-          if (error) {
-            console.warn("ROOC count load through supabase-js failed, trying REST:", error);
-            data = await fetchListingsFromRest("select=category&active=eq.true&sale_status=neq.closed&sale_status=neq.sold&sale_status=neq.deleted");
-          }
-
-          if (client && (!data || !data.length)) {
-            data = await fetchListingsFromRest("select=category&active=eq.true&sale_status=neq.closed&sale_status=neq.sold&sale_status=neq.deleted");
-          }
-
-          if (!data) return;
-
-          const counts = { mvp: 0, accessories: 0, fashion: 0, auction: 0, account: 0 };
-          data.forEach((listing) => {
-            if (counts[listing.category] !== undefined) counts[listing.category] += 1;
-          });
-
-          Object.entries(targets).forEach(([category, target]) => {
-            if (target) target.textContent = counts[category].toLocaleString("th-TH");
-          });
-
-          if (totalTarget) {
-            totalTarget.textContent = data.length.toLocaleString("th-TH");
-          }
-        } catch (_error) {
-          // Keep zero counts when Supabase is not reachable.
-        }
-      }
-
-      async function loadLatestListings(client) {
-        const grid = document.querySelector("#latestListingGrid");
-        const emptyState = document.querySelector("#latestEmptyState");
-        if (!grid || !emptyState) return;
-
-        try {
-          let data = [];
-          let error = null;
-          if (client) {
-            const result = await client
-              .from("marketplace_listings")
-              .select("*")
-              .eq("active", true)
-              .not("sale_status", "in", '("closed","sold","deleted")')
-              .order("created_at", { ascending: false })
-              .limit(12);
-            data = result.data;
-            error = result.error;
-          } else {
-            data = await fetchListingsFromRest("select=*&active=eq.true&sale_status=neq.closed&sale_status=neq.sold&sale_status=neq.deleted&order=created_at.desc&limit=12");
-          }
-
-          if (error) {
-            console.warn("ROOC listing load through supabase-js failed, trying REST:", error);
-            data = await fetchListingsFromRest("select=*&active=eq.true&sale_status=neq.closed&sale_status=neq.sold&sale_status=neq.deleted&order=created_at.desc&limit=12");
-          }
-
-          if (client && (!data || !data.length)) {
-            data = await fetchListingsFromRest("select=*&active=eq.true&sale_status=neq.closed&sale_status=neq.sold&sale_status=neq.deleted&order=created_at.desc&limit=12");
-          }
-
-          if (!data || !data.length) {
-            grid.innerHTML = "";
-            emptyState.hidden = false;
-            emptyState.querySelector("h3").textContent = "ยังไม่มีประกาศขาย";
-            emptyState.querySelector("p").textContent = "ไม่พบรายการที่ active = true ใน Supabase";
-            console.info("ROOC listings loaded 0 rows");
-            return;
-          }
-
-          console.info(`ROOC listings loaded ${data.length} rows`);
-
-          grid.innerHTML = data.map((listing) => {
-            const mediaClass = listing.category === "mvp" ? "item-media card-media" : listing.category === "account" ? "item-media account-listing-media" : "item-media";
-            const listingImages = getListingImages(listing);
-            const title = listing.title || listing.item_name || "ประกาศขาย";
-            const contact = listing.contact || "";
-            const profileUrl = getListingProfileUrl(listing);
-            const discordId = getListingDiscordId(listing);
-            const sellerName = listing.seller_name || "ผู้ขาย ROOC";
-            const sellerUserId = listing.user_id || "";
-            const galleryData = listing.category === "account"
-              ? ` data-account-gallery="${escapeHtml(encodeURIComponent(JSON.stringify(listingImages)))}" data-account-title="${escapeHtml(title)}"`
-              : "";
-            const rawPrice = Number(normalizePriceText(listing.price_text));
-            const formattedPrice = Number.isFinite(rawPrice) && rawPrice > 0 ? rawPrice.toLocaleString("th-TH", { maximumFractionDigits: 2 }) : "0";
-            const listingType = listing.listing_type || "sell";
-            const badges = [
-              `<span class="${listingType === "buy" ? "buy" : listingType === "service" ? "verified" : "fast"} shine">${listingType === "buy" ? "รับซื้อ" : listingType === "service" ? "รับจ้าง" : "ขาย"}</span>`,
-              `<span class="shine">${escapeHtml(listing.server_name || "ทั้งหมด")}</span>`,
-              listing.ready_today ? '<span class="fast pulse">Fast Deal</span>' : "",
-              listing.category === "mvp" ? '<span class="mvp shine">MVP</span>' : ""
-            ].filter(Boolean).join("");
-            const description = listing.middleman
-              ? `${listing.description || ""} · รองรับ Middleman`
-              : listing.description || "";
-
-            return `
-			              <article class="listing-card${listing.card_background && listing.card_background !== 'default' ? " " + listing.card_background : ""}">
-	                <div class="${mediaClass}"${galleryData}>
-                  <img src="${escapeHtml(listingImages[0])}" alt="" />
-                  ${listing.category === "account" && listingImages.length > 1 ? `
-                    <div class="account-gallery-count">${listingImages.length} รูป</div>
-                    <div class="account-gallery-strip">
-                      ${listingImages.slice(0, 5).map((src) => `<span><img src="${escapeHtml(src)}" alt="" /></span>`).join("")}
-                    </div>
-                  ` : ""}
-                </div>
-                <div class="listing-meta">${badges}</div>
-                <h3>${escapeHtml(title)}</h3>
-                <p>${escapeHtml(description)}</p>
-                <div class="price-row">
-                  <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <strong>฿ ${formattedPrice}</strong>
-                    ${sellerUserId ? `<a href="store.html?id=${sellerUserId}" class="seller-store-link" style="font-size: 11px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 4px;">🏪 ดูร้านค้า: ${escapeHtml(sellerName)}</a>` : `<span style="font-size: 11px; color: var(--muted);">👤 ${escapeHtml(sellerName)}</span>`}
-                  </div>
-                  <button class="btn btn-small contact-seller-button" type="button" data-title="${escapeHtml(title)}" data-contact="${escapeHtml(contact)}" data-profile-url="${escapeHtml(profileUrl)}" data-discord-id="${escapeHtml(discordId)}" data-seller-name="${escapeHtml(sellerName)}">ติดต่อผู้ขาย</button>
-                  <button class="btn btn-small btn-light chat-seller-button" type="button" title="แชต" aria-label="แชตกับผู้ขาย" data-chat-listing-id="${escapeHtml(listing.id)}" data-chat-seller-id="${escapeHtml(sellerUserId)}" data-chat-title="${escapeHtml(title)}" data-chat-image="${escapeHtml(listingImages[0])}" data-chat-seller-name="${escapeHtml(sellerName)}">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 9h8M8 13h5"/></svg>
-                  </button>
-                </div>
-              </article>
-            `;
-          }).join("");
-
-          emptyState.hidden = true;
-        } catch (_error) {
-          grid.innerHTML = "";
-          emptyState.hidden = false;
-          emptyState.querySelector("h3").textContent = "โหลดประกาศไม่สำเร็จ";
-          emptyState.querySelector("p").textContent = _error.message || "เกิดข้อผิดพลาดระหว่างเชื่อมต่อ Supabase";
-          console.error("ROOC listings unexpected error:", _error);
-        }
       }
 
       const supabaseClient = getSupabaseClient();
@@ -920,48 +733,6 @@
       });
 
       offerForm?.addEventListener("submit", submitOffer);
-
-      async function syncAuthLink() {
-        const authLink = document.querySelector(".auth-link");
-        const adminLink = document.querySelector(".admin-link");
-        if (!authLink || !supabaseClient) return;
-        const { data } = await supabaseClient.auth.getSession();
-        if (data.session) {
-          authLink.textContent = getDiscordDisplayName(data.session);
-          authLink.href = "login.html";
-        }
-        if (adminLink) adminLink.hidden = !isAdminSession(data.session);
-      }
-
-      function getDiscordDisplayName(session) {
-        const user = session?.user || {};
-        const identityData = user.identities?.find((identity) => identity.provider === "discord")?.identity_data || {};
-        return user.user_metadata?.full_name ||
-          user.user_metadata?.name ||
-          user.user_metadata?.preferred_username ||
-          identityData.full_name ||
-          identityData.name ||
-          identityData.preferred_username ||
-          user.email ||
-          "Discord";
-      }
-
-      function isAdminSession(session) {
-        if (!session) return false;
-        const user = session.user || {};
-        const email = (user.email || user.user_metadata?.email || user.identities?.[0]?.identity_data?.email || "").toLowerCase();
-        const identities = user.identities || [];
-        const discordIds = identities
-          .filter((identity) => identity.provider === "discord")
-          .map((identity) => identity.identity_data?.sub || identity.id)
-          .filter(Boolean);
-        return (appConfig.adminUserIds || []).includes(user.id) ||
-          (appConfig.adminEmails || []).map((entry) => entry.toLowerCase()).includes(email) ||
-          discordIds.some((id) => (appConfig.adminDiscordIds || []).includes(id));
-      }
-
-      syncAuthLink();
-      if (supabaseClient) supabaseClient.auth.onAuthStateChange(() => syncAuthLink());
 
       window.ROOC_APP?.initTheme();
     </script>
