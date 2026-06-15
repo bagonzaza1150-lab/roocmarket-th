@@ -12,10 +12,10 @@
     <title>Admin | ROOC Market TH</title>
     <link rel="icon" type="image/png" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
     <link rel="apple-touch-icon" href="https://qgzkoraxaszvdxvasgqz.supabase.co/storage/v1/object/public/marketplace-assets/site_assets/site-logo_1781355043941.png" />
-  <link rel="stylesheet" href="styles.css?v=20260615-game-background-v1" />
+  <link rel="stylesheet" href="styles.css?v=20260615-game-position-v1" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="supabase-config.js?v=20260615-game-background-v1"></script>
+  <script src="supabase-config.js?v=20260615-game-position-v1"></script>
   </head>
   <body>
     <header class="site-header">
@@ -806,6 +806,16 @@
                       <img id="currentGameBackgroundPreview" alt="" hidden />
                       <small data-empty-preview>ยังไม่ได้ตั้งค่ารูป</small>
                     </div>
+                    <div class="game-background-position">
+                      <label>
+                        <span>แนวนอน <output id="currentGameBackgroundXValue">50%</output></span>
+                        <input id="currentGameBackgroundX" type="range" min="0" max="100" value="50" />
+                      </label>
+                      <label>
+                        <span>แนวตั้ง <output id="currentGameBackgroundYValue">50%</output></span>
+                        <input id="currentGameBackgroundY" type="range" min="0" max="100" value="50" />
+                      </label>
+                    </div>
                   </div>
                   <div>
                     <input id="secondGameBackgroundUrl" type="hidden" />
@@ -818,6 +828,16 @@
                     <div class="auto-image-box admin-image-preview">
                       <img id="secondGameBackgroundPreview" alt="" hidden />
                       <small data-empty-preview>ยังไม่ได้ตั้งค่ารูป</small>
+                    </div>
+                    <div class="game-background-position">
+                      <label>
+                        <span>แนวนอน <output id="secondGameBackgroundXValue">50%</output></span>
+                        <input id="secondGameBackgroundX" type="range" min="0" max="100" value="50" />
+                      </label>
+                      <label>
+                        <span>แนวตั้ง <output id="secondGameBackgroundYValue">50%</output></span>
+                        <input id="secondGameBackgroundY" type="range" min="0" max="100" value="50" />
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -1085,10 +1105,18 @@
         currentGameBackgroundPath: document.querySelector("#currentGameBackgroundPath"),
         currentGameBackgroundImage: document.querySelector("#currentGameBackgroundImage"),
         currentGameBackgroundPreview: document.querySelector("#currentGameBackgroundPreview"),
+        currentGameBackgroundX: document.querySelector("#currentGameBackgroundX"),
+        currentGameBackgroundY: document.querySelector("#currentGameBackgroundY"),
+        currentGameBackgroundXValue: document.querySelector("#currentGameBackgroundXValue"),
+        currentGameBackgroundYValue: document.querySelector("#currentGameBackgroundYValue"),
         secondGameBackgroundUrl: document.querySelector("#secondGameBackgroundUrl"),
         secondGameBackgroundPath: document.querySelector("#secondGameBackgroundPath"),
         secondGameBackgroundImage: document.querySelector("#secondGameBackgroundImage"),
         secondGameBackgroundPreview: document.querySelector("#secondGameBackgroundPreview"),
+        secondGameBackgroundX: document.querySelector("#secondGameBackgroundX"),
+        secondGameBackgroundY: document.querySelector("#secondGameBackgroundY"),
+        secondGameBackgroundXValue: document.querySelector("#secondGameBackgroundXValue"),
+        secondGameBackgroundYValue: document.querySelector("#secondGameBackgroundYValue"),
         donateEnabled: document.querySelector("#donateEnabled"),
         donateTitle: document.querySelector("#donateTitle"),
         donateText: document.querySelector("#donateText"),
@@ -2350,8 +2378,12 @@
           second_game_url: supportFields.secondGameUrl.value.trim(),
           current_game_background_url: supportFields.currentGameBackgroundUrl.value,
           current_game_background_path: supportFields.currentGameBackgroundPath.value,
+          current_game_background_x: Number(supportFields.currentGameBackgroundX.value),
+          current_game_background_y: Number(supportFields.currentGameBackgroundY.value),
           second_game_background_url: supportFields.secondGameBackgroundUrl.value,
           second_game_background_path: supportFields.secondGameBackgroundPath.value,
+          second_game_background_x: Number(supportFields.secondGameBackgroundX.value),
+          second_game_background_y: Number(supportFields.secondGameBackgroundY.value),
           donate_enabled: supportFields.donateEnabled.checked,
           donate_title: supportFields.donateTitle.value.trim(),
           donate_text: supportFields.donateText.value.trim(),
@@ -2398,8 +2430,13 @@
         supportFields.secondGameUrl.value = settings.second_game_url || "";
         supportFields.currentGameBackgroundUrl.value = settings.current_game_background_url || "";
         supportFields.currentGameBackgroundPath.value = settings.current_game_background_path || "";
+        supportFields.currentGameBackgroundX.value = settings.current_game_background_x ?? 50;
+        supportFields.currentGameBackgroundY.value = settings.current_game_background_y ?? 50;
         supportFields.secondGameBackgroundUrl.value = settings.second_game_background_url || "";
         supportFields.secondGameBackgroundPath.value = settings.second_game_background_path || "";
+        supportFields.secondGameBackgroundX.value = settings.second_game_background_x ?? 50;
+        supportFields.secondGameBackgroundY.value = settings.second_game_background_y ?? 50;
+        syncGameBackgroundPositionLabels();
         setOptionalImagePreview(supportFields.currentGameBackgroundPreview, settings.current_game_background_url, "ยังไม่ได้ตั้งค่ารูป");
         setOptionalImagePreview(supportFields.secondGameBackgroundPreview, settings.second_game_background_url, "ยังไม่ได้ตั้งค่ารูป");
         supportFields.donateEnabled.checked = Boolean(settings.donate_enabled);
@@ -2959,6 +2996,19 @@
         const file = supportFields.secondGameBackgroundImage.files && supportFields.secondGameBackgroundImage.files[0];
         if (file) setOptionalImagePreview(supportFields.secondGameBackgroundPreview, URL.createObjectURL(file));
       });
+      function syncGameBackgroundPositionLabels() {
+        supportFields.currentGameBackgroundXValue.value = `${supportFields.currentGameBackgroundX.value}%`;
+        supportFields.currentGameBackgroundYValue.value = `${supportFields.currentGameBackgroundY.value}%`;
+        supportFields.secondGameBackgroundXValue.value = `${supportFields.secondGameBackgroundX.value}%`;
+        supportFields.secondGameBackgroundYValue.value = `${supportFields.secondGameBackgroundY.value}%`;
+      }
+      [
+        supportFields.currentGameBackgroundX,
+        supportFields.currentGameBackgroundY,
+        supportFields.secondGameBackgroundX,
+        supportFields.secondGameBackgroundY
+      ].forEach((input) => input.addEventListener("input", syncGameBackgroundPositionLabels));
+      syncGameBackgroundPositionLabels();
       profileFrameImage?.addEventListener("change", () => {
         const file = profileFrameImage.files && profileFrameImage.files[0];
         if (file) {

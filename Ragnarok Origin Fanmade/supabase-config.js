@@ -1686,16 +1686,29 @@ window.ROOC_SUPABASE = {
     if (statusElement) statusElement.textContent = enabled ? "เปิดใช้งานแล้ว" : "เร็ว ๆ นี้";
     if (iconElement) iconElement.textContent = enabled ? "→" : "";
 
-    const applyBackground = (element, imageUrl) => {
+    const applyBackground = (element, imageUrl, positionX, positionY) => {
       if (!element) return;
       const url = String(imageUrl || "").trim();
+      const x = Math.min(100, Math.max(0, Number(positionX ?? 50)));
+      const y = Math.min(100, Math.max(0, Number(positionY ?? 50)));
       element.classList.toggle("has-game-background", Boolean(url));
       element.style.backgroundImage = url
         ? `linear-gradient(rgba(5, 15, 25, 0.42), rgba(5, 15, 25, 0.42)), url("${url.replace(/"/g, '\\"')}")`
         : "";
+      element.style.backgroundPosition = `${x}% ${y}%`;
     };
-    applyBackground(currentOption, settings.current_game_background_url);
-    applyBackground(option, settings.second_game_background_url);
+    applyBackground(
+      currentOption,
+      settings.current_game_background_url,
+      settings.current_game_background_x,
+      settings.current_game_background_y
+    );
+    applyBackground(
+      option,
+      settings.second_game_background_url,
+      settings.second_game_background_x,
+      settings.second_game_background_y
+    );
   }
 
   function applySiteSettings(settings = {}) {

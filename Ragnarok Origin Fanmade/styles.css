@@ -268,6 +268,29 @@ a:focus-visible {
   color: rgba(255, 255, 255, 0.88);
 }
 
+.game-background-position {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.game-background-position label {
+  display: grid;
+  gap: 4px;
+}
+
+.game-background-position label > span {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.game-background-position input[type="range"] {
+  width: 100%;
+}
+
 .game-option small {
   margin-top: 2px;
   color: var(--muted);
